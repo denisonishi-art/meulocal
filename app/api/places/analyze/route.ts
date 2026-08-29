@@ -22,10 +22,31 @@ function presenceBand(score: number) {
   return { key: 'strong', label: 'Forte' };
 }
 
+type NearbyPlace = {
+  id?: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  rating?: number;
+  userRatingCount?: number;
+  websiteUri?: string;
+  primaryType?: string;
+};
+
+type Competitor = {
+  id: string;
+  name: string;
+  address: string;
+  rating: number | null;
+  reviewCount: number;
+  website: string | null;
+  category: string | null;
+  reviewDataReliable: boolean;
+};
+
 export async function POST(req: NextRequest) {
   try {
     const place = await req.json();
-    if (!place?.id || !place?.latitude || !place?.longitude) {
+    if (!place?.id || place?.latitude == null || place?.longitude == null) {
       return NextResponse.json({ error: 'Empresa inválida.' }, { status: 400 });
     }
 
@@ -65,50 +86,93 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: payload?.error?.message || 'Falha ao analisar concorrentes.' }, { status: response.status });
     }
 
-    const competitors = (payload.places || [])
-      .filter((p: any) => p.id !== place.id)
-      .map((p: any) => ({
-        id: p.id,
-        name: p.displayName?.text || '',
-        address: p.formattedAddress || '',
-        rating: p.rating ?? null,
-        reviewCount: p.userRatingCount ?? 0,
-        website: p.websiteUri || null,
-        category: p.primaryType || null,
-      }))
-      .sort((a: any, b: any) => (b.reviewCount || 0) - (a.reviewCount || 0))
+    const allCompetitors: Competitor[] = (payload.places || [])
+      .filter((p: NearbyPlace) => p.id && p.id !== place.id)
+      .map((p: NearbyPlace) => {
+        const reviewCount = typeof p.userRatingCount === 'number' ? p.userRatingCount : 0;
+        return {
+          id: p.id || '',
+          name: p.displayName?.text || '',
+          address: p.formattedAddress || '',
+          rating: typeof p.rating === 'number' ? p.rating : null,
+          reviewCount,
+          website: p.websiteUri || null,
+          category: p.primaryType || null,
+          reviewDataReliable: reviewCount > 0,
+        };
+      });
+
+    // Zero/missing review counts are not used as competitive evidence. They may be
+    // incomplete Google data and must not artificially improve or damage a score.
+    const reliableCompetitors = allCompetitors
+      .filter((c) => c.reviewDataReliable)
+      .sort((a, b) => b.reviewCount - a.reviewCount)
       .slice(0, 3);
 
-    const avgReviews = competitors.length
-      ? competitors.reduce((sum: number, c: any) => sum + (c.reviewCount || 0), 0) / competitors.length
+    const competitors = reliableCompetitors.length >= 2
+      ? reliableCompetitors
+      : allCompetitors.sort((a, b) => b.reviewCount - a.reviewCount).slice(0, 3);
+
+    const scoringCompetitors = competitors.filter((c) => c.reviewDataReliable);
+    const avgReviews = scoringCompetitors.length
+      ? scoringCompetitors.reduce((sum, c) => sum + c.reviewCount, 0) / scoringCompetitors.length
       : 0;
 
-    const reviewScore = avgReviews > 0
-      ? clamp(((place.reviewCount || 0) / avgReviews) * 100)
-      : (place.reviewCount || 0) > 0 ? 50 : 0;
+    const businessReviewCount = typeof place.reviewCount === 'number' ? place.reviewCount : 0;
+    const businessReviewDataReliable = businessReviewCount > 0;
+    const competitorReviewDataReliable = scoringCompetitors.length >= 2;
+    const reviewComparisonReliable = businessReviewDataReliable && competitorReviewDataReliable;
 
-    const ratingScore = clamp((((place.rating || 0) - 3) / 2) * 100);
+    const reviewScore = reviewComparisonReliable
+      ? clamp((businessReviewCount / avgReviews) * 100)
+      : null;
+
+    const ratingScore = typeof place.rating === 'number'
+      ? clamp(((place.rating - 3) / 2) * 100)
+      : null;
+
     const profileScore = place.website ? 70 : 45;
     const seoScore = place.website ? 55 : 35;
     const authorityScore = 40;
 
+    // If review data is unreliable, redistribute its 45% weight over the remaining
+    // observable components instead of treating a suspicious zero as fact.
+    const components = [
+      reviewScore == null ? null : { value: reviewScore, weight: 0.45 },
+      ratingScore == null ? null : { value: ratingScore, weight: 0.15 },
+      { value: profileScore, weight: 0.15 },
+      { value: seoScore, weight: 0.15 },
+      { value: authorityScore, weight: 0.10 },
+    ].filter((component): component is { value: number; weight: number } => component !== null);
+
+    const totalWeight = components.reduce((sum, component) => sum + component.weight, 0);
     const score = Math.round(
-      reviewScore * 0.45 +
-      ratingScore * 0.15 +
-      profileScore * 0.15 +
-      seoScore * 0.15 +
-      authorityScore * 0.10
+      components.reduce((sum, component) => sum + component.value * component.weight, 0) / totalWeight
     );
 
     const band = presenceBand(score);
     const gainPotential = score <= 50 ? 'Alto' : score <= 70 ? 'Médio' : 'Baixo';
-    const reviewGap = Math.max(0, Math.round(avgReviews - (place.reviewCount || 0)));
+    const reviewGap = reviewComparisonReliable
+      ? Math.max(0, Math.round(avgReviews - businessReviewCount))
+      : null;
+
+    const dataWarnings: string[] = [];
+    if (!businessReviewDataReliable) {
+      dataWarnings.push('O Google não retornou uma contagem confiável de avaliações para esta empresa. Esse dado foi excluído do cálculo.');
+    }
+    if (!competitorReviewDataReliable) {
+      dataWarnings.push('Não encontramos pelo menos dois concorrentes com contagem confiável de avaliações. A comparação de reviews foi excluída do cálculo.');
+    }
 
     const gaps = [
-      reviewGap > 0 ? `Seus principais concorrentes têm, em média, ${Math.round(avgReviews)} avaliações. Você tem ${place.reviewCount || 0}.` : null,
+      reviewGap != null && reviewGap > 0
+        ? `Seus principais concorrentes têm, em média, ${Math.round(avgReviews)} avaliações. Você tem ${businessReviewCount}.`
+        : null,
       !place.website ? 'Seu perfil não apresenta um site associado, o que reduz sinais de autoridade e conversão.' : null,
-      (place.rating || 0) < 4.5 ? `Sua nota média é ${place.rating || 'sem nota'}, abaixo do nível normalmente associado aos líderes locais.` : null,
-    ].filter(Boolean);
+      typeof place.rating === 'number' && place.rating < 4.5
+        ? `Sua nota média é ${place.rating}, abaixo do nível normalmente associado aos líderes locais.`
+        : null,
+    ].filter((gap): gap is string => Boolean(gap));
 
     return NextResponse.json({
       business: place,
@@ -118,10 +182,16 @@ export async function POST(req: NextRequest) {
         band: band.label,
         bandKey: band.key,
         gainPotential,
-        avgCompetitorReviews: Math.round(avgReviews),
+        avgCompetitorReviews: reviewComparisonReliable ? Math.round(avgReviews) : null,
         reviewGap,
-        reviewScore: Math.round(reviewScore),
-        ratingScore: Math.round(ratingScore),
+        reviewScore: reviewScore == null ? null : Math.round(reviewScore),
+        ratingScore: ratingScore == null ? null : Math.round(ratingScore),
+        reviewComparisonReliable,
+      },
+      dataQuality: {
+        status: dataWarnings.length ? 'partial' : 'reliable',
+        warnings: dataWarnings,
+        reliableCompetitors: scoringCompetitors.length,
       },
       gaps,
     });
