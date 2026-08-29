@@ -82,8 +82,8 @@ export function evaluateOnboardingAction(input: OnboardingAction): GuardrailDeci
 }
 
 export type AdvisorOutputCheck = {
-  usesObservedMetrics?: boolean;
-  labelsRecommendations?: boolean;
+  hasRecommendations?: boolean;
+  recommendationsAreLabeled?: boolean;
   exposesOtherCustomerIdentity?: boolean;
   claimsUnobservedResult?: boolean;
 };
@@ -95,7 +95,7 @@ export function evaluateAdvisorOutput(input: AdvisorOutputCheck): GuardrailDecis
   if (input.claimsUnobservedResult) {
     return deny('unobserved_result_forbidden','O agente não pode apresentar resultado não observado como fato.');
   }
-  if (input.usesObservedMetrics && !input.labelsRecommendations) {
+  if (input.hasRecommendations && !input.recommendationsAreLabeled) {
     return deny('fact_recommendation_separation_required','O agente deve separar fatos observados de recomendações.');
   }
   return allow();
