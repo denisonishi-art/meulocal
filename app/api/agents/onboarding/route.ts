@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {agentModels,agentPolicies} from '@/lib/agents/config';
+import {meulocalBusinessRules} from '@/lib/agents/business-rules';
 
 const steps={
   welcome:{title:'Vamos configurar seu MeuLocal',next:'confirm_business'},
@@ -26,15 +27,23 @@ export async function POST(req:Request){
         action:'create_or_queue_ghl_subaccount',
         customerVisibleLabel:'Preparando sua operação',
         highLevelVisible:false,
-        endpoint:'/api/ghl/provision',
+        integrationStatus:'not_configured',
+        automaticWhenApiAvailable:true,
+        manualFallbackWhenApiUnavailable:true,
+      }:null,
+      whatsapp: step==='connect_whatsapp'?{
+        transport:'highlevel',
+        directWhatsAppProviderEndpointInMeuLocal:false,
+        futureHighLevelEventWebhookRequired:meulocalBusinessRules.whatsapp.futureHighLevelWebhookRequired,
       }:null,
       rules:{
         highLevelVisible:!agentPolicies.onboarding.neverExposeHighLevel,
         customerMessagesEnabled:false,
         requiresFinalConfirmation:agentPolicies.onboarding.neverSendCustomerMessagesBeforeFinalConfirmation,
         importCanBeSkipped:agentPolicies.onboarding.allowImportSkip,
-        dedicatedWorkspacePerCustomer:true,
-        neverBlockCustomerOnManualProvisioning:true,
+        dedicatedHighLevelLocationPerCustomer:agentPolicies.onboarding.provisionDedicatedGhlLocationPerCustomer,
+        provisionBeforeChannelSetup:agentPolicies.onboarding.provisionBeforeChannelSetup,
+        neverBlockCustomerOnManualProvisioning:agentPolicies.onboarding.neverBlockCustomerExperienceOnManualProvisioning,
       },
     });
   }catch{return NextResponse.json({error:'Não foi possível continuar o onboarding agora.'},{status:500})}
