@@ -1,0 +1,113 @@
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  .container { width: calc(100% - 24px); }
+  .primary { min-height: 50px; width: 100%; font-size: 15px; border-radius: 12px; }
+
+  .dashboardNav { height: 64px; position: sticky; top: 0; z-index: 20; background: rgba(251,252,250,.96); backdrop-filter: blur(12px); border-bottom: 1px solid #e9ede7; }
+  .dashboardNav nav { display: none; }
+  .accountDot { width: 36px; height: 36px; font-size: 12px; }
+
+  .dashboardBody { padding: 24px 0 92px; }
+  .dashboardWelcome { display: block; margin-bottom: 18px; }
+  .dashboardWelcome > div:first-child > span { font-size: 10px; letter-spacing: 1.2px; }
+  .dashboardWelcome h1 { font-size: 30px; line-height: 1.05; letter-spacing: -1.4px; margin: 8px 0; }
+  .dashboardWelcome p { font-size: 14px; line-height: 1.5; margin: 0; }
+  .periodPill { display: inline-flex; margin-top: 14px; font-size: 11px; }
+
+  .scoreHeroCard { display: block; padding: 24px 20px; border-radius: 18px; }
+  .scoreHeroCopy > span { font-size: 10px; }
+  .scoreHeroValue { font-size: 72px; letter-spacing: -4px; margin-top: 4px; }
+  .scoreHeroValue small { font-size: 18px; }
+  .scoreEvolution { font-size: 12px; margin-top: 6px; }
+  .scoreHeroCopy p { font-size: 13px; line-height: 1.5; margin: 12px 0 0; }
+  .scoreHistory { margin-top: 28px; gap: 8px; min-height: 150px; }
+  .historyPoint { min-width: 0; }
+  .historyPoint strong { font-size: 13px; }
+  .historyPoint span { font-size: 9px; }
+
+  .dashboardMetrics { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .dashboardMetrics article { padding: 16px; border-radius: 14px; min-height: 128px; }
+  .dashboardMetrics article > div span { font-size: 10px; }
+  .dashboardMetrics strong { font-size: 30px; margin-top: 18px; }
+  .dashboardMetrics small { font-size: 10px; line-height: 1.35; }
+
+  .dashboardColumns { grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+  .dashboardPanel { padding: 20px; border-radius: 16px; }
+  .panelTitle h2 { font-size: 22px; margin-top: 4px; }
+  .panelTitle span, .recommendation > span { font-size: 9px; }
+  .impactRows > div { padding: 13px 0; }
+  .impactRows b { min-width: 52px; font-size: 15px; }
+  .impactRows span { font-size: 12px; }
+  .comparison > div { grid-template-columns: 1fr 38px; gap: 8px; }
+  .comparison i { grid-column: 1 / -1; }
+  .positiveText { font-size: 12px; line-height: 1.45; }
+  .workStats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .workStats > div { padding: 14px; border-radius: 12px; }
+  .workStats strong { font-size: 25px; }
+  .workStats span { font-size: 10px; }
+  .recommendation h2 { font-size: 22px; line-height: 1.15; }
+  .recommendation p { font-size: 13px; }
+  .dashboardDemoNote { font-size: 10px; line-height: 1.45; }
+
+  .loginWrap { min-height: calc(100vh - 70px); padding: 28px 0 48px; align-items: flex-start; }
+  .loginCard { width: 100%; padding: 24px 18px; border-radius: 18px; box-shadow: none; }
+  .loginCard h1 { font-size: 30px; line-height: 1.05; }
+  .loginCard p { font-size: 14px; line-height: 1.5; }
+  .loginCard form { gap: 13px; }
+  .loginCard label { font-size: 12px; }
+  .loginCard input { height: 52px; font-size: 16px; }
+  .loginSubmit { width: 100%; margin-top: 4px; }
+  .loginSwitch { min-height: 44px; }
+
+  .onboardingHero { padding: 32px 0 72px; }
+  .onboardingHero h1 { font-size: 34px; line-height: 1.02; letter-spacing: -1.7px; }
+  .onboardingHero > p { font-size: 14px; line-height: 1.5; }
+  .onboardingCard { padding: 22px 18px; border-radius: 18px; }
+  .onboardingCard h2 { font-size: 26px; line-height: 1.1; }
+  .onboardingCard > p { font-size: 14px; line-height: 1.5; }
+  .connectionList button { min-height: 56px; padding: 0 14px; }
+  .connectionList button span { font-size: 13px; }
+  .uploadBox { padding: 24px 14px; }
+  .uploadBox strong { font-size: 15px; }
+  .uploadBox span { font-size: 12px; }
+  .onboardingActions { display: grid; gap: 8px; }
+  .onboardingActions .primary { width: 100%; }
+  .linkButton { min-height: 44px; }
+  .privacyNote { font-size: 10px; line-height: 1.4; }
+
+  .checkoutHero { padding: 38px 0 72px; }
+  .checkoutHero > h1 { font-size: 38px; letter-spacing: -2px; }
+  .checkoutHero > p { font-size: 14px; }
+  .checkoutCard { grid-template-columns: 1fr; margin-top: 28px; border-radius: 18px; }
+  .checkoutBenefits { padding: 20px 18px; }
+  .checkoutBenefits article { padding: 18px 0; }
+  .checkoutBenefits strong { font-size: 16px; }
+  .checkoutBenefits p { font-size: 12px; }
+  .checkoutAction { padding: 24px 18px; }
+  .checkoutAction h2 { font-size: 25px; }
+
+  .diagnosticHero { padding: 32px 0 64px; }
+  .diagnosticHero > h1 { font-size: 38px; letter-spacing: -2px; }
+  .diagnosticHero > p { font-size: 14px; margin-bottom: 28px; }
+  .businessSearch { padding: 18px; border-radius: 16px; box-shadow: none; }
+  .searchInputWrap input { height: 52px; font-size: 16px; }
+  .analysisResult { padding: 20px 16px; border-radius: 16px; }
+  .analysisTop { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; }
+  .analysisTop h2 { font-size: 23px; }
+  .scoreBadge { width: 86px; height: 86px; }
+  .scoreBadge strong { font-size: 31px; }
+  .analysisGrid { grid-template-columns: 1fr 1fr; }
+  .analysisGrid div { padding: 14px; }
+  .analysisGrid div:nth-child(3) { grid-column: 1 / -1; }
+  .leadCapture { padding: 18px; }
+  .leadCapture input { height: 52px; font-size: 16px; }
+  .leadCapture .primary { width: 100%; }
+
+  .mobileBottomNav { position: fixed; left: 10px; right: 10px; bottom: 10px; z-index: 30; display: grid; grid-template-columns: repeat(3,1fr); background: #172019; border-radius: 16px; padding: 6px; box-shadow: 0 18px 45px rgba(23,32,25,.24); }
+  .mobileBottomNav a { color: #b8c0ba; text-decoration: none; font-size: 10px; font-weight: 700; min-height: 48px; display: grid; place-items: center; border-radius: 11px; }
+  .mobileBottomNav a.active { background: #daf44c; color: #172019; }
+}
+
+@media (min-width: 761px) {
+  .mobileBottomNav { display: none; }
+}
