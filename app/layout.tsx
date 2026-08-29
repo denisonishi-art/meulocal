@@ -1,26 +1,65 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import './mobile.css';
+import {siteConfig} from '@/lib/site';
 
 export const metadata: Metadata = {
-  title: 'MeuLocal | Mais presença no Google. Mais clientes locais.',
-  description: 'Avaliações automáticas, SEO Local e autoridade para pequenos negócios aparecerem mais no Google e conquistarem mais clientes na sua região.',
-  metadataBase: new URL('https://meulocal.vercel.app'),
-  openGraph: {
-    title: 'MeuLocal | Crescimento local no Google',
-    description: 'Mais avaliações. Mais presença no Google. Mais clientes locais.',
-    type: 'website',
-    locale: 'pt_BR'
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: 'MeuLocal | Mais avaliações no Google. Mais clientes locais.',
+    template: '%s | MeuLocal',
   },
-  robots: { index: true, follow: true }
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  openGraph: {
+    title: 'MeuLocal | Mais avaliações no Google. Mais clientes locais.',
+    description: siteConfig.description,
+    type: 'website',
+    locale: 'pt_BR',
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MeuLocal | Mais avaliações no Google. Mais clientes locais.',
+    description: siteConfig.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 const structuredData = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'MeuLocal',
-  description: 'Plataforma de crescimento local para pequenos negócios.',
-  serviceType: ['Gestão de avaliações', 'SEO Local', 'Autoridade Local']
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${siteConfig.url}/#organization`,
+      name: siteConfig.name,
+      url: siteConfig.url,
+      description: siteConfig.description,
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${siteConfig.url}/#website`,
+      name: siteConfig.name,
+      alternateName: 'Meu Local',
+      url: siteConfig.url,
+      inLanguage: 'pt-BR',
+      publisher: { '@id': `${siteConfig.url}/#organization` },
+    },
+  ],
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
