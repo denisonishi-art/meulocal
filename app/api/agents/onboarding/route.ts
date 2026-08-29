@@ -3,7 +3,8 @@ import {agentModels,agentPolicies} from '@/lib/agents/config';
 
 const steps={
   welcome:{title:'Vamos configurar seu MeuLocal',next:'confirm_business'},
-  confirm_business:{title:'Confirme seu negócio',next:'connect_google'},
+  confirm_business:{title:'Confirme seu negócio',next:'provision_ghl'},
+  provision_ghl:{title:'Preparando sua operação',next:'connect_google'},
   connect_google:{title:'Conecte seu Google Business Profile',next:'connect_whatsapp'},
   connect_whatsapp:{title:'Conecte seu WhatsApp Business',next:'import_customers'},
   import_customers:{title:'Traga seus clientes',next:'review_activation'},
@@ -21,11 +22,19 @@ export async function POST(req:Request){
     return NextResponse.json({
       agent:'onboarding',model:agentModels.onboarding,step,current:current.title,nextStep:current.next,
       context,
+      provisioning: step==='provision_ghl'?{
+        action:'create_or_queue_ghl_subaccount',
+        customerVisibleLabel:'Preparando sua operação',
+        highLevelVisible:false,
+        endpoint:'/api/ghl/provision',
+      }:null,
       rules:{
         highLevelVisible:!agentPolicies.onboarding.neverExposeHighLevel,
         customerMessagesEnabled:false,
         requiresFinalConfirmation:agentPolicies.onboarding.neverSendCustomerMessagesBeforeFinalConfirmation,
         importCanBeSkipped:agentPolicies.onboarding.allowImportSkip,
+        dedicatedWorkspacePerCustomer:true,
+        neverBlockCustomerOnManualProvisioning:true,
       },
     });
   }catch{return NextResponse.json({error:'Não foi possível continuar o onboarding agora.'},{status:500})}
