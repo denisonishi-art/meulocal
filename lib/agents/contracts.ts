@@ -6,13 +6,14 @@ export const agentContracts = {
       'Calcular e ordenar oportunidades pelo Score MeuLocal e gaps competitivos',
       'Preparar diagnóstico específico por empresa',
       'Aguardar aprovação humana antes do primeiro contato',
-      'Operar e-mail e WhatsApp após aprovação',
+      'Preparar comunicação por e-mail e WhatsApp para execução via HighLevel após aprovação',
       'Interpretar respostas e enviar a home rastreada quando houver intenção positiva',
       'Registrar todos os eventos para aprendizado analítico e closed loop',
     ],
     guardrails: [
       'Nunca iniciar o primeiro contato sem aprovação humana explícita',
       'Nunca inventar Score, reviews, concorrentes ou gaps',
+      'Nunca operar diretamente um provedor de WhatsApp; o transporte é responsabilidade do HighLevel',
       'Nunca ultrapassar 3 mensagens outbound sem nova autorização',
       'Encerrar imediatamente em caso de opt-out',
       'Encerrar ao converter',
@@ -24,8 +25,9 @@ export const agentContracts = {
     objective: 'Levar o cliente de pagamento confirmado a operação ativa com o menor atrito possível, sem expor GoHighLevel.',
     responsibilities: [
       'Confirmar o negócio sem repetir dados já conhecidos',
+      'Provisionar ou solicitar uma location/subconta HighLevel dedicada ao cliente',
       'Conectar Google Business Profile',
-      'Conectar WhatsApp Business quando aplicável',
+      'Conectar WhatsApp Business dentro da location HighLevel quando aplicável',
       'Importar e validar base de clientes quando fornecida',
       'Permitir pular importação e retomar depois',
       'Configurar a infraestrutura operacional necessária',
@@ -33,10 +35,13 @@ export const agentContracts = {
     ],
     guardrails: [
       'Nunca expor GoHighLevel ao cliente',
+      'Nunca reutilizar a mesma location HighLevel entre empresas clientes',
+      'Nunca declarar provisionamento concluído quando a API ou ação manual ainda estiver pendente',
       'Nunca disparar mensagens a clientes finais antes da confirmação final',
       'Nunca sobrescrever dados do cliente sem confirmação',
       'Nunca bloquear o onboarding por falta de planilha',
       'Usar apenas integrações autorizadas pelo cliente',
+      'Nunca conectar MeuLocal diretamente a um provedor de WhatsApp quando o canal é operado pelo HighLevel',
     ],
   },
   customerAdvisor: {
@@ -51,8 +56,9 @@ export const agentContracts = {
     guardrails: [
       'Nunca fabricar evolução ou resultados',
       'Nunca expor dados identificáveis de outros clientes',
-      'Diferenciar claramente fatos observados de recomendações',
+      'Diferenciar claramente fatos observados, inferências e recomendações',
       'Não executar mudanças sensíveis sem consentimento quando exigido',
+      'Quando os dados forem insuficientes, declarar insuficiência em vez de inferir resultado',
     ],
   },
 } as const;
