@@ -16,14 +16,27 @@ export function buildProspectFunnel(d: ProspectDiagnostic) {
     ? `Hoje a empresa tem ${d.reviews} avaliações${d.rating ? ` e nota ${d.rating.toFixed(1)}` : ''}.`
     : `Hoje a empresa tem ${d.reviews} avaliações, enquanto negócios comparáveis da região têm em média ${Math.round(d.competitorAverageReviews)}.${gap ? ` O gap é de ${gap} avaliações.` : ''}`;
 
-  const message1 = `Oi! Fizemos uma análise da presença da ${d.businessName} no Google. O Score MeuLocal hoje é ${d.score}/100. ${evidence} Veja o diagnóstico completo: ${d.diagnosticUrl}`;
-  const message2 = `O principal ponto do diagnóstico da ${d.businessName} é a oportunidade de fortalecer a reputação no Google. O MeuLocal automatiza esse crescimento e acompanha a evolução do seu Score. Quer melhorar suas avaliações?`;
-  const message3 = `Última mensagem sobre o diagnóstico da ${d.businessName}: se fizer sentido melhorar a reputação no Google, você pode conhecer como o MeuLocal funciona e ativar quando quiser. Se não for prioridade, encerramos por aqui.`;
+  const homeUrl = `/?utm_source=meulocal_prospecting&utm_medium=whatsapp&utm_campaign=outbound&prospect_id=${encodeURIComponent(d.prospectId)}`;
+
+  const email = {
+    message1: `Oi! Fizemos uma análise da presença da ${d.businessName} no Google. O Score MeuLocal hoje é ${d.score}/100. ${evidence} Veja o diagnóstico completo: ${d.diagnosticUrl}`,
+    message2: `O principal ponto do diagnóstico da ${d.businessName} é a oportunidade de fortalecer a reputação no Google. O MeuLocal automatiza esse crescimento e acompanha a evolução do seu Score. Quer melhorar suas avaliações?`,
+    message3: `Última mensagem sobre o diagnóstico da ${d.businessName}: se fizer sentido melhorar a reputação no Google, você pode conhecer como o MeuLocal funciona e ativar quando quiser. Se não for prioridade, encerramos por aqui.`,
+  };
+
+  const whatsapp = {
+    message1: `Oi! Fizemos uma análise da presença da ${d.businessName} no Google. O Score MeuLocal hoje é ${d.score}/100. ${evidence} Quer saber como melhorar suas avaliações? Responda *SIM* e eu te mostro.`,
+    positiveReplyPatterns: ['sim','s','quero','pode mandar','manda','me mostra','mostrar','claro','ok','quero sim'],
+    positiveReplyMessage: `Perfeito. Aqui você consegue ver como o MeuLocal pode ajudar a melhorar suas avaliações e sua reputação no Google: ${homeUrl}`,
+    message2: `Vi que o principal ponto da ${d.businessName} é fortalecer a reputação no Google. Se quiser, responda *SIM* e eu te mando como funciona.`,
+    message3: `Última mensagem sobre a análise da ${d.businessName}. Se quiser ver como melhorar suas avaliações, responda *SIM*. Se não for prioridade, encerramos por aqui.`,
+    homeUrl,
+  };
 
   return {
     approvalRequiredBeforeMessage1: agentPolicies.prospecting.requiresHumanApprovalBeforeContact,
     maxMessages: agentPolicies.prospecting.maxOutboundMessages,
-    messages: [message1, message2, message3],
+    channels: {email, whatsapp},
     diagnostic: {
       cta: agentPolicies.prospecting.diagnosticCtaLabel,
       ctaDestination: agentPolicies.prospecting.diagnosticCtaDestination,
@@ -39,6 +52,7 @@ export function buildProspectFunnel(d: ProspectDiagnostic) {
       stopOnOptOut: true,
       stopAfterThirdMessage: true,
       neverSendBeforeApproval: true,
+      whatsappRequiresPositiveReplyBeforeHomeLink: true,
     },
   };
 }
