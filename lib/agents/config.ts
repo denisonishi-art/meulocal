@@ -27,5 +27,11 @@ export const agentPolicies = {
     neverExposeHighLevel: true,
     neverSendCustomerMessagesBeforeFinalConfirmation: true,
     allowImportSkip: true,
+    provisionDedicatedGhlLocationPerCustomer: true,
+    provisionBeforeChannelSetup: true,
+    neverReuseCustomerLocationAcrossBusinesses: true,
+    neverDeleteOrOverwriteExistingLocationWithoutApproval: true,
+    manualProvisioningFallbackWhenApiUnavailable: true,
+    neverBlockCustomerExperienceOnManualProvisioning: true,
   },
 } as const;
