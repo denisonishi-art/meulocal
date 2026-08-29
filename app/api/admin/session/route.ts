@@ -1,5 +1,11 @@
 import {NextResponse} from 'next/server';
 
+async function sessionToken(secret:string){
+  const data=new TextEncoder().encode(`meulocal-admin:${secret}`);
+  const digest=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
 export async function POST(req:Request){
   try{
     const {key}=await req.json();
@@ -7,7 +13,7 @@ export async function POST(req:Request){
     if(!configured)return NextResponse.json({error:'Admin não configurado.'},{status:503});
     if(typeof key!=='string'||key!==configured)return NextResponse.json({error:'Acesso inválido.'},{status:401});
     const res=NextResponse.json({ok:true});
-    res.cookies.set('meulocal_admin',configured,{httpOnly:true,secure:true,sameSite:'strict',path:'/',maxAge:60*60*8});
+    res.cookies.set('meulocal_admin',await sessionToken(configured),{httpOnly:true,secure:true,sameSite:'strict',path:'/',maxAge:60*60*8});
     return res;
   }catch{return NextResponse.json({error:'Falha ao autenticar.'},{status:400})}
 }
