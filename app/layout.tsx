@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     title: 'MeuLocal | Mais avaliações no Google. Mais clientes locais.',
     description: siteConfig.description,
