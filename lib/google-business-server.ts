@@ -1,0 +1,7 @@
+import {createCipheriv,createDecipheriv,createHash,randomBytes} from 'crypto';
+
+function key(){const secret=process.env.GOOGLE_TOKEN_ENCRYPTION_KEY;if(!secret)throw new Error('GOOGLE_TOKEN_ENCRYPTION_KEY missing');return createHash('sha256').update(secret).digest()}
+export function encryptToken(value:string){const iv=randomBytes(12);const cipher=createCipheriv('aes-256-gcm',key(),iv);const encrypted=Buffer.concat([cipher.update(value,'utf8'),cipher.final()]);const tag=cipher.getAuthTag();return Buffer.concat([iv,tag,encrypted]).toString('base64url')}
+export function decryptToken(value:string){const raw=Buffer.from(value,'base64url');const iv=raw.subarray(0,12),tag=raw.subarray(12,28),encrypted=raw.subarray(28);const decipher=createDecipheriv('aes-256-gcm',key(),iv);decipher.setAuthTag(tag);return Buffer.concat([decipher.update(encrypted),decipher.final()]).toString('utf8')}
+
+export async function refreshGoogleAccessToken(refreshToken:string){const body=new URLSearchParams({client_id:process.env.GOOGLE_BUSINESS_CLIENT_ID||'',client_secret:process.env.GOOGLE_BUSINESS_CLIENT_SECRET||'',refresh_token:refreshToken,grant_type:'refresh_token'});const res=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,cache:'no-store'});if(!res.ok)throw new Error('Google token refresh failed');return res.json() as Promise<{access_token:string;expires_in:number}>}
