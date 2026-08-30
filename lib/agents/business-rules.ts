@@ -76,6 +76,17 @@ export const meulocalBusinessRules = {
     stopAfterThirdMessageWithoutConversion: true,
     noMacroStrategyChangeWithoutApproval: true,
     whatsappHomeLinkAfterPositiveIntent: true,
+    competitionScope: {
+      defaultMode: 'auto',
+      radiusMetersIsOnlyAHeuristic: true,
+      supportedModes: ['local_radius','city_region','search_market'] as const,
+      hyperlocalExamples: ['barbearia','restaurante','academia','pet shop'] as const,
+      searchMarketExamples: ['aluguel de geradores','software','serviços B2B','equipamentos','fornecedores'] as const,
+      rule: 'Concorrente é quem disputa a mesma intenção de busca e o mesmo cliente, mesmo que esteja fora do raio físico.',
+    },
+    outreachCopyMustMatchEvidenceScope: true,
+    neverSayNearbyWhenComparisonIsSearchMarket: true,
+    neverClaimRadiusIfRadiusWasNotActuallyUsed: true,
   },
   onboarding: {
     requiresConfirmedPaymentBeforeActivation: true,
