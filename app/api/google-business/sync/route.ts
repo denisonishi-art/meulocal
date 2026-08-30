@@ -1,20 +1,21 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
-import {decryptToken,refreshGoogleAccessToken} from '@/lib/google-business-server';
+import {syncGoogleReputation} from '@/lib/google-reputation-sync';
 
 export async function POST(request:Request){
- const auth=request.headers.get('authorization');const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL,anonKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
- if(!auth?.startsWith('Bearer ')||!supabaseUrl||!anonKey||!serviceKey)return NextResponse.json({error:'Não autorizado.'},{status:401});
- const userClient=createClient(supabaseUrl,anonKey,{global:{headers:{Authorization:auth}}});const {data:{user}}=await userClient.auth.getUser(auth.slice(7));if(!user)return NextResponse.json({error:'Sessão inválida.'},{status:401});
- const admin=createClient(supabaseUrl,serviceKey);const {data:conn}=await admin.from('google_business_connections').select('business_id,google_account_id,google_location_id,refresh_token_ciphertext').eq('user_id',user.id).eq('status','connected').maybeSingle();
- if(!conn?.refresh_token_ciphertext||!conn.google_account_id||!conn.google_location_id)return NextResponse.json({error:'Google Business Profile ainda não está conectado.'},{status:409});
- const refreshed=await refreshGoogleAccessToken(decryptToken(conn.refresh_token_ciphertext));
- const reviewUrl=`https://mybusiness.googleapis.com/v4/${conn.google_account_id}/${conn.google_location_id}/reviews?pageSize=50&orderBy=updateTime%20desc`;
- const reviewRes=await fetch(reviewUrl,{headers:{Authorization:`Bearer ${refreshed.access_token}`},cache:'no-store'});const reviewPayload=await reviewRes.json();if(!reviewRes.ok)return NextResponse.json({error:reviewPayload?.error?.message||'Não foi possível sincronizar avaliações.'},{status:reviewRes.status});
- const reviews=reviewPayload.reviews||[];const reviewCount=Number(reviewPayload.totalReviewCount||reviews.length||0);const rating=Number(reviewPayload.averageRating||0);const since=Date.now()-30*86400000;const recent=reviews.filter((r:any)=>new Date(r.createTime||r.updateTime||0).getTime()>=since).length;const answered=reviews.filter((r:any)=>Boolean(r.reviewReply)).length;const responseRate=reviews.length?Math.round(answered/reviews.length*100):0;
- const {data:diag}=await admin.from('diagnostics').select('id,local_seo_score,authority_score,profile_score').eq('business_id',conn.business_id).order('created_at',{ascending:false}).limit(1).maybeSingle();let competitorAvg=0;if(diag?.id){const {data:comps}=await admin.from('competitors').select('google_review_count').eq('diagnostic_id',diag.id);const valid=(comps||[]).map((c:any)=>Number(c.google_review_count||0)).filter((n:number)=>n>0);if(valid.length)competitorAvg=valid.reduce((a:number,b:number)=>a+b,0)/valid.length;}
- const {data:scoreRows,error:scoreError}=await admin.rpc('calculate_presence_score',{p_review_count:reviewCount,p_competitor_avg_reviews:competitorAvg,p_rating:rating,p_profile_score:diag?.profile_score??50,p_local_seo_score:diag?.local_seo_score??50,p_authority_score:diag?.authority_score??40});if(scoreError)return NextResponse.json({error:'Não foi possível recalcular o Score MeuLocal.'},{status:500});const scoreRow=scoreRows?.[0];
- const snapshot={business_id:conn.business_id,score:scoreRow?.presence_score??0,band:scoreRow?.presence_band??'critical',review_count:reviewCount,google_rating:rating||null,response_rate:responseRate,reviews_last_30d:recent,competitor_avg_score:null,snapshot_date:new Date().toISOString().slice(0,10)};
- const {error:snapshotError}=await admin.from('score_snapshots').upsert(snapshot,{onConflict:'business_id,snapshot_date'});if(snapshotError)return NextResponse.json({error:'Não foi possível salvar a evolução.'},{status:500});await admin.from('google_business_connections').update({last_sync_at:new Date().toISOString(),token_expires_at:new Date(Date.now()+refreshed.expires_in*1000).toISOString()}).eq('user_id',user.id);
- return NextResponse.json({ok:true,score:snapshot.score,band:snapshot.band,reviewCount,rating,responseRate,reviewsLast30d:recent});
+  const auth=request.headers.get('authorization');
+  const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL,anonKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!auth?.startsWith('Bearer ')||!supabaseUrl||!anonKey||!serviceKey)return NextResponse.json({error:'Não autorizado.'},{status:401});
+  const userClient=createClient(supabaseUrl,anonKey,{global:{headers:{Authorization:auth}}});
+  const {data:{user}}=await userClient.auth.getUser(auth.slice(7));
+  if(!user)return NextResponse.json({error:'Sessão inválida.'},{status:401});
+  const admin=createClient(supabaseUrl,serviceKey);
+  const {data:conn}=await admin.from('google_business_connections').select('user_id,business_id,google_account_id,google_location_id,refresh_token_ciphertext').eq('user_id',user.id).eq('status','connected').maybeSingle();
+  if(!conn?.refresh_token_ciphertext||!conn.google_account_id||!conn.google_location_id)return NextResponse.json({error:'Google Business Profile ainda não está conectado.'},{status:409});
+  try{
+    const snapshot=await syncGoogleReputation(admin,conn,'manual');
+    return NextResponse.json({ok:true,score:snapshot.score,band:snapshot.band,scoreVersion:snapshot.score_version,reviewCount:snapshot.review_count,rating:snapshot.google_rating,responseRate:snapshot.response_rate,reviewsLast30d:snapshot.reviews_last_30d,pagesFetched:snapshot.pagesFetched,reviewsTruncated:snapshot.reviewsTruncated});
+  }catch(error:any){
+    return NextResponse.json({error:error?.message||'Não foi possível sincronizar avaliações.'},{status:502});
+  }
 }
