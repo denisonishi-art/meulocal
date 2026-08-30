@@ -2,8 +2,11 @@ import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {createRecurringCheckout} from '@/lib/payments/asaas';
 import {meulocalBusinessRules} from '@/lib/agents/business-rules';
+import {consumeRateLimit} from '@/lib/rate-limit';
 
 export async function POST(req:Request){
+  const rate=await consumeRateLimit(req,'payment_checkout',5,60);
+  if(!rate.allowed)return NextResponse.json({error:'Muitas tentativas de ativação. Aguarde um minuto e tente novamente.'},{status:429,headers:{'Retry-After':'60'}});
   try{
     const {name,email,phone,businessId,leadId}=await req.json() as {name?:string;email?:string;phone?:string;businessId?:string;leadId?:string};
     if(!name?.trim()||!email?.trim())return NextResponse.json({error:'Informe nome e e-mail.'},{status:400});
@@ -23,13 +26,8 @@ export async function POST(req:Request){
     const amountBRL=meulocalBusinessRules.commercial.officialMonthlyPriceBRL;
 
     const checkout=await createRecurringCheckout({
-      externalReference,
-      name:'MeuLocal',
-      description:'Plano mensal MeuLocal',
-      valueBRL:amountBRL,
-      successUrl:`${appUrl}/contratar?payment=processing`,
-      cancelUrl:`${appUrl}/contratar?payment=canceled`,
-      expiredUrl:`${appUrl}/contratar?payment=expired`,
+      externalReference,name:'MeuLocal',description:'Plano mensal MeuLocal',valueBRL:amountBRL,
+      successUrl:`${appUrl}/contratar?payment=processing`,cancelUrl:`${appUrl}/contratar?payment=canceled`,expiredUrl:`${appUrl}/contratar?payment=expired`,
       customerData:{name:name.trim(),email:email.trim(),phone:phone?.trim()||undefined},
     });
 
