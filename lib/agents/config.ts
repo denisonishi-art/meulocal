@@ -3,6 +3,7 @@ export const agentModels = {
   prospectDecision: 'gpt-5.6-terra',
   onboarding: 'gpt-5.6-terra',
   customerAdvisor: 'gpt-5.6-sol',
+  seoIntelligence: 'gpt-5.6-terra',
 } as const;
 
 export const agentPolicies = {
@@ -33,5 +34,14 @@ export const agentPolicies = {
     neverDeleteOrOverwriteExistingLocationWithoutApproval: true,
     manualProvisioningFallbackWhenApiUnavailable: true,
     neverBlockCustomerExperienceOnManualProvisioning: true,
+  },
+  seo: {
+    provider: 'openseo',
+    externalMetricsRequireEvidence: true,
+    publishRequiresHumanApproval: true,
+    allowStandaloneProduct: true,
+    allowAddonProduct: true,
+    avoidThinProgrammaticPages: true,
+    prioritizeCommercialAndLocalIntent: true,
   },
 } as const;
