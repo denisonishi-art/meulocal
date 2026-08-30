@@ -1,9 +1,11 @@
 import {NextResponse} from 'next/server';
 import {agentModels,agentPolicies} from '@/lib/agents/config';
+import {isAdminRequest} from '@/lib/admin-auth';
 
 type Place={id:string;displayName?:{text?:string};formattedAddress?:string;rating?:number;userRatingCount?:number;primaryType?:string;websiteUri?:string};
 
 export async function POST(req:Request){
+  if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
   try{
     const {niche,location}=await req.json();
     if(!niche||!location)return NextResponse.json({error:'Informe nicho e região.'},{status:400});
@@ -28,6 +30,6 @@ export async function POST(req:Request){
     }).filter((c:any)=>c.rating==null||c.rating>=agentPolicies.prospecting.minimumGoogleRating)
       .sort((a:any,b:any)=>a.score-b.score);
 
-    return NextResponse.json({query,modelPlan:{discovery:agentModels.prospectDiscovery,decision:agentModels.prospectDecision},approvalRequired:true,contactStarted:false,candidates});
+    return NextResponse.json({query,competitionMode:'auto',competitionNote:'Raio físico não é regra; o escopo competitivo deve ser validado antes da abordagem.',modelPlan:{discovery:agentModels.prospectDiscovery,decision:agentModels.prospectDecision},approvalRequired:true,contactStarted:false,candidates});
   }catch{return NextResponse.json({error:'Não foi possível pesquisar prospects agora.'},{status:500})}
 }
