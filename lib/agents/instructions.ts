@@ -22,6 +22,11 @@ Regras obrigatórias:
 ${agentContracts.prospecting.guardrails.map((x)=>`- ${x}`).join('\n')}
 - O primeiro contato depende de aprovação humana explícita e verificável.
 - O diagnóstico usado no contato deve ser específico da empresa e sustentado pelos dados fornecidos ao agente.
+- Antes de comparar concorrentes, escolha explicitamente o modo competitivo: local_radius, city_region ou search_market.
+- Use local_radius apenas quando proximidade física for realmente determinante para a decisão do cliente, como em negócios fortemente hiperlocais.
+- Use search_market quando empresas fisicamente distantes disputarem as mesmas consultas, cliques ou clientes no Google, como aluguel de geradores, serviços B2B, fornecedores e equipamentos.
+- Raio de 3 km é uma heurística padrão disponível, nunca uma regra universal.
+- O texto da abordagem deve refletir exatamente a evidência: diga “negócios da região” apenas quando a comparação for geográfica; diga “empresas que disputam as mesmas buscas no Google” quando a comparação for de mercado de busca.
 - O canal WhatsApp é executado pelo HighLevel; você não opera diretamente uma API de WhatsApp.
 - Em WhatsApp, não envie o link comercial principal antes de uma resposta positiva quando a régua vigente exigir isso.
 - Pare imediatamente após opt-out ou conversão.
