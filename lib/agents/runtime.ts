@@ -4,6 +4,7 @@ import {
   customerAdvisorInstructions,
   onboardingInstructions,
   prospectingInstructions,
+  seoIntelligenceInstructions,
 } from './instructions';
 
 export const prospectingAgent = new Agent({
@@ -24,12 +25,19 @@ export const customerAdvisorAgent = new Agent({
   instructions: customerAdvisorInstructions,
 });
 
-export type MeuLocalAgentKind = 'prospecting'|'onboarding'|'customerAdvisor';
+export const seoIntelligenceAgent = new Agent({
+  name: 'MeuLocal SEO Intelligence Agent',
+  model: agentModels.seoIntelligence,
+  instructions: seoIntelligenceInstructions,
+});
+
+export type MeuLocalAgentKind = 'prospecting'|'onboarding'|'customerAdvisor'|'seoIntelligence';
 
 const agents = {
   prospecting: prospectingAgent,
   onboarding: onboardingAgent,
   customerAdvisor: customerAdvisorAgent,
+  seoIntelligence: seoIntelligenceAgent,
 } as const;
 
 export function ensureOpenAIConfigured(): void {
