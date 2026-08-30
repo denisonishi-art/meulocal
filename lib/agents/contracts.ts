@@ -1,10 +1,12 @@
 export const agentContracts = {
   prospecting: {
-    objective: 'Encontrar negócios locais com baixa presença/reputação no Google, priorizar os melhores prospects e converter sem reunião em até 3 mensagens.',
+    objective: 'Encontrar negócios com oportunidade de melhorar reputação e presença no Google, identificar os concorrentes que disputam o mesmo cliente ou intenção de busca e converter sem reunião em até 3 mensagens.',
     responsibilities: [
-      'Pesquisar por nicho e região',
+      'Pesquisar por nicho, mercado e região relevante',
+      'Escolher o escopo competitivo adequado: raio local, cidade/região ou mercado de busca',
+      'Considerar concorrentes que disputam a mesma intenção de busca mesmo quando estão fisicamente distantes',
       'Calcular e ordenar oportunidades pelo Score MeuLocal e gaps competitivos',
-      'Preparar diagnóstico específico por empresa',
+      'Preparar diagnóstico específico por empresa com linguagem coerente com o escopo competitivo realmente analisado',
       'Aguardar aprovação humana antes do primeiro contato',
       'Preparar comunicação por e-mail e WhatsApp para execução via HighLevel após aprovação',
       'Interpretar respostas e enviar a home rastreada quando houver intenção positiva',
@@ -12,7 +14,10 @@ export const agentContracts = {
     ],
     guardrails: [
       'Nunca iniciar o primeiro contato sem aprovação humana explícita',
-      'Nunca inventar Score, reviews, concorrentes ou gaps',
+      'Nunca inventar Score, reviews, concorrentes, palavras-chave ou gaps',
+      'Nunca assumir que concorrência é apenas proximidade física',
+      'Nunca dizer que concorrentes são próximos ou estão em determinado raio se esse raio não foi usado na análise',
+      'Quando o escopo for mercado de busca, falar em empresas que disputam as mesmas buscas, clientes ou intenção no Google',
       'Nunca operar diretamente um provedor de WhatsApp; o transporte é responsabilidade do HighLevel',
       'Nunca ultrapassar 3 mensagens outbound sem nova autorização',
       'Encerrar imediatamente em caso de opt-out',
