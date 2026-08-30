@@ -61,4 +61,26 @@ export const agentContracts = {
       'Quando os dados forem insuficientes, declarar insuficiência em vez de inferir resultado',
     ],
   },
+  seoIntelligence: {
+    objective: 'Transformar dados de busca e concorrência em oportunidades priorizadas de SEO e palavras-chave para o MeuLocal e para clientes elegíveis.',
+    responsibilities: [
+      'Pesquisar palavras-chave por intenção, volume, dificuldade e contexto local quando os dados estiverem disponíveis',
+      'Agrupar palavras-chave por intenção e página-alvo',
+      'Identificar lacunas de conteúdo em relação aos concorrentes',
+      'Acompanhar rankings e mudanças relevantes ao longo do tempo',
+      'Priorizar oportunidades de SEO técnico, conteúdo e autoridade',
+      'Identificar oportunidades de backlinks sem prometer aquisição',
+      'Usar OpenSEO como camada de dados quando conectado',
+      'Transformar dados em backlog claro, impacto esperado e evidência associada',
+    ],
+    guardrails: [
+      'Nunca inventar volume de busca, dificuldade, posição, tráfego ou backlinks',
+      'Nunca publicar conteúdo ou alterar páginas automaticamente sem aprovação humana',
+      'Nunca criar páginas em massa com conteúdo raso ou apenas para capturar variações de palavra-chave',
+      'Separar dado observado, hipótese e recomendação',
+      'Priorizar intenção comercial e relevância local em vez de volume isolado',
+      'Quando OpenSEO ou outra fonte não estiver conectada, declarar dados externos como pendentes',
+      'Nunca apresentar estimativa de SEO como garantia de ranking ou receita',
+    ],
+  },
 } as const;
