@@ -1,11 +1,20 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
-import {decryptToken,refreshGoogleAccessToken} from '@/lib/google-business-server';
+import {syncGoogleReputation} from '@/lib/google-reputation-sync';
 
 export async function GET(request:Request){
- const secret=process.env.CRON_SECRET;if(!secret||request.headers.get('authorization')!==`Bearer ${secret}`)return NextResponse.json({error:'Não autorizado.'},{status:401});
- const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL,serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;if(!supabaseUrl||!serviceKey)return NextResponse.json({error:'Supabase não configurado.'},{status:503});const admin=createClient(supabaseUrl,serviceKey);
- const {data:connections}=await admin.from('google_business_connections').select('user_id,business_id,google_account_id,google_location_id,refresh_token_ciphertext').eq('status','connected');let synced=0,failed=0;
- for(const conn of connections||[]){try{if(!conn.refresh_token_ciphertext||!conn.google_account_id||!conn.google_location_id)continue;const refreshed=await refreshGoogleAccessToken(decryptToken(conn.refresh_token_ciphertext));const res=await fetch(`https://mybusiness.googleapis.com/v4/${conn.google_account_id}/${conn.google_location_id}/reviews?pageSize=50&orderBy=updateTime%20desc`,{headers:{Authorization:`Bearer ${refreshed.access_token}`},cache:'no-store'});if(!res.ok)throw new Error('reviews');const payload=await res.json();const reviews=payload.reviews||[];const reviewCount=Number(payload.totalReviewCount||reviews.length||0);const rating=Number(payload.averageRating||0);const since=Date.now()-30*86400000;const recent=reviews.filter((r:any)=>new Date(r.createTime||r.updateTime||0).getTime()>=since).length;const answered=reviews.filter((r:any)=>Boolean(r.reviewReply)).length;const responseRate=reviews.length?Math.round(answered/reviews.length*100):0;const {data:diag}=await admin.from('diagnostics').select('id,local_seo_score,authority_score,profile_score').eq('business_id',conn.business_id).order('created_at',{ascending:false}).limit(1).maybeSingle();let competitorAvg=0;if(diag?.id){const {data:comps}=await admin.from('competitors').select('google_review_count').eq('diagnostic_id',diag.id);const valid=(comps||[]).map((c:any)=>Number(c.google_review_count||0)).filter((n:number)=>n>0);if(valid.length)competitorAvg=valid.reduce((a:number,b:number)=>a+b,0)/valid.length}const {data:scoreRows}=await admin.rpc('calculate_presence_score',{p_review_count:reviewCount,p_competitor_avg_reviews:competitorAvg,p_rating:rating,p_profile_score:diag?.profile_score??50,p_local_seo_score:diag?.local_seo_score??50,p_authority_score:diag?.authority_score??40});const score=scoreRows?.[0];await admin.from('score_snapshots').upsert({business_id:conn.business_id,score:score?.presence_score??0,band:score?.presence_band??'critical',review_count:reviewCount,google_rating:rating||null,response_rate:responseRate,reviews_last_30d:recent,snapshot_date:new Date().toISOString().slice(0,10)},{onConflict:'business_id,snapshot_date'});await admin.from('google_business_connections').update({last_sync_at:new Date().toISOString()}).eq('user_id',conn.user_id).eq('business_id',conn.business_id);synced++}catch{failed++}}
- return NextResponse.json({ok:true,synced,failed});
+  const secret=process.env.CRON_SECRET;
+  if(!secret||request.headers.get('authorization')!==`Bearer ${secret}`)return NextResponse.json({error:'Não autorizado.'},{status:401});
+  const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL,serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if(!supabaseUrl||!serviceKey)return NextResponse.json({error:'Supabase não configurado.'},{status:503});
+  const admin=createClient(supabaseUrl,serviceKey);
+  const {data:connections}=await admin.from('google_business_connections').select('user_id,business_id,google_account_id,google_location_id,refresh_token_ciphertext').eq('status','connected');
+  let synced=0,failed=0;
+  for(const conn of connections||[]){
+    try{
+      if(!conn.refresh_token_ciphertext||!conn.google_account_id||!conn.google_location_id){failed++;continue;}
+      await syncGoogleReputation(admin,conn,'cron');synced++;
+    }catch{failed++;}
+  }
+  return NextResponse.json({ok:true,synced,failed,total:(connections||[]).length});
 }
