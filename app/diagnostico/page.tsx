@@ -78,6 +78,7 @@ export default function DiagnosticoPage() {
       };
       const res=await fetch('/api/leads/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const data=await res.json(); if(!res.ok) throw new Error(data.error||'Não foi possível salvar seus dados.');
+      sessionStorage.setItem('meulocal_checkout_context',JSON.stringify({businessId:data.businessId||null,leadId:data.leadId||null,name,email,phone:whatsapp,businessName:analysis.business.name}));
       window.location.href='/contratar';
     }catch(err:any){setError(err.message||'Não foi possível salvar seus dados.')}finally{setSaving(false)}
   }
@@ -90,7 +91,7 @@ export default function DiagnosticoPage() {
     <section className="diagnosticHero container">
       <div className="eyebrow"><span></span>Diagnóstico gratuito</div>
       <h1>Descubra sua Nota de Presença Local.</h1>
-      <p>Encontre seu negócio no Google e veja como ele está comparado aos concorrentes da região.</p>
+      <p>Encontre seu negócio no Google e veja como ele está comparado a empresas que disputam os mesmos clientes.</p>
 
       {!analysis && <form className="businessSearch" onSubmit={submit}>
         <label htmlFor="business">Nome da empresa + cidade ou bairro</label>
@@ -102,16 +103,16 @@ export default function DiagnosticoPage() {
 
       {places.length>0&&<section className="placeResults" aria-live="polite"><div className="resultHeader"><div><span>Encontramos estas empresas</span><h2>Qual delas é a sua?</h2></div><small>{places.length} resultado(s)</small></div><div className="placeList">{places.map(p=><button className="placeCard" key={p.id} type="button" onClick={()=>analyze(p)} disabled={analyzing}><div className="placeIcon"><Building2 size={20}/></div><div className="placeText"><strong>{p.name}</strong><span>{p.address}</span><small>{p.rating?`★ ${p.rating}`:'Sem nota'} · {p.reviewCount} avaliações</small></div><ArrowRight size={18}/></button>)}</div></section>}
 
-      {analyzing&&<div className="analysisLoading"><strong>Analisando sua presença local...</strong><span>Comparando sua empresa com negócios relevantes em um raio de 3 km.</span></div>}
+      {analyzing&&<div className="analysisLoading"><strong>Analisando sua presença no Google...</strong><span>Comparando sua empresa com negócios relevantes para o seu mercado e contexto de busca.</span></div>}
 
       {analysis&&<section className="analysisResult">
         <div className="analysisTop"><div><span>Resultado preliminar</span><h2>{analysis.business.name}</h2><p>{analysis.business.address}</p></div><div className={scoreClass}><strong>{analysis.metrics.score}</strong><span>/100</span><small>{analysis.metrics.band}</small></div></div>
         <div className="gainLine"><span>Potencial de ganho</span><strong>{analysis.metrics.gainPotential}</strong></div>
-        <div className="analysisGrid"><div><small>Suas avaliações</small><strong>{analysis.business.reviewCount}</strong></div><div><small>Média dos concorrentes</small><strong>{analysis.metrics.avgCompetitorReviews??'—'}</strong></div><div><small>Gap de avaliações</small><strong>{analysis.metrics.reviewGap??'—'}</strong></div></div>
+        <div className="analysisGrid"><div><small>Suas avaliações</small><strong>{analysis.business.reviewCount}</strong></div><div><small>Média comparável</small><strong>{analysis.metrics.avgCompetitorReviews??'—'}</strong></div><div><small>Gap de avaliações</small><strong>{analysis.metrics.reviewGap??'—'}</strong></div></div>
         {analysis.gaps.length>0&&<div className="gapBox"><span>O que encontramos</span>{analysis.gaps.map((g,i)=><p key={i}>• {g}</p>)}</div>}
-        <div className="competitorList"><span>Concorrentes usados na comparação</span>{analysis.competitors.map((c,i)=><div key={c.id}><strong>{i+1}. {c.name}</strong><small>{c.reviewCount} avaliações · {c.rating?`★ ${c.rating}`:'sem nota'}</small></div>)}</div>
+        <div className="competitorList"><span>Empresas usadas na comparação</span>{analysis.competitors.map((c,i)=><div key={c.id}><strong>{i+1}. {c.name}</strong><small>{c.reviewCount} avaliações · {c.rating?`★ ${c.rating}`:'sem nota'}</small></div>)}</div>
 
-        {!showLead?<div className="unlockBox"><h3>Quer ver como melhorar sua presença local?</h3><p>Receba sua análise e avance direto para ativar o MeuLocal — sem reunião.</p><button className="primary" type="button" onClick={()=>setShowLead(true)}>Quero melhorar minha presença <ArrowRight size={18}/></button></div>:
+        {!showLead?<div className="unlockBox"><h3>Quer ver como melhorar sua presença no Google?</h3><p>Receba sua análise e avance direto para ativar o MeuLocal — sem reunião.</p><button className="primary" type="button" onClick={()=>setShowLead(true)}>Quero melhorar minha presença <ArrowRight size={18}/></button></div>:
         <form className="leadCapture" onSubmit={saveLead}>
           <div><span>Último passo</span><h3>Para onde enviamos sua análise?</h3><p>Preencha seus dados para salvar o diagnóstico e seguir para a ativação.</p></div>
           <label>Seu nome<input value={name} onChange={e=>setName(e.target.value)} required/></label>
