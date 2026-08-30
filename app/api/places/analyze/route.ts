@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {consumeRateLimit} from '@/lib/rate-limit';
 
 const fields = [
   'places.id','places.displayName','places.formattedAddress','places.location','places.rating','places.userRatingCount','places.websiteUri','places.primaryType',
@@ -14,6 +15,8 @@ type NearbyPlace={id?:string;displayName?:{text?:string};formattedAddress?:strin
 type Competitor={id:string;name:string;address:string;rating:number|null;reviewCount:number;website:string|null;category:string|null;reviewDataReliable:boolean};
 
 export async function POST(req:NextRequest){
+  const rate=await consumeRateLimit(req,'places_analyze',6,60);
+  if(!rate.allowed)return NextResponse.json({error:'Muitas análises em pouco tempo. Aguarde um minuto e tente novamente.'},{status:429,headers:{'Retry-After':'60'}});
   try{
     const place=await req.json();
     if(!place?.id)return NextResponse.json({error:'Empresa inválida.'},{status:400});
