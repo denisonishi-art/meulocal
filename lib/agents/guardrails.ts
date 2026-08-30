@@ -101,6 +101,30 @@ export function evaluateAdvisorOutput(input: AdvisorOutputCheck): GuardrailDecis
   return allow();
 }
 
+export type SeoActionCheck = {
+  action: 'recommend'|'publish'|'claim_metric'|'create_programmatic_pages';
+  hasEvidence?: boolean;
+  hasHumanApproval?: boolean;
+  metricObserved?: boolean;
+  contentIsThin?: boolean;
+};
+
+export function evaluateSeoAction(input: SeoActionCheck): GuardrailDecision {
+  if ((input.action === 'recommend' || input.action === 'claim_metric') && meulocalBusinessRules.seo.recommendationsMustBeEvidenceBased && !input.hasEvidence) {
+    return deny('seo_evidence_required','Recomendações e métricas de SEO precisam de evidência observável.');
+  }
+  if (input.action === 'claim_metric' && !input.metricObserved) {
+    return deny('seo_metric_unobserved','Volume, dificuldade, posição, tráfego ou backlinks não podem ser inventados.');
+  }
+  if (input.action === 'publish' && meulocalBusinessRules.seo.requireHumanApprovalBeforePublishingContent && !input.hasHumanApproval) {
+    return deny('seo_publish_approval_required','Publicação ou alteração de conteúdo exige aprovação humana.');
+  }
+  if (input.action === 'create_programmatic_pages' && meulocalBusinessRules.seo.avoidProgrammaticThinContent && input.contentIsThin) {
+    return deny('thin_programmatic_content_forbidden','O MeuLocal não deve criar páginas em massa com conteúdo raso para capturar variações de palavra-chave.');
+  }
+  return allow();
+}
+
 export function assertGuardrail(decision: GuardrailDecision): void {
   if (!decision.allowed) {
     throw new Error(`AGENT_GUARDRAIL:${decision.code}:${decision.reason}`);
