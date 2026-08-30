@@ -7,6 +7,15 @@ function safeEqual(a:string,b:string){
   return aa.length===bb.length && timingSafeEqual(aa,bb);
 }
 
+async function ensureCustomerUser(admin:any,email:string,redirectTo:string){
+  const invited=await admin.auth.admin.inviteUserByEmail(email,{redirectTo});
+  if(!invited.error&&invited.data?.user)return {user:invited.data.user,status:'invited' as const};
+  const listed=await admin.auth.admin.listUsers({page:1,perPage:1000});
+  const existing=listed.data?.users?.find((u:any)=>String(u.email||'').toLowerCase()===email.toLowerCase());
+  if(existing)return {user:existing,status:'linked' as const};
+  throw invited.error||new Error('CUSTOMER_USER_CREATION_FAILED');
+}
+
 export async function POST(req:Request){
   const expected=process.env.ASAAS_WEBHOOK_TOKEN;
   const received=req.headers.get('asaas-access-token')||'';
@@ -31,16 +40,11 @@ export async function POST(req:Request){
     const externalReference=checkout.externalReference||subscription.externalReference||payment.externalReference||null;
 
     const admin=createClient(supabaseUrl,serviceKey,{auth:{persistSession:false}});
+    const compactPayload={event:eventType,checkoutId:externalCheckoutId,subscriptionId:externalSubscriptionId,paymentId:externalPaymentId,externalReference,status:payment.status||subscription.status||checkout.status||null};
     const {error:insertError}=await admin.from('payment_events').insert({
-      provider:'asaas',
-      external_event_id:eventId,
-      event_type:eventType,
-      external_checkout_id:externalCheckoutId,
-      external_subscription_id:externalSubscriptionId,
-      external_payment_id:externalPaymentId,
-      external_reference:externalReference,
-      payload,
-      processed_at:new Date().toISOString(),
+      provider:'asaas',external_event_id:eventId,event_type:eventType,external_checkout_id:externalCheckoutId,
+      external_subscription_id:externalSubscriptionId,external_payment_id:externalPaymentId,external_reference:externalReference,
+      payload:compactPayload,processed_at:new Date().toISOString(),
     });
 
     if(insertError){
@@ -48,7 +52,7 @@ export async function POST(req:Request){
       throw insertError;
     }
 
-    let query=admin.from('payment_checkouts').select('id,customer_account_id').limit(1);
+    let query=admin.from('payment_checkouts').select('id,customer_account_id,business_id,customer_email,activation_status').limit(1);
     if(externalReference)query=query.eq('external_reference',externalReference);
     else if(externalCheckoutId)query=query.eq('external_checkout_id',externalCheckoutId);
     else if(externalSubscriptionId)query=query.eq('external_subscription_id',externalSubscriptionId);
@@ -59,9 +63,24 @@ export async function POST(req:Request){
     if(!checkoutRecord)return NextResponse.json({ok:true,stored:true,matched:false});
 
     if(eventType==='CHECKOUT_PAID'||eventType==='PAYMENT_CONFIRMED'||eventType==='PAYMENT_RECEIVED'){
-      await admin.from('payment_checkouts').update({status:'paid',paid_at:new Date().toISOString(),...(externalSubscriptionId?{external_subscription_id:externalSubscriptionId}:{})}).eq('id',checkoutRecord.id);
+      const paidAt=new Date().toISOString();
+      await admin.from('payment_checkouts').update({status:'paid',paid_at:paidAt,...(externalSubscriptionId?{external_subscription_id:externalSubscriptionId}:{})}).eq('id',checkoutRecord.id);
       if(checkoutRecord.customer_account_id){
-        await admin.from('customer_accounts').update({payment_provider:'asaas',payment_status:'active',paid_at:new Date().toISOString(),...(externalSubscriptionId?{external_subscription_id:externalSubscriptionId}:{})}).eq('id',checkoutRecord.customer_account_id);
+        const {data:account}=await admin.from('customer_accounts').select('id,user_id').eq('id',checkoutRecord.customer_account_id).maybeSingle();
+        let userId=account?.user_id||null;
+        let activationStatus:'linked'|'invited'=userId?'linked':'invited';
+        if(!userId&&checkoutRecord.customer_email){
+          try{
+            const appUrl=(process.env.NEXT_PUBLIC_APP_URL||'https://meulocal.ia.br').replace(/\/$/,'');
+            const access=await ensureCustomerUser(admin,checkoutRecord.customer_email,`${appUrl}/login?reset=1`);
+            userId=access.user.id;activationStatus=access.status;
+          }catch(error:any){
+            await admin.from('payment_checkouts').update({activation_status:'error',activation_error:String(error?.message||'access_activation_failed').slice(0,500)}).eq('id',checkoutRecord.id);
+            return NextResponse.json({ok:true,paymentConfirmed:true,accessActivation:'error'});
+          }
+        }
+        await admin.from('customer_accounts').update({user_id:userId,payment_provider:'asaas',payment_status:'active',paid_at:paidAt,...(externalSubscriptionId?{external_subscription_id:externalSubscriptionId}:{})}).eq('id',checkoutRecord.customer_account_id);
+        await admin.from('payment_checkouts').update({activation_status:activationStatus,activation_error:null}).eq('id',checkoutRecord.id);
       }
     } else if(eventType==='CHECKOUT_CANCELED'||eventType==='SUBSCRIPTION_INACTIVATED'||eventType==='SUBSCRIPTION_DELETED'){
       await admin.from('payment_checkouts').update({status:'canceled'}).eq('id',checkoutRecord.id);
