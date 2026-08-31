@@ -11,7 +11,10 @@ export default function Home() {
     <main>
       <header className="nav container">
         <a className="brand" href="#top" aria-label="MeuLocal - início"><span className="brandMark"><MapPin size={19}/></span>MeuLocal</a>
-        <a className="navCta" href="/diagnostico">Descobrir minha nota <ArrowRight size={16}/></a>
+        <div style={{display:'flex',alignItems:'center',gap:20}}>
+          <a className="navCta" href="/login">Entrar</a>
+          <a className="navCta" href="/diagnostico">Descobrir minha nota <ArrowRight size={16}/></a>
+        </div>
       </header>
 
       <section id="top" className="hero container">
