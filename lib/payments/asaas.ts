@@ -24,6 +24,19 @@ export function ensureAsaasConfigured(): string {
   return key;
 }
 
+/** Returns the payer e-mail when an Asaas webhook only carries a customer id. */
+export async function getAsaasCustomerEmail(customerId: string): Promise<string | null> {
+  const accessToken = ensureAsaasConfigured();
+  const response = await fetch(`${ASAAS_API_BASE}/customers/${encodeURIComponent(customerId)}`, {
+    headers: { access_token: accessToken, 'User-Agent': 'MeuLocal/1.0' },
+    cache: 'no-store',
+  });
+  if (!response.ok) return null;
+  const payload = await response.json() as { email?: unknown };
+  const email = typeof payload.email === 'string' ? payload.email.trim().toLowerCase() : '';
+  return email || null;
+}
+
 export async function createRecurringCheckout(input: CreateRecurringCheckoutInput) {
   const accessToken = ensureAsaasConfigured();
   const nextDueDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
