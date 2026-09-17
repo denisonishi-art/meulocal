@@ -33,5 +33,24 @@ export async function POST(request:Request){
   const db=createClient(url,key);const row=normalize(body);
   const {error}=await db.from('ghl_events').insert(row);
   if(error&&error.code!=='23505')return NextResponse.json({error:'Falha ao registrar evento.'},{status:500});
+  // Keep an activation-safe local record for contacts created or messaged in GHL.
+  // Only the verified Asaas payment webhook can turn this into an active account.
+  const contact=body?.contact||{};
+  const email=typeof contact.email==='string'?contact.email.trim().toLowerCase():'';
+  if(email&&row.contact_id){
+    const name=String(contact.companyName||contact.name||contact.firstName||email).trim();
+    const {data:existingBusiness}=await db.from('businesses').select('id').eq('ghl_contact_id',row.contact_id).eq('ghl_location_id',row.ghl_location_id).maybeSingle();
+    let businessId=existingBusiness?.id;
+    if(businessId){
+      await db.from('businesses').update({name,status:'contacted'}).eq('id',businessId);
+    }else{
+      const {data:business}=await db.from('businesses').insert({name,source:'outbound',status:'contacted',ghl_contact_id:row.contact_id,ghl_location_id:row.ghl_location_id}).select('id').single();
+      businessId=business?.id;
+    }
+    if(businessId){
+      const {data:lead}=await db.from('leads').select('id').eq('business_id',businessId).ilike('email',email).maybeSingle();
+      if(!lead)await db.from('leads').insert({business_id:businessId,name,email,origin:'ghl',lifecycle_stage:'conversation'});
+    }
+  }
   return NextResponse.json({ok:true,duplicate:error?.code==='23505',eventId:row.external_event_id});
 }
