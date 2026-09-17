@@ -1,6 +1,7 @@
 import {timingSafeEqual} from 'crypto';
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
+import {getAsaasCustomerEmail} from '@/lib/payments/asaas';
 
 function safeEqual(a:string,b:string){
   const aa=Buffer.from(a); const bb=Buffer.from(b);
@@ -59,7 +60,31 @@ export async function POST(req:Request){
     else return NextResponse.json({ok:true,stored:true,matched:false});
 
     const {data:rows}=await query;
-    const checkoutRecord=rows?.[0];
+    let checkoutRecord=rows?.[0];
+
+    // The commercial team uses one recurring Asaas link. There is no generated
+    // checkout reference in that flow, so match only the unique payer e-mail to
+    // an existing MeuLocal lead. The configured link id is an explicit safety
+    // gate: unrelated Asaas payments can never activate an account.
+    if(!checkoutRecord && (eventType==='PAYMENT_CONFIRMED'||eventType==='PAYMENT_RECEIVED')){
+      const configuredLinkId=process.env.ASAAS_SHARED_PAYMENT_LINK_ID||'lay9mi0r83n79lzn';
+      const paymentLinkId=String(payment.paymentLink||payload.paymentLink||payload.payment_link||'');
+      const rawEmail=payment.customerEmail||payment.customer?.email||payload.customer?.email;
+      let payerEmail=typeof rawEmail==='string'?rawEmail.trim().toLowerCase():null;
+      const customerId=typeof payment.customer==='string'?payment.customer:(typeof payload.customer==='string'?payload.customer:null);
+      if(!payerEmail&&customerId){try{payerEmail=await getAsaasCustomerEmail(customerId)}catch{payerEmail=null}}
+      if(configuredLinkId&&paymentLinkId===configuredLinkId&&payerEmail){
+        const {data:matches}=await admin.from('leads').select('id,business_id,email').ilike('email',payerEmail).order('created_at',{ascending:false}).limit(2);
+        if(matches?.length===1){
+          const lead=matches[0];
+          const {data:account,error:accountError}=await admin.from('customer_accounts').upsert({business_id:lead.business_id,onboarding_status:'pending',payment_status:'pending',payment_provider:'asaas'},{onConflict:'business_id'}).select('id').single();
+          if(accountError)throw accountError;
+          const {data:created,error:checkoutError}=await admin.from('payment_checkouts').insert({provider:'asaas',business_id:lead.business_id,lead_id:lead.id,customer_account_id:account.id,amount_cents:39700,currency:'BRL',billing_type:'SHARED_PAYMENT_LINK',cycle:'MONTHLY',status:'created',customer_email:payerEmail,external_subscription_id:externalSubscriptionId}).select('id,customer_account_id,business_id,customer_email,activation_status').single();
+          if(checkoutError)throw checkoutError;
+          checkoutRecord=created;
+        }
+      }
+    }
     if(!checkoutRecord)return NextResponse.json({ok:true,stored:true,matched:false});
 
     if(eventType==='CHECKOUT_PAID'||eventType==='PAYMENT_CONFIRMED'||eventType==='PAYMENT_RECEIVED'){
