@@ -28,6 +28,18 @@ export const agentPolicies = {
     stopAfterOptOut: true,
     stopAfterThirdMessageWithoutConversion: true,
     humanApprovalAppliesBeforeFirstContactOnly: true,
+    acquisitionCadence: {
+      track: 'meulocal_acquisition',
+      steps: [0,3,7] as const,
+      maxMessages: 3,
+      emailFirst: true,
+      whatsappOnlyWhenExplicitlyAuthorized: true,
+      stopOnReply: true,
+      stopOnOptOut: true,
+      stopOnConversion: true,
+      requiresHumanApprovalBeforeFirstContact: true,
+      followUpsAfterApprovalAreAutomatic: true,
+    },
   },
   onboarding: {
     neverExposeHighLevel: true,
