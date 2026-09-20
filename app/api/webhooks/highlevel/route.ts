@@ -82,6 +82,34 @@ export async function POST(request:Request){
     }
   }
 
+  // Acquisition cadence events: keep prospect status synchronized and stop follow-ups on replies/opt-out.
+  if(row.ghl_location_id&&row.contact_id){
+    const {data:lead}=await db.from('leads').select('id,business_id,lifecycle_stage,prospect_diagnostic_id,opt_out_at,last_reply_at').eq('ghl_location_id',row.ghl_location_id).eq('ghl_contact_id',row.contact_id).maybeSingle();
+    if(lead){
+      let eventType:string|null=null;
+      if(row.opted_out)eventType='unsubscribed';
+      else if(row.direction==='inbound')eventType='replied';
+      else if(row.normalized_status==='delivered')eventType='delivered';
+      else if(row.normalized_status==='failed'||row.normalized_status==='undelivered')eventType='failed';
+      else if(row.normalized_status==='sent')eventType='sent';
+      if(eventType){
+        const mappedChannel=/whatsapp/i.test(String(row.channel||''))?'whatsapp':/email/i.test(String(row.channel||''))?'email':'system';
+        const {data:lastOutbound}=await db.from('outreach_events').select('message_key').eq('lead_id',lead.id).in('event_type',['sent','delivered']).order('created_at',{ascending:false}).limit(1).maybeSingle();
+        await db.from('outreach_events').insert({lead_id:lead.id,channel:mappedChannel,event_type:eventType,provider:'highlevel',external_id:row.message_id,conversation_id:row.conversation_id,message_key:lastOutbound?.message_key||null,metadata:{source:'highlevel_webhook',raw_event_type:row.event_type}});
+        const now=new Date().toISOString();
+        if(eventType==='unsubscribed'){
+          await db.from('leads').update({lifecycle_stage:'lost',opt_out_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id);
+          await db.from('automation_enrollments').update({status:'cancelled',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
+          await db.from('businesses').update({status:'lost',updated_at:now}).eq('id',lead.business_id);
+        }else if(eventType==='replied'){
+          await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id);
+          await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
+          await db.from('businesses').update({status:'engaged',updated_at:now}).eq('id',lead.business_id);
+        }
+      }
+      return NextResponse.json({ok:true,duplicate:error?.code==='23505',eventId:row.external_event_id,acquisitionFlow:true});
+    }
+  }
   // Keep an activation-safe local record for contacts created or messaged in GHL.
   // Only the verified Asaas payment webhook can turn this into an active account.
   const contact=body?.contact||{};
