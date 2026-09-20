@@ -39,7 +39,7 @@ async function run(req:Request){
   const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
   const webhook=process.env.GHL_REVIEW_REQUEST_WEBHOOK_URL;
   if(!url||!key)return NextResponse.json({error:'Banco não configurado.'},{status:503});
-  if(!webhook)return NextResponse.json({error:'Canal operacional ainda não configurado para a régua de avaliações.'},{status:503});
+  if(!webhook)return NextResponse.json({ok:true,processed:0,status:'channel_not_configured'});
   const db=createClient(url,key,{auth:{persistSession:false}});
   const now=new Date();
   const {data:settings,error:settingsError}=await db.from('review_request_settings').select('*').eq('status','active');
