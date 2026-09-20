@@ -7,6 +7,8 @@ async function parse(res:Response){
 }
 
 export async function getLocationAccessToken(locationId:string){
+  const directToken=process.env.GHL_API_KEY;
+  if(directToken)return directToken;
   const agencyToken=process.env.GHL_AGENCY_ACCESS_TOKEN;
   const companyId=process.env.GHL_COMPANY_ID;
   if(!agencyToken||!companyId)throw new Error('Credenciais operacionais não configuradas.');
