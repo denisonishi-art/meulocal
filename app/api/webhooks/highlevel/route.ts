@@ -33,6 +33,42 @@ export async function POST(request:Request){
   const db=createClient(url,key);const row=normalize(body);
   const {error}=await db.from('ghl_events').insert(row);
   if(error&&error.code!=='23505')return NextResponse.json({error:'Falha ao registrar evento.'},{status:500});
+  // Customer review automation events are handled first. GHL remains invisible to the customer.
+  if(row.ghl_location_id&&row.contact_id){
+    const {data:customerContact}=await db.from('customer_contacts')
+      .select('id,business_id,status')
+      .eq('ghl_location_id',row.ghl_location_id).eq('ghl_contact_id',row.contact_id).maybeSingle();
+    if(customerContact){
+      const {data:enrollment}=await db.from('review_request_enrollments')
+        .select('id,status').eq('contact_id',customerContact.id)
+        .in('status',['queued','active']).order('created_at',{ascending:false}).limit(1).maybeSingle();
+      if(enrollment){
+        let eventType:string|null=null;
+        if(row.opted_out)eventType='opted_out';
+        else if(row.direction==='inbound')eventType='replied';
+        else if(row.normalized_status==='delivered')eventType='delivered';
+        else if(row.normalized_status==='failed'||row.normalized_status==='undelivered')eventType='failed';
+        else if(row.normalized_status==='sent')eventType='sent';
+        if(eventType){
+          const mappedChannel=/whatsapp/i.test(String(row.channel||''))?'whatsapp':/email/i.test(String(row.channel||''))?'email':'system';
+          await db.from('review_request_events').insert({
+            business_id:customerContact.business_id,enrollment_id:enrollment.id,contact_id:customerContact.id,
+            channel:mappedChannel,event_type:eventType,provider:'highlevel',external_id:row.message_id,
+            metadata:{source:'highlevel_webhook',conversation_id:row.conversation_id,raw_event_type:row.event_type}
+          });
+          if(eventType==='opted_out'){
+            await db.from('customer_contacts').update({status:'opted_out',opt_out_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',customerContact.id);
+            await db.from('review_request_enrollments').update({status:'opted_out',next_run_at:null,completed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',enrollment.id);
+          }else if(eventType==='replied'){
+            await db.from('customer_contacts').update({status:'completed',updated_at:new Date().toISOString()}).eq('id',customerContact.id);
+            await db.from('review_request_enrollments').update({status:'completed',next_run_at:null,completed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',enrollment.id);
+          }
+        }
+      }
+      return NextResponse.json({ok:true,duplicate:error?.code==='23505',eventId:row.external_event_id,customerFlow:true});
+    }
+  }
+
   // Keep an activation-safe local record for contacts created or messaged in GHL.
   // Only the verified Asaas payment webhook can turn this into an active account.
   const contact=body?.contact||{};
