@@ -1,14 +1,15 @@
 'use client';
 import {useEffect,useState} from 'react';
 import {createClient} from '@supabase/supabase-js';
-import {Activity,CheckCircle2,CircleDollarSign,Clock3,MessageSquareText,RefreshCw,Settings2,Workflow} from 'lucide-react';
+import {Activity,CheckCircle2,CircleDollarSign,MessageSquareText,RefreshCw,Settings2,Upload,Workflow} from 'lucide-react';
+import CustomerBaseSetup from '../onboarding/CustomerBaseSetup';
 
 const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 type Data={
   user:{email?:string|null};
-  account:any;business:any;google:any;ghl:any;leads:any[];automations:any[];requests:any[];payments:any[];
+  account:any;business:any;google:any;ghl:any;leads:any[];automations:any[];requests:any[];payments:any[];reviewAutomation:any;
   summary:{sent:number;replies:number;failures:number;activeAutomations:number};
 };
 
@@ -17,7 +18,7 @@ function money(cents?:number|null,currency='BRL'){if(cents==null)return '—';re
 function label(v?:string|null){const m:Record<string,string>={active:'Ativo',pending:'Pendente',in_progress:'Em andamento',completed:'Concluído',paid:'Pago',past_due:'Em atraso',canceled:'Cancelado',failed:'Falhou',sent:'Enviado',delivered:'Entregue',replied:'Respondido',queued:'Na fila',connected:'Conectado',error:'Erro',provisioning:'Provisionando'};return m[v||'']||String(v||'—').replaceAll('_',' ')}
 
 export default function CustomerOperations(){
-  const[data,setData]=useState<Data|null>(null);const[loading,setLoading]=useState(true);const[error,setError]=useState('');
+  const[data,setData]=useState<Data|null>(null);const[loading,setLoading]=useState(true);const[error,setError]=useState('');const[showImporter,setShowImporter]=useState(false);
   async function load(){
     setLoading(true);setError('');
     if(!url||!key){setError('Integração do painel não configurada.');setLoading(false);return}
@@ -31,8 +32,17 @@ export default function CustomerOperations(){
   if(loading)return <section className="dashboardPanel operationsPanel"><div className="panelTitle"><div><span>OPERAÇÃO</span><h2>Carregando suas ações...</h2></div><RefreshCw size={20}/></div></section>;
   if(error)return <section className="dashboardPanel operationsPanel"><div className="panelTitle"><div><span>OPERAÇÃO</span><h2>Não foi possível carregar agora.</h2></div></div><p className="panelCopy">{error}</p><button className="linkButton" onClick={load}>Tentar novamente</button></section>;
   if(!data)return null;
-  const lastPayment=data.payments?.[0];
+  const lastPayment=data.payments?.[0];const base=data.reviewAutomation?.contacts||{total:0,eligible:0,queued:0,active:0,completed:0,optedOut:0};const reviewSettings=data.reviewAutomation?.settings;
   return <>
+    <section className="dashboardPanel operationsPanel" id="base-clientes">
+      <div className="panelTitle"><div><span>BASE DE CLIENTES</span><h2>Seu flywheel de avaliações</h2></div><Upload size={20}/></div>
+      {base.total>0&&!showImporter?<div className="baseDashboardSummary">
+        <div className="baseNumbers"><article><span>Na base</span><strong>{base.total}</strong></article><article><span>Na fila</span><strong>{base.queued}</strong></article><article><span>Em andamento</span><strong>{base.active}</strong></article><article><span>Concluídos</span><strong>{base.completed}</strong></article></div>
+        <div className="protectionNote"><Workflow/><div><strong>{reviewSettings?.status==='active'?'Ativação protegida ativa':'Base pronta'}</strong><span>{reviewSettings?.status==='active'?'30 clientes no primeiro dia, 40 no segundo e até 50 por dia útil a partir do terceiro. No máximo 3 tentativas por contato.':'Ative a automação para iniciar a distribuição progressiva.'}</span></div></div>
+        <button className="linkButton" type="button" onClick={()=>setShowImporter(true)}>Adicionar nova base</button>
+      </div>:<CustomerBaseSetup onReady={async()=>{setShowImporter(false);await load()}}/>}
+    </section>
+
     <section className="dashboardPanel operationsPanel" id="operacao">
       <div className="panelTitle"><div><span>MEULOCAL TRABALHANDO</span><h2>Solicitações e automações</h2></div><Workflow size={20}/></div>
       <div className="operationsKpis">
@@ -68,7 +78,7 @@ export default function CustomerOperations(){
           <div><span>Empresa</span><strong>{data.business?.name||'—'}</strong></div>
           <div><span>Seu acesso</span><strong>{data.user?.email||'—'}</strong></div>
           <div><span>Google</span><strong>{data.google?label(data.google.status):'Não conectado'}</strong></div>
-          <div><span>Automação</span><strong>{data.ghl?label(data.ghl.lifecycle_status):'Aguardando ativação'}</strong></div>
+          <div><span>Automação</span><strong>{reviewSettings?label(reviewSettings.status):'Aguardando ativação'}</strong></div>
         </div>
         <p className="panelCopy">{data.google?.last_sync_at?'Última sincronização com Google: '+date(data.google.last_sync_at):'Conecte o Google para manter seus dados atualizados.'}</p>
       </section>
