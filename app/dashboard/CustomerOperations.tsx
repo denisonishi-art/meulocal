@@ -52,8 +52,12 @@ export default function CustomerOperations(){
         <article><Activity/><span>Falhas recentes</span><strong>{data.summary.failures}</strong></article>
       </div>
       <div className="operationsSplit">
-        <div><div className="miniTitle"><h3>Automações</h3><span>{data.automations.length} no histórico</span></div>
-          <div className="customerList">{data.automations.length?data.automations.slice(0,8).map((a:any)=><div key={a.id}><span><strong>{a.track}</strong><small>Etapa {a.step??0}</small></span><b className={'customerStatus '+a.status}>{label(a.status)}</b><time>{date(a.next_run_at||a.completed_at)}</time></div>):<p className="panelCopy">Nenhuma automação registrada ainda.</p>}</div>
+        <div><div className="miniTitle"><h3>Automações</h3><span>{data.summary.activeAutomations} ativa(s)</span></div>
+          <div className="customerList">
+            {reviewSettings&&<div><span><strong>Automação de avaliações</strong><small>{base.queued} na fila · até {reviewSettings.steady_limit||50} clientes/dia útil</small></span><b className={'customerStatus '+reviewSettings.status}>{label(reviewSettings.status)}</b><time>{reviewSettings.activated_at?date(reviewSettings.activated_at):'—'}</time></div>}
+            {data.automations.slice(0,7).map((a:any)=><div key={a.id}><span><strong>{a.track}</strong><small>Etapa {a.step??0}</small></span><b className={'customerStatus '+a.status}>{label(a.status)}</b><time>{date(a.next_run_at||a.completed_at)}</time></div>)}
+            {!reviewSettings&&!data.automations.length&&<p className="panelCopy">Nenhuma automação registrada ainda.</p>}
+          </div>
         </div>
         <div><div className="miniTitle"><h3>Últimas ações</h3><span>{data.requests.length} eventos</span></div>
           <div className="customerList">{data.requests.length?data.requests.slice(0,8).map((r:any)=><div key={r.id}><span><strong>{label(r.event_type)} · {r.channel}</strong><small>{r.lead?.email||r.lead?.whatsapp||'Contato'}</small></span><b className={'customerStatus '+r.event_type}>{label(r.event_type)}</b><time>{date(r.created_at)}</time></div>):<p className="panelCopy">As ações aparecerão aqui quando a régua começar a rodar.</p>}</div>
