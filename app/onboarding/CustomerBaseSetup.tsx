@@ -12,7 +12,7 @@ type Activation={queued:number;firstActivationDate:string;lastActivationDate:str
 export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>void}){
   const[file,setFile]=useState<File|null>(null);const[summary,setSummary]=useState<ImportSummary|null>(null);
   const[confirmed,setConfirmed]=useState(false);const[activation,setActivation]=useState<Activation|null>(null);
-  const[busy,setBusy]=useState(false);const[error,setError]=useState('');
+  const[busy,setBusy]=useState(false);const[error,setError]=useState('');const[audienceConfirmed,setAudienceConfirmed]=useState(false);
 
   async function token(){if(!url||!key)return null;const sb=createClient(url,key);return (await sb.auth.getSession()).data.session?.access_token||null}
   async function upload(){
@@ -28,7 +28,7 @@ export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>v
   }
   async function activate(){
     setBusy(true);setError('');
-    try{const t=await token();if(!t)return;const r=await fetch('/api/customer-base/activate',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({confirmed:true})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha ao ativar');setActivation(j);onReady?.(true)}
+    try{const t=await token();if(!t)return;const r=await fetch('/api/customer-base/activate',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({confirmed:true,audienceConfirmed})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha ao ativar');setActivation(j);onReady?.(true)}
     catch(e:any){setError(e.message)}finally{setBusy(false)}
   }
 
@@ -58,7 +58,8 @@ export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>v
     {summary&&confirmed&&!activation&&<div className="activationRule">
       <div className="protectionNote"><Workflow/><div><strong>Ativação protegida</strong><span>Dia 1: 30 clientes · Dia 2: 40 · Dia 3 em diante: até 50 por dia útil. Cada contato recebe no máximo 3 tentativas: D0, D+3 e D+7. Opt-out encerra a régua imediatamente.</span></div></div>
       <p>Essa distribuição gradual ajuda a preservar a reputação dos seus canais e evita comportamento de disparo em massa.</p>
-      <button className="primary" type="button" disabled={busy} onClick={activate}>{busy?'Ativando...':'Ativar automação de avaliações'}</button>
+      <label className="audienceConfirm"><input type="checkbox" checked={audienceConfirmed} onChange={e=>setAudienceConfirmed(e.target.checked)}/><span>Confirmo que esta base é de clientes da empresa e que tenho autorização/base adequada para contatá-los pelos canais informados.</span></label>
+      <button className="primary" type="button" disabled={busy||!audienceConfirmed} onClick={activate}>{busy?'Ativando...':'Ativar automação de avaliações'}</button>
     </div>}
 
     {activation&&<div className="activationDone"><Check size={24}/><div><strong>Automação ativada.</strong><span>{activation.queued} clientes foram organizados na fila protegida. A ativação começa em {new Date(activation.firstActivationDate+'T12:00:00').toLocaleDateString('pt-BR')} e a base atual está prevista até {new Date(activation.lastActivationDate+'T12:00:00').toLocaleDateString('pt-BR')}.</span></div></div>}
