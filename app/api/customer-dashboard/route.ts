@@ -46,11 +46,11 @@ export async function GET(req:Request){
   const reviewEnrollments=reviewEnrollmentsRes.data||[];
   const reviewEvents=reviewEventsRes.data||[];
   const activeAutomations=automations.filter((a:any)=>a.status==='active');
-  const reviewActive=reviewEnrollments.filter((a:any)=>a.status==='active'||a.status==='queued').length;
+  const reviewAutomationActive=reviewSettingsRes.data?.status==='active'?1:0;
   const contacts=contactsRes.data||[];
-  const sent=requests.filter((o:any)=>o.event_type==='sent'||o.event_type==='delivered').length;
-  const replies=requests.filter((o:any)=>o.event_type==='replied').length;
-  const failures=requests.filter((o:any)=>o.event_type==='failed').length;
+  const sent=requests.filter((o:any)=>o.event_type==='sent'||o.event_type==='delivered').length+reviewEvents.filter((o:any)=>o.event_type==='sent'||o.event_type==='delivered').length;
+  const replies=requests.filter((o:any)=>o.event_type==='replied').length+reviewEvents.filter((o:any)=>o.event_type==='replied').length;
+  const failures=requests.filter((o:any)=>o.event_type==='failed').length+reviewEvents.filter((o:any)=>o.event_type==='failed').length;
   return NextResponse.json({
     user:{email:c.user.email},
     account:c.account,
@@ -68,6 +68,6 @@ export async function GET(req:Request){
       imports:importsRes.data||[],
       contacts:{total:contacts.length,eligible:contacts.filter((x:any)=>x.status==='eligible').length,queued:contacts.filter((x:any)=>x.status==='queued').length,active:contacts.filter((x:any)=>x.status==='active').length,completed:contacts.filter((x:any)=>x.status==='completed').length,optedOut:contacts.filter((x:any)=>x.status==='opted_out').length}
     },
-    summary:{sent,replies,failures,activeAutomations:activeAutomations.length+reviewActive}
+    summary:{sent,replies,failures,activeAutomations:activeAutomations.length+reviewAutomationActive}
   });
 }
