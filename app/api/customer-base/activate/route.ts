@@ -16,8 +16,9 @@ export async function POST(req:Request){
   if(!c)return NextResponse.json({error:'Não autorizado.'},{status:401});
   if(!requireActiveAccount(c.account))return NextResponse.json({error:'Assinatura ativa necessária.'},{status:403});
   try{
-    const {confirmed}=await req.json().catch(()=>({confirmed:false}));
+    const {confirmed,audienceConfirmed}=await req.json().catch(()=>({confirmed:false,audienceConfirmed:false}));
     if(confirmed!==true)return NextResponse.json({error:'Confirme a ativação antes de iniciar a régua.'},{status:400});
+    if(audienceConfirmed!==true)return NextResponse.json({error:'Confirme que a base pode ser contatada pelos canais informados.'},{status:400});
     const businessId=c.account!.business_id;
 
     const {data:contacts,error:contactsError}=await c.admin.from('customer_contacts')
