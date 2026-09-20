@@ -28,20 +28,20 @@ function Pill({value}:{value?:string|null}){const key=(value||'').replaceAll('_'
 export default function AdminClient(){
  const[view,setView]=useState<View>('overview');
  const[data,setData]=useState<Overview|null>(null);const[loadingData,setLoadingData]=useState(true);const[dataError,setDataError]=useState('');
- const[niche,setNiche]=useState('');const[location,setLocation]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');
+ const[niche,setNiche]=useState('');const[region,setRegion]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');
 
  async function loadOverview(){setLoadingData(true);setDataError('');try{const r=await fetch('/api/admin/overview',{cache:'no-store'});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha ao carregar operação');setData(j)}catch(e:any){setDataError(e.message)}finally{setLoadingData(false)}}
  useEffect(()=>{loadOverview()},[]);
  const attention=useMemo(()=>data?data.kpis.onboardingPending+(data.infrastructure.ghlJobs||[]).filter((x:any)=>x.status==='failed').length+(data.infrastructure.syncLogs||[]).filter((x:any)=>x.status==='failed').length:0,[data]);
 
- async function search(e:FormEvent){e.preventDefault();setBusy(true);setMsg('');setSelected([]);try{const r=await fetch('/api/agents/prospect/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({niche,location})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na busca');setRows(j.candidates||[])}catch(e:any){setMsg(e.message)}finally{setBusy(false)}}
+ async function search(e:FormEvent){e.preventDefault();setBusy(true);setMsg('');setSelected([]);try{const r=await fetch('/api/agents/prospect/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({niche,location:region})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na busca');setRows(j.candidates||[])}catch(e:any){setMsg(e.message)}finally{setBusy(false)}}
  function toggle(id:string){setSelected(s=>s.includes(id)?s.filter(x=>x!==id):[...s,id])}
  async function approve(){if(!selected.length)return;setBusy(true);setMsg('');try{
-   const approved=rows.filter(x=>selected.includes(x.id)).map(x=>({id:x.id,name:x.name,address:x.address,rating:x.rating,reviews:x.reviews,score:x.score,competitorAverageReviews:x.competitorAverageReviews,niche,region:location,competitionMode:x.competitionMode,competitionLabel:x.competitionLabel,searchIntent:x.searchIntent}));
-   const r=await fetch('/api/agents/prospect/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approved,niche,location})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na aprovação');
+   const approved=rows.filter(x=>selected.includes(x.id)).map(x=>({id:x.id,name:x.name,address:x.address,rating:x.rating,reviews:x.reviews,score:x.score,competitorAverageReviews:x.competitorAverageReviews,niche,region,competitionMode:x.competitionMode,competitionLabel:x.competitionLabel,searchIntent:x.searchIntent}));
+   const r=await fetch('/api/agents/prospect/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approved,niche,location:region})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na aprovação');
    setMsg(selected.length+' prospect'+(selected.length>1?'s':'')+' aprovado'+(selected.length>1?'s':'')+'. Diagnósticos gerados e prontos para a régua de contato.');setSelected([]);await loadOverview();
  }catch(e:any){setMsg(e.message)}finally{setBusy(false)}}
- async function logout(){await fetch('/api/admin/session',{method:'DELETE'});location.href='/admin-login'}
+ async function logout(){await fetch('/api/admin/session',{method:'DELETE'});window.location.href='/admin-login'}
 
  const nav=(id:View,Icon:any)=><button className={view===id?'active':''} onClick={()=>setView(id)}><Icon/>{labels[id]}</button>;
 
@@ -92,7 +92,7 @@ export default function AdminClient(){
      </>}
 
      {view==='prospecting'&&<>
-       <form className="commandCard" onSubmit={search}><div className="commandIcon"><Bot/></div><div className="commandFields"><label>O que você quer prospectar?<input value={niche} onChange={e=>setNiche(e.target.value)} placeholder="Ex.: empresas que alugam geradores" required/></label><label>Onde?<input value={location} onChange={e=>setLocation(e.target.value)} placeholder="Ex.: São Paulo, SP" required/></label></div><button disabled={busy}>{busy?'Pesquisando...':'Buscar oportunidades'} <ArrowUpRight/></button></form>
+       <form className="commandCard" onSubmit={search}><div className="commandIcon"><Bot/></div><div className="commandFields"><label>O que você quer prospectar?<input value={niche} onChange={e=>setNiche(e.target.value)} placeholder="Ex.: empresas que alugam geradores" required/></label><label>Onde?<input value={region} onChange={e=>setRegion(e.target.value)} placeholder="Ex.: São Paulo, SP" required/></label></div><button disabled={busy}>{busy?'Pesquisando...':'Buscar oportunidades'} <ArrowUpRight/></button></form>
        {msg&&<div className="adminMessage">{msg}</div>}
        {rows.length>0&&<><div className="resultHeader"><div><span>OPORTUNIDADES ENCONTRADAS</span><h2>Prioridade sugerida pelo MeuLocal</h2><p>Ordenadas do menor Score para o maior. Revise antes de autorizar qualquer contato.</p></div><button className="approveBtn" onClick={approve} disabled={!selected.length||busy}><Check/> Aprovar {selected.length||''} {selected.length===1?'prospect':'prospects'}</button></div><div className="prospectList">{rows.map((r,i)=><article key={r.id} className={selected.includes(r.id)?'selected':''} onClick={()=>toggle(r.id)}><div className="selectBox">{selected.includes(r.id)&&<Check/>}</div><div className="rank">#{i+1}</div><div className="prospectInfo"><strong>{r.name}</strong><span>{r.address}</span><small>{r.rating?'★ '+r.rating:'Sem nota'} · {r.reviews} avaliações</small></div><div className="scoreBox"><span>Score MeuLocal</span><strong>{r.score}<small>/100</small></strong><em>{r.priority.replace('_',' ')}</em></div></article>)}</div></>}
      </>}
