@@ -28,7 +28,7 @@ function Pill({value}:{value?:string|null}){const key=(value||'').replaceAll('_'
 export default function AdminClient(){
  const[view,setView]=useState<View>('overview');
  const[data,setData]=useState<Overview|null>(null);const[loadingData,setLoadingData]=useState(true);const[dataError,setDataError]=useState('');
- const[niche,setNiche]=useState('');const[region,setRegion]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');
+ const[niche,setNiche]=useState('');const[region,setRegion]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');const[diagMsg,setDiagMsg]=useState('');
 
  async function loadOverview(){setLoadingData(true);setDataError('');try{const r=await fetch('/api/admin/overview',{cache:'no-store'});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha ao carregar operação');setData(j)}catch(e:any){setDataError(e.message)}finally{setLoadingData(false)}}
  useEffect(()=>{loadOverview()},[]);
@@ -41,6 +41,20 @@ export default function AdminClient(){
    const r=await fetch('/api/agents/prospect/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approved,niche,location:region})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na aprovação');
    setMsg(selected.length+' prospect'+(selected.length>1?'s':'')+' aprovado'+(selected.length>1?'s':'')+'. Diagnósticos gerados e prontos para a régua de contato.');setSelected([]);await loadOverview();
  }catch(e:any){setMsg(e.message)}finally{setBusy(false)}}
+ async function activateAcquisition(d:any){
+   const email=window.prompt('E-mail comercial para iniciar a régua de aquisição:','')?.trim()||'';
+   if(!email){setDiagMsg('Ativação cancelada: informe um e-mail comercial.');return}
+   const whatsapp=window.prompt('WhatsApp comercial (opcional):','')?.trim()||'';
+   const allowWhatsApp=whatsapp?window.confirm('Autorizar o uso deste WhatsApp na régua caso o e-mail não esteja disponível?'):false;
+   setBusy(true);setDiagMsg('');
+   try{
+     const r=await fetch('/api/agents/prospect/enroll',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({diagnosticId:d.id,email,whatsapp,allowWhatsApp})});
+     const j=await r.json();if(!r.ok)throw new Error(j.error||'Não foi possível ativar a régua.');
+     setDiagMsg('Régua de aquisição ativada para '+d.business_name+'. Primeiro contato entrou na fila.');
+     await loadOverview();
+   }catch(e:any){setDiagMsg(e.message)}finally{setBusy(false)}
+ }
+
  async function logout(){await fetch('/api/admin/session',{method:'DELETE'});window.location.href='/admin-login'}
 
  const nav=(id:View,Icon:any)=><button className={view===id?'active':''} onClick={()=>setView(id)}><Icon/>{labels[id]}</button>;
@@ -99,7 +113,7 @@ export default function AdminClient(){
 
      {view==='leads'&&data&&<section className="adminPanel tablePanel"><div className="panelHead"><div><span>FUNIL COMERCIAL</span><h2>Leads</h2></div><b>{data.leads.length}</b></div><div className="adminTable"><div className="tableRow tableHead"><span>Empresa / contato</span><span>Etapa</span><span>Automação</span><span>Próxima ação</span></div>{data.leads.map((l:any)=><div className="tableRow" key={l.id}><span><strong>{l.business?.name||l.name||'Sem empresa'}</strong><small>{l.email||l.whatsapp||'Sem contato'}</small></span><span><Pill value={l.lifecycle_stage}/></span><span>{l.automation_track||'—'}</span><span>{fmtDate(l.next_action_at)}</span></div>)}</div>{!data.leads.length&&<p className="empty">Nenhum lead ainda.</p>}</section>}
 
-     {view==='diagnostics'&&data&&<section className="adminPanel tablePanel"><div className="panelHead"><div><span>DIAGNÓSTICOS</span><h2>Histórico de oportunidades</h2></div><b>{data.diagnostics.length}</b></div><div className="adminTable"><div className="tableRow tableHead diagCols"><span>Empresa</span><span>Score</span><span>Status</span><span>Abertura</span><span>CTA</span></div>{data.diagnostics.map((d:any)=><div className="tableRow diagCols" key={d.id}><span><strong>{d.business_name}</strong><small>{d.niche||d.region||'—'}</small></span><span><b>{d.score}/100</b></span><span><Pill value={d.status}/></span><span>{fmtDate(d.diagnostic_opened_at)}</span><span>{fmtDate(d.cta_clicked_at)}</span></div>)}</div>{!data.diagnostics.length&&<p className="empty">Nenhum diagnóstico persistido ainda.</p>}</section>}
+     {view==='diagnostics'&&data&&<section className="adminPanel tablePanel"><div className="panelHead"><div><span>DIAGNÓSTICOS</span><h2>Histórico de oportunidades</h2></div><b>{data.diagnostics.length}</b></div>{diagMsg&&<div className="adminMessage">{diagMsg}</div>}<div className="adminTable"><div className="tableRow tableHead diagCols"><span>Empresa</span><span>Score</span><span>Status</span><span>Abertura</span><span>CTA</span></div>{data.diagnostics.map((d:any)=><div className="tableRow diagCols" key={d.id}><span><strong>{d.business_name}</strong><small>{d.niche||d.region||'—'}</small>{d.status==='approved'&&<button className="textBtn acquisitionBtn" type="button" disabled={busy} onClick={()=>activateAcquisition(d)}>Ativar régua</button>}</span><span><b>{d.score}/100</b></span><span><Pill value={d.status}/></span><span>{fmtDate(d.diagnostic_opened_at)}</span><span>{fmtDate(d.cta_clicked_at)}</span></div>)}</div>{!data.diagnostics.length&&<p className="empty">Nenhum diagnóstico persistido ainda.</p>}</section>}
 
      {view==='customers'&&data&&<section className="adminPanel tablePanel"><div className="panelHead"><div><span>CARTEIRA</span><h2>Clientes</h2></div><b>{data.customers.length}</b></div><div className="adminTable"><div className="tableRow tableHead customerCols"><span>Empresa</span><span>Pagamento</span><span>Onboarding</span><span>Google</span><span>GHL</span></div>{data.customers.map((c:any)=><div className="tableRow customerCols" key={c.id}><span><strong>{c.business?.name||'Empresa'}</strong><small>{c.business?.city||c.business?.address||'—'}</small></span><span><Pill value={c.payment_status}/></span><span><Pill value={c.onboarding_status}/></span><span>{c.google?<Pill value={c.google.status}/>:<span className="muted">Não conectado</span>}</span><span>{c.ghl?<Pill value={c.ghl.lifecycle_status}/>:<span className="muted">Não provisionado</span>}</span></div>)}</div>{!data.customers.length&&<p className="empty">Nenhum cliente ativado ainda.</p>}</section>}
 
