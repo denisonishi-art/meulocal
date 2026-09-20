@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, FileSpreadsheet, MapPin, MessageCircle, Store } from 'lucide-react';
 import {createClient} from '@supabase/supabase-js';
+import CustomerBaseSetup from './CustomerBaseSetup';
 
 const steps = [
   { title: 'Confirmar seu negócio', text: 'Usamos os dados do diagnóstico para evitar perguntas repetidas.', icon: Store },
@@ -13,7 +14,7 @@ type Location={id:string;accountId:string;title:string;address:string};
 const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;const supabaseKey=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export default function OnboardingPage() {
-  const [step, setStep] = useState(0);const [skipped, setSkipped] = useState(false);const [googleBusy,setGoogleBusy]=useState(false);const [googleConnected,setGoogleConnected]=useState(false);const [locations,setLocations]=useState<Location[]>([]);const [selected,setSelected]=useState('');const [googleError,setGoogleError]=useState('');const [checking,setChecking]=useState(true);const [paymentBlocked,setPaymentBlocked]=useState(false);
+  const [step, setStep] = useState(0);const [skipped, setSkipped] = useState(false);const [baseReady,setBaseReady]=useState(false);const [googleBusy,setGoogleBusy]=useState(false);const [googleConnected,setGoogleConnected]=useState(false);const [locations,setLocations]=useState<Location[]>([]);const [selected,setSelected]=useState('');const [googleError,setGoogleError]=useState('');const [checking,setChecking]=useState(true);const [paymentBlocked,setPaymentBlocked]=useState(false);
   async function session(){if(!supabaseUrl||!supabaseKey)return null;const sb=createClient(supabaseUrl,supabaseKey);const {data}=await sb.auth.getSession();return data.session}
   async function setStatus(status:'pending'|'in_progress'|'completed'){const s=await session();if(!s)return false;const res=await fetch('/api/onboarding/status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({status})});return res.ok}
   async function connectGoogle(){setGoogleError('');setGoogleBusy(true);const s=await session();if(!s){setGoogleBusy(false);window.location.href='/login';return}const res=await fetch('/api/google-business/connect',{headers:{Authorization:`Bearer ${s.access_token}`}});const data=await res.json();setGoogleBusy(false);if(!res.ok){setGoogleError(data.error||'Não foi possível conectar o Google.');return}window.location.href=data.url}
@@ -41,9 +42,9 @@ export default function OnboardingPage() {
             {googleConnected&&<div className="onboardingSummary"><strong>Google conectado ✓</strong><span>A primeira sincronização da sua reputação foi concluída.</span></div>}
             {googleError&&<div className="loginError">{googleError}</div>}
           </div>}
-          {step === 2 && <div className="uploadBox"><FileSpreadsheet size={27}/><strong>Importação é opcional no lançamento</strong><span>Você poderá enviar sua base com validação e deduplicação quando a automação GHL estiver conectada.</span></div>}
-          <div className="onboardingActions"><button className="primary" type="button" onClick={advance} disabled={step===1&&!googleConnected}>{step === 2 ? 'Concluir configuração' : 'Continuar'} <ArrowRight size={18}/></button>{step === 2 && <button className="linkButton" type="button" onClick={async() => {setSkipped(true);await setStatus('completed');setStep(3);}}>Fazer isso depois</button>}</div>
-        </> : <div className="onboardingDone"><div className="stepIcon"><Check size={27}/></div><h2>Configuração concluída.</h2><p>{skipped ? 'Você pode enviar sua base quando a automação estiver conectada. Seu painel já está disponível.' : 'Seu Google está conectado e seu painel de reputação está disponível.'}</p><a className="primary" href="/dashboard">Ver meu dashboard <ArrowRight size={18}/></a></div>}
+          {step === 2 && <CustomerBaseSetup onReady={setBaseReady}/>} 
+          <div className="onboardingActions"><button className="primary" type="button" onClick={advance} disabled={(step===1&&!googleConnected)||(step===2&&!baseReady)}>{step === 2 ? 'Concluir configuração' : 'Continuar'} <ArrowRight size={18}/></button>{step === 2 && <button className="linkButton" type="button" onClick={async() => {setSkipped(true);await setStatus('completed');setStep(3);}}>Fazer isso depois</button>}</div>
+        </> : <div className="onboardingDone"><div className="stepIcon"><Check size={27}/></div><h2>Configuração concluída.</h2><p>{skipped ? 'Seu painel já está disponível. Você pode enviar sua base depois na área de operação.' : 'Seu Google está conectado, sua base foi preparada e sua automação está configurada.'}</p><a className="primary" href="/dashboard">Ver meu dashboard <ArrowRight size={18}/></a></div>}
       </div>
       <div className="privacyNote">Toda a experiência acontece dentro do MeuLocal.</div>
     </section>
