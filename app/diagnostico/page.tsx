@@ -94,8 +94,8 @@ export default function DiagnosticoPage() {
       <p>Encontre seu negócio no Google e veja como ele está comparado a empresas que disputam os mesmos clientes.</p>
 
       {!analysis && <form className="businessSearch" onSubmit={submit}>
-        <label htmlFor="business">Nome da empresa + cidade ou bairro</label>
-        <div className="searchRow"><div className="searchInputWrap"><Search size={19}/><input id="business" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Ex.: Barbearia Chácara Santo Antônio São Paulo" required minLength={3}/></div><button className="primary" type="submit" disabled={loading||analyzing}>{loading?'Buscando...':<>Encontrar empresa <ArrowRight size={18}/></>}</button></div>
+        <label htmlFor="business">Nome da empresa ou categoria + cidade</label>
+        <div className="searchRow"><div className="searchInputWrap"><Search size={19}/><input id="business" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Ex.: Petshop em São Paulo" required minLength={3}/></div><button className="primary" type="submit" disabled={loading||analyzing}>{loading?'Buscando...':<>Encontrar empresa <ArrowRight size={18}/></>}</button></div>
         <small>Usamos dados públicos do Google para localizar sua empresa.</small>
       </form>}
 
