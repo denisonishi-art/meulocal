@@ -39,6 +39,17 @@ export const agentPolicies = {
     neverDeleteOrOverwriteExistingLocationWithoutApproval: true,
     manualProvisioningFallbackWhenApiUnavailable: true,
     neverBlockCustomerExperienceOnManualProvisioning: true,
+    reviewActivation: {
+      day1Contacts: 30,
+      day2Contacts: 40,
+      steadyDailyContacts: 50,
+      weekdaysOnly: true,
+      maxAttemptsPerContact: 3,
+      reminderDayOffsets: [0,3,7] as const,
+      stopImmediatelyOnOptOut: true,
+      requireExplicitActivationConfirmation: true,
+      purpose: 'Preservar reputação de e-mail e WhatsApp e evitar comportamento de disparo em massa.',
+    },
   },
   seo: {
     provider: 'openseo',
