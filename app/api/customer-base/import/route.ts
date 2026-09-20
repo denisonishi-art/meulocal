@@ -59,10 +59,12 @@ export async function POST(req:Request){
     });
 
     const keys=candidates.map(x=>x.contactKey);
-    let existingKeys=new Set<string>();
-    if(keys.length){
-      const {data:existing}=await c.admin.from('customer_contacts').select('contact_key').eq('business_id',c.account!.business_id).in('contact_key',keys);
-      existingKeys=new Set((existing||[]).map((x:any)=>x.contact_key));
+    const existingKeys=new Set<string>();
+    for(let i=0;i<keys.length;i+=250){
+      const chunk=keys.slice(i,i+250);
+      const {data:existing,error:existingError}=await c.admin.from('customer_contacts').select('contact_key').eq('business_id',c.account!.business_id).in('contact_key',chunk);
+      if(existingError)throw existingError;
+      for(const row of existing||[])existingKeys.add((row as any).contact_key);
     }
     duplicateRows+=candidates.filter(x=>existingKeys.has(x.contactKey)).length;
     const fresh=candidates.filter(x=>!existingKeys.has(x.contactKey));
@@ -73,11 +75,12 @@ export async function POST(req:Request){
     }).select('id').single();
     if(impError)throw impError;
 
-    if(fresh.length){
-      const {error:insertError}=await c.admin.from('customer_contacts').insert(fresh.map(x=>({
+    for(let i=0;i<fresh.length;i+=500){
+      const chunk=fresh.slice(i,i+500).map(x=>({
         business_id:c.account!.business_id,import_id:imp.id,name:x.name||null,email:x.email||null,whatsapp:x.whatsapp||null,
         last_purchase_at:x.lastPurchase,contact_key:x.contactKey,status:'imported'
-      })));
+      }));
+      const {error:insertError}=await c.admin.from('customer_contacts').insert(chunk);
       if(insertError)throw insertError;
     }
 
