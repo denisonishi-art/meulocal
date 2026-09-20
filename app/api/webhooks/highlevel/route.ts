@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
-import {createHash} from 'crypto';
+import {createHash,verify as verifySignature} from 'crypto';
 
 function eventId(body:any){
   const explicit=body?.id||body?.eventId||body?.messageId||body?.message?.id;
@@ -13,7 +13,9 @@ function normalize(body:any){
   const direction=body?.direction||body?.message?.direction||null;
   const channel=body?.messageType||body?.channel||body?.message?.type||null;
   const status=body?.status||body?.message?.status||null;
-  const optedOut=Boolean(body?.optedOut||body?.dnd||/opt.?out|unsubscribe|dnd/i.test(type));
+  const text=String(body?.body||body?.message?.body||body?.message||'').trim();
+  const explicitStop=/^(sair|stop|cancelar|unsubscribe)$/i.test(text);
+  const optedOut=Boolean(body?.optedOut||body?.dnd||explicitStop||/opt.?out|unsubscribe|dnd/i.test(type));
   const conversion=Boolean(body?.conversion||/conversion|opportunity.*won|payment/i.test(type));
   return {
     external_event_id:eventId(body),event_type:type,ghl_location_id:body?.locationId||body?.location?.id||null,
@@ -23,13 +25,24 @@ function normalize(body:any){
   };
 }
 
-export async function POST(request:Request){
+const GHL_PUBLIC_KEY='-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAi2HR1srL4o18O8BRa7gVJY7G7bupbN3H9AwJrHCDiOg=\n-----END PUBLIC KEY-----';
+
+function validWebhook(request:Request,raw:string){
+  const signed=request.headers.get('x-ghl-signature');
+  if(signed){
+    try{return verifySignature(null,Buffer.from(raw,'utf8'),GHL_PUBLIC_KEY,Buffer.from(signed,'base64'))}catch{return false}
+  }
   const secret=process.env.GHL_WEBHOOK_SECRET;
-  if(!secret)return NextResponse.json({error:'HighLevel webhook ainda não ativado.'},{status:503});
-  if(request.headers.get('x-meulocal-webhook-token')!==secret)return NextResponse.json({error:'Não autorizado.'},{status:401});
+  return Boolean(secret&&request.headers.get('x-meulocal-webhook-token')===secret);
+}
+
+export async function POST(request:Request){
+  const raw=await request.text();
+  if(!validWebhook(request,raw))return NextResponse.json({error:'Não autorizado.'},{status:401});
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!key)return NextResponse.json({error:'Supabase não configurado.'},{status:503});
-  const body=await request.json().catch(()=>null);if(!body)return NextResponse.json({error:'Payload inválido.'},{status:400});
+  let body:any=null;try{body=JSON.parse(raw)}catch{}
+  if(!body)return NextResponse.json({error:'Payload inválido.'},{status:400});
   const db=createClient(url,key);const row=normalize(body);
   const {error}=await db.from('ghl_events').insert(row);
   if(error&&error.code!=='23505')return NextResponse.json({error:'Falha ao registrar evento.'},{status:500});
