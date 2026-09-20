@@ -3,7 +3,7 @@ import {createClient} from '@supabase/supabase-js';
 
 function isAuthorized(req:Request){
   const secret=process.env.CRON_SECRET;
-  return Boolean(secret&&req.headers.get('authorization')===\`Bearer \${secret}\`);
+  return Boolean(secret&&req.headers.get('authorization')===`Bearer ${secret}`);
 }
 function isWeekend(d:Date){const n=d.getUTCDay();return n===0||n===6}
 function nextWeekday(d:Date){
