@@ -79,7 +79,7 @@ export async function POST(request:Request){
           }
         }
       }
-      return NextResponse.json({ok:true,duplicate:error?.code==='23505',eventId:row.external_event_id,customerFlow:true});
+      return NextResponse.json({ok:true,duplicate:false,eventId:row.external_event_id,customerFlow:true});
     }
   }
 
@@ -108,7 +108,7 @@ export async function POST(request:Request){
           await db.from('businesses').update({status:'engaged',updated_at:now}).eq('id',lead.business_id);
         }
       }
-      return NextResponse.json({ok:true,duplicate:error?.code==='23505',eventId:row.external_event_id,acquisitionFlow:true});
+      return NextResponse.json({ok:true,duplicate:false,eventId:row.external_event_id,acquisitionFlow:true});
     }
   }
   // Keep an activation-safe local record for contacts created or messaged in GHL.
@@ -130,5 +130,5 @@ export async function POST(request:Request){
       if(!lead)await db.from('leads').insert({business_id:businessId,name,email,origin:'ghl',lifecycle_stage:'conversation'});
     }
   }
-  return NextResponse.json({ok:true,duplicate:error?.code==='23505',eventId:row.external_event_id});
+  return NextResponse.json({ok:true,duplicate:false,eventId:row.external_event_id});
 }
