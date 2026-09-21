@@ -60,3 +60,14 @@ export async function sendOperationalMessage(args:{
   const data=await parse(res);
   return {messageId:data?.messageId||null,conversationId:data?.conversationId||null,raw:data};
 }
+
+
+export async function getOperationalConversationMessages(args:{token:string;conversationId:string;limit?:number}){
+  const res=await fetch(API+'/conversations/'+encodeURIComponent(args.conversationId)+'/messages?limit='+(args.limit||50),{
+    method:'GET',
+    headers:{Authorization:'Bearer '+args.token,Accept:'application/json',Version:'v3'},
+    cache:'no-store'
+  });
+  const data=await parse(res);
+  return Array.isArray(data?.messages?.messages)?data.messages.messages:[];
+}
