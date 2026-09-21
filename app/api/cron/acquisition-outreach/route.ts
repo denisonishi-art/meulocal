@@ -1,6 +1,6 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
-import {getLocationAccessToken,sendOperationalMessage,upsertOperationalContact} from '@/lib/highlevel-operational';
+import {getLocationAccessToken,getOperationalConversationMessages,sendOperationalMessage,upsertOperationalContact} from '@/lib/highlevel-operational';
 
 function authorized(req:Request){const secret=process.env.CRON_SECRET;return Boolean(secret&&req.headers.get('authorization')==='Bearer '+secret)}
 function addDays(date:Date,days:number){const d=new Date(date);d.setUTCDate(d.getUTCDate()+days);d.setUTCHours(13,0,0,0);return d}
@@ -40,6 +40,34 @@ async function run(req:Request){
  for(const enrollment of enrollments||[]){
    const {data:lead}=await db.from('leads').select('id,business_id,name,email,whatsapp,consent_whatsapp,lifecycle_stage,prospect_diagnostic_id,ghl_contact_id,ghl_location_id,opt_out_at,last_reply_at').eq('id',enrollment.lead_id).maybeSingle();
    if(!lead)continue;
+   // Safety net: reconcile HighLevel replies before any follow-up is sent.
+   // This makes reply-stop work even if a webhook is delayed or unavailable.
+   const {data:lastOutbound}=await db.from('outreach_events')
+     .select('conversation_id,created_at,message_key')
+     .eq('lead_id',lead.id).eq('provider','highlevel').eq('event_type','sent')
+     .not('conversation_id','is',null).order('created_at',{ascending:false}).limit(1).maybeSingle();
+   if(lastOutbound?.conversation_id&&!lead.last_reply_at){
+     try{
+       const messages=await getOperationalConversationMessages({token:locationToken,conversationId:lastOutbound.conversation_id,limit:50});
+       const inbound=messages
+         .filter((m:any)=>String(m?.direction||'').toLowerCase()==='inbound')
+         .sort((a:any,b:any)=>new Date(b?.dateAdded||0).getTime()-new Date(a?.dateAdded||0).getTime())[0];
+       if(inbound&&new Date(inbound.dateAdded||0).getTime()>new Date(lastOutbound.created_at||0).getTime()){
+         const repliedAt=inbound.dateAdded||now.toISOString();
+         const inboundId=String(inbound.id||inbound.messageId||'');
+         if(inboundId){
+           const {data:existingReply}=await db.from('outreach_events').select('id').eq('lead_id',lead.id).eq('event_type','replied').eq('external_id',inboundId).maybeSingle();
+           if(!existingReply)await db.from('outreach_events').insert({lead_id:lead.id,channel:/email/i.test(String(inbound.messageType||''))?'email':/whatsapp/i.test(String(inbound.messageType||''))?'whatsapp':'system',event_type:'replied',provider:'highlevel',external_id:inboundId,conversation_id:lastOutbound.conversation_id,message_key:lastOutbound.message_key||null,metadata:{source:'highlevel_reconciliation'}});
+         }
+         await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:repliedAt,next_action_at:null,updated_at:now.toISOString()}).eq('id',lead.id);
+         await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);
+         await db.from('businesses').update({status:'engaged',updated_at:now.toISOString()}).eq('id',lead.business_id);
+         stopped++;details.push({leadId:lead.id,status:'stopped_on_reply_reconciliation'});continue;
+       }
+     }catch(reconcileError:any){
+       details.push({leadId:lead.id,status:'reply_reconciliation_failed',error:String(reconcileError?.message||reconcileError).slice(0,160)});
+     }
+   }
    if(lead.opt_out_at||lead.last_reply_at||['conversation','customer','lost'].includes(lead.lifecycle_stage)){await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);stopped++;continue}
    const {data:diag}=await db.from('prospect_diagnostics').select('id,public_token,business_name,status,converted_at,first_contact_at').eq('id',lead.prospect_diagnostic_id).maybeSingle();
    if(!diag)continue;
