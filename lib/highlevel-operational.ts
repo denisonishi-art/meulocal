@@ -53,7 +53,7 @@ export async function sendOperationalMessage(args:{
   }
   const res=await fetch(API+'/conversations/messages',{
     method:'POST',
-    headers:{Authorization:'Bearer '+args.token,'Content-Type':'application/json',Accept:'application/json',Version:'2021-07-28'},
+    headers:{Authorization:'Bearer '+args.token,'Content-Type':'application/json',Accept:'application/json',Version:'2021-04-15'},
     body:JSON.stringify(payload),
     cache:'no-store'
   });
