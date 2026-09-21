@@ -25,7 +25,7 @@ export async function getLocationAccessToken(locationId:string){
 export async function upsertOperationalContact(args:{token:string;locationId:string;name?:string|null;email?:string|null;phone?:string|null}){
   const res=await fetch(API+'/contacts/upsert',{
     method:'POST',
-    headers:{Authorization:'Bearer '+args.token,'Content-Type':'application/json',Accept:'application/json',Version:'v3'},
+    headers:{Authorization:'Bearer '+args.token,'Content-Type':'application/json',Accept:'application/json',Version:'2021-07-28'},
     body:JSON.stringify({
       locationId:args.locationId,
       name:args.name||undefined,
@@ -53,7 +53,7 @@ export async function sendOperationalMessage(args:{
   }
   const res=await fetch(API+'/conversations/messages',{
     method:'POST',
-    headers:{Authorization:'Bearer '+args.token,'Content-Type':'application/json',Accept:'application/json',Version:'v3'},
+    headers:{Authorization:'Bearer '+args.token,'Content-Type':'application/json',Accept:'application/json',Version:'2021-07-28'},
     body:JSON.stringify(payload),
     cache:'no-store'
   });
