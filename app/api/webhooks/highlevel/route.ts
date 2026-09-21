@@ -45,7 +45,8 @@ export async function POST(request:Request){
   if(!body)return NextResponse.json({error:'Payload inválido.'},{status:400});
   const db=createClient(url,key);const row=normalize(body);
   const {error}=await db.from('ghl_events').insert(row);
-  if(error&&error.code!=='23505')return NextResponse.json({error:'Falha ao registrar evento.'},{status:500});
+  if(error?.code==='23505')return NextResponse.json({ok:true,duplicate:true,eventId:row.external_event_id});
+  if(error)return NextResponse.json({error:'Falha ao registrar evento.'},{status:500});
   // Customer review automation events are handled first. GHL remains invisible to the customer.
   if(row.ghl_location_id&&row.contact_id){
     const {data:customerContact}=await db.from('customer_contacts')
