@@ -9,7 +9,10 @@ export async function POST(req:Request){
   if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
   try{
     const body=await req.json();
-    const approved:ApprovedProspect[]=Array.isArray(body.approved)?body.approved:[];
+    // `prospects` is sent by the admin screen; keep `approved` for API compatibility.
+    const approved:ApprovedProspect[]=Array.isArray(body.prospects)
+      ?body.prospects
+      :Array.isArray(body.approved)?body.approved:[];
     const approvedIds:string[]=Array.isArray(body.approvedIds)?body.approvedIds:[];
     const count=approved.length||approvedIds.length;
     if(count===0)return NextResponse.json({error:'Selecione pelo menos um prospect.'},{status:400});
