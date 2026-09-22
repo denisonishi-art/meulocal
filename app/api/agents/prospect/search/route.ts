@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 import {agentModels,agentPolicies} from '@/lib/agents/config';
 import {isAdminRequest} from '@/lib/admin-auth';
 
-type Place={id:string;displayName?:{text?:string};formattedAddress?:string;rating?:number;userRatingCount?:number;primaryType?:string;websiteUri?:string};
+type Place={id:string;displayName?:{text?:string};formattedAddress?:string;rating?:number;userRatingCount?:number;primaryType?:string;websiteUri?:string;nationalPhoneNumber?:string};
 
 export async function POST(req:Request){
   if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
@@ -14,7 +14,7 @@ export async function POST(req:Request){
 
     const query=`${niche} em ${location}`;
     const response=await fetch('https://places.googleapis.com/v1/places:searchText',{
-      method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.primaryType,places.websiteUri'},
+      method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.primaryType,places.websiteUri,places.nationalPhoneNumber'},
       body:JSON.stringify({textQuery:query,languageCode:'pt-BR',regionCode:'BR',maxResultCount:agentPolicies.prospecting.maxCandidatesPerSearch}),cache:'no-store'
     });
     const payload=await response.json();
@@ -26,7 +26,7 @@ export async function POST(req:Request){
       const reviewScore=Math.min(100,Math.round((reviews/300)*100));
       const ratingScore=rating==null?50:Math.max(0,Math.min(100,Math.round(((rating-3)/2)*100)));
       const score=Math.round(reviewScore*0.7+ratingScore*0.3);
-      return {id:p.id,name:p.displayName?.text||'',address:p.formattedAddress||'',rating,reviews,website:p.websiteUri||null,score,priority:score<35?'muito_alta':score<55?'alta':score<70?'media':'baixa'};
+      return {id:p.id,name:p.displayName?.text||'',address:p.formattedAddress||'',rating,reviews,website:p.websiteUri||null,phone:p.nationalPhoneNumber||null,score,priority:score<35?'muito_alta':score<55?'alta':score<70?'media':'baixa'};
     }).filter((c:any)=>c.rating==null||c.rating>=agentPolicies.prospecting.minimumGoogleRating)
       .sort((a:any,b:any)=>a.score-b.score);
 
