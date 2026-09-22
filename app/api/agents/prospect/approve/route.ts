@@ -26,7 +26,9 @@ export async function POST(req:Request){
     if(!supabaseUrl||!serviceKey)return NextResponse.json({error:'Banco ainda não configurado para diagnósticos.'},{status:503});
     const admin=createClient(supabaseUrl,serviceKey);
     const ids=approved.map(p=>p.id);
-    const {data:existing}=await admin.from('prospect_diagnostics').select('place_id,status').in('place_id',ids).in('status',['approved','contacted','converted']);
+    // An earlier approval without a GHL dispatch is retryable. Only block a
+    // prospect after it has actually entered the outreach flow or converted.
+    const {data:existing}=await admin.from('prospect_diagnostics').select('place_id,status').in('place_id',ids).in('status',['contacted','converted']);
     const blocked=new Set((existing||[]).map((x:any)=>x.place_id));
     const fresh=approved.filter(p=>!blocked.has(p.id));
     if(fresh.length===0)return NextResponse.json({ok:true,status:'deduped',contactStarted:false,diagnostics:[],skippedDuplicatePlaceIds:ids});
