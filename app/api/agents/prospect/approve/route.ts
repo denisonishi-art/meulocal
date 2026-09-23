@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {agentPolicies} from '@/lib/agents/config';
 import {isAdminRequest} from '@/lib/admin-auth';
-import {enqueueGhlProspect,findBusinessEmail} from '@/lib/ghl-prospecting';
+import {enqueueGhlProspect,findBusinessEmail,sendGhlProspectWhatsApp} from '@/lib/ghl-prospecting';
 
 type ApprovedProspect={id:string;name:string;address?:string;rating?:number|null;reviews?:number;score:number;website?:string|null;phone?:string|null;competitorAverageReviews?:number|null;niche?:string;region?:string;competitionMode?:'local_radius'|'city_region'|'search_market';competitionLabel?:string|null;searchIntent?:string|null};
 
@@ -45,7 +45,7 @@ export async function POST(req:Request){
     const {data,error}=await admin.from('prospect_diagnostics').insert(rows).select('id,public_token,place_id,business_name,score,review_count,competitor_avg_reviews,review_gap,competition_mode,competition_label,search_intent');
     if(error)return NextResponse.json({error:'Não foi possível gerar os diagnósticos.',detail:error.message},{status:500});
     const diagnostics=(data||[]).map(d=>({...d,url:`${appUrl}/d/${d.public_token}`}));
-    const dispatched=await Promise.all(diagnostics.map(async(d:any)=>{const source=fresh.find(p=>p.id===d.place_id);const email=await findBusinessEmail(source?.website);if(!email)return {id:d.id,ok:false,reason:'E-mail não encontrado no site'};const result=await enqueueGhlProspect({businessName:d.business_name,email,phone:source?.phone,website:source?.website,diagnosticUrl:d.url});if(result.ok)await admin.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);return {id:d.id,email,...result}}));
+    const dispatched=await Promise.all(diagnostics.map(async(d:any)=>{const source=fresh.find(p=>p.id===d.place_id);const email=await findBusinessEmail(source?.website);const result=email?await enqueueGhlProspect({businessName:d.business_name,email,phone:source?.phone,website:source?.website,diagnosticUrl:d.url}):source?.phone?await sendGhlProspectWhatsApp({businessName:d.business_name,phone:source.phone,diagnosticUrl:d.url}):{ok:false,reason:'E-mail e WhatsApp não encontrados'};if(result.ok)await admin.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);return {id:d.id,email:email||null,channel:email?'email':'whatsapp',...result}}));
     return NextResponse.json({ok:true,status:'approved',contactStarted:dispatched.some(x=>x.ok),diagnostics,dispatched,skippedDuplicatePlaceIds:[...blocked]});
   }catch{return NextResponse.json({error:'Não foi possível aprovar a lista agora.'},{status:500})}
 }
