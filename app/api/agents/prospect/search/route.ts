@@ -9,7 +9,14 @@ async function geocodeCoverage(location:string,key:string){
   try{
     const url=`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${encodeURIComponent(key)}&language=pt-BR&region=BR`;
     const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(7000)});const body=await response.json();
-    const geometry=body?.results?.[0]?.geometry;if(!geometry?.location)return null;
+    let geometry=body?.results?.[0]?.geometry;
+    if(!geometry?.location){
+      const fallback=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(location)}`,{headers:{'User-Agent':'MeuLocal prospect discovery'},cache:'no-store',signal:AbortSignal.timeout(7000)});
+      const row=(await fallback.json())[0];
+      if(!row?.lat||!row?.lon)return null;
+      const [south,north,west,east]=(row.boundingbox||[]).map(Number);
+      geometry={location:{lat:Number(row.lat),lng:Number(row.lon)},viewport:{northeast:{lat:north,lng:east},southwest:{lat:south,lng:west}}};
+    }
     const center:Point={latitude:geometry.location.lat,longitude:geometry.location.lng};
     const viewport=geometry.viewport;
     if(!viewport?.northeast||!viewport?.southwest)return {centers:[center],radius:12000};
