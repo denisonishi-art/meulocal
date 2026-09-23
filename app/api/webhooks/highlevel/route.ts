@@ -1,6 +1,7 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {createHash,verify as verifySignature} from 'crypto';
+import {getLocationAccessToken,removeOperationalTags} from '@/lib/highlevel-operational';
 
 function eventId(body:any){
   const explicit=body?.id||body?.eventId||body?.messageId||body?.message?.id;
@@ -106,6 +107,7 @@ export async function POST(request:Request){
           await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id);
           await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
           await db.from('businesses').update({status:'engaged',updated_at:now}).eq('id',lead.business_id);
+          try{const token=await getLocationAccessToken(row.ghl_location_id);await removeOperationalTags({token,contactId:row.contact_id,tags:['meulocal:prospectar','follow-up']})}catch{}
         }
       }
       return NextResponse.json({ok:true,duplicate:false,eventId:row.external_event_id,acquisitionFlow:true});

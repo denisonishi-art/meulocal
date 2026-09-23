@@ -71,3 +71,21 @@ export async function getOperationalConversationMessages(args:{token:string;conv
   const data=await parse(res);
   return Array.isArray(data?.messages?.messages)?data.messages.messages:[];
 }
+
+export async function findOperationalConversation(args:{token:string;locationId:string;contactId:string}){
+  const query=new URLSearchParams({locationId:args.locationId,contactId:args.contactId,limit:'20',sort:'desc'});
+  const res=await fetch(API+'/conversations/search?'+query.toString(),{
+    method:'GET',headers:{Authorization:'Bearer '+args.token,Accept:'application/json',Version:'v3'},cache:'no-store'
+  });
+  const data=await parse(res);
+  const conversations=Array.isArray(data?.conversations)?data.conversations:[];
+  return conversations[0]?.id?String(conversations[0].id):null;
+}
+
+export async function removeOperationalTags(args:{token:string;contactId:string;tags:string[]}){
+  const res=await fetch(API+'/contacts/'+encodeURIComponent(args.contactId)+'/tags',{
+    method:'DELETE',headers:{Authorization:'Bearer '+args.token,'Content-Type':'application/json',Accept:'application/json',Version:'2021-07-28'},
+    body:JSON.stringify({tags:args.tags}),cache:'no-store'
+  });
+  await parse(res);
+}

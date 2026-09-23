@@ -20,7 +20,7 @@ async function placeContact(placeId:string):Promise<PlaceContact>{
   }catch{return {}}
 }
 
-async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null,eventType:'queued'|'failed',channel:'email'|'whatsapp'|'system',reason?:string){
+async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null,eventType:'queued'|'failed',channel:'email'|'whatsapp'|'system',result?:{contactId?:string|null;conversationId?:string|null},reason?:string){
   let business=(await db.from('businesses').select('id').eq('google_place_id',d.place_id).maybeSingle()).data;
   if(!business){
     const inserted=await db.from('businesses').insert({google_place_id:d.place_id,name:d.business_name,phone:contact.phone||null,website:contact.website||null,source:'outbound',status:eventType==='queued'?'contacted':'qualified'}).select('id').single();
@@ -32,7 +32,10 @@ async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null
     const inserted=await db.from('leads').insert({business_id:business.id,name:d.business_name,email,whatsapp:contact.phone||null,consent_email:channel==='email',consent_whatsapp:channel==='whatsapp',origin:'outbound',lifecycle_stage:eventType==='queued'?'mql':'lead',automation_track:'meulocal_acquisition',prospect_diagnostic_id:d.id}).select('id').single();
     lead=inserted.data;
   }
-  if(lead?.id)await db.from('outreach_events').insert({lead_id:lead.id,channel,eventType:eventType,provider:'highlevel',message_key:'diagnostic_initial',metadata:reason?{reason}:{source:'prospect_recovery'}});
+  if(lead?.id){
+    if(result?.contactId)await db.from('leads').update({ghl_contact_id:result.contactId,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583',updated_at:new Date().toISOString()}).eq('id',lead.id);
+    await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:eventType,provider:'highlevel',conversation_id:result?.conversationId||null,message_key:'diagnostic_initial',metadata:reason?{reason}:{source:'prospect_recovery'}});
+  }
 }
 
 function cronAuthorized(req:Request){const secret=process.env.CRON_SECRET;return Boolean(secret&&req.headers.get('authorization')===`Bearer ${secret}`)}
@@ -64,18 +67,18 @@ async function dispatch(req:Request){
       const contact=await placeContact(d.place_id);
       const email=await findBusinessEmail(contact.website);
       if(!email){
-        if(!contact.phone){await trackDispatch(db,d,contact,null,'failed','system','E-mail público e WhatsApp não encontrados');return {id:d.id,businessName:d.business_name,ok:false,reason:'E-mail público e WhatsApp não encontrados'};}
+        if(!contact.phone){await trackDispatch(db,d,contact,null,'failed','system',undefined,'E-mail público e WhatsApp não encontrados');return {id:d.id,businessName:d.business_name,ok:false,reason:'E-mail público e WhatsApp não encontrados'};}
         const result=await sendGhlProspectWhatsApp({businessName:d.business_name,phone:contact.phone,diagnosticUrl:`${appUrl}/d/${d.public_token}`});
-        if(result.ok){await db.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);await trackDispatch(db,d,contact,null,'queued','whatsapp');}
-        else await trackDispatch(db,d,contact,null,'failed','whatsapp',result.reason);
+        if(result.ok){await db.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);await trackDispatch(db,d,contact,null,'queued','whatsapp',result);}
+        else await trackDispatch(db,d,contact,null,'failed','whatsapp',undefined,result.reason);
         return {id:d.id,businessName:d.business_name,...result};
       }
       const result=await enqueueGhlProspect({
         businessName:d.business_name,email,phone:contact.phone,website:contact.website,
         diagnosticUrl:`${appUrl}/d/${d.public_token}`
       });
-      if(result.ok){await db.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);await trackDispatch(db,d,contact,email,'queued','email');}
-      else await trackDispatch(db,d,contact,email,'failed','email',result.reason);
+      if(result.ok){await db.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);await trackDispatch(db,d,contact,email,'queued','email',result);}
+      else await trackDispatch(db,d,contact,email,'failed','email',undefined,result.reason);
       return {id:d.id,businessName:d.business_name,email,...result};
     }));
     return NextResponse.json({ok:true,processed:results.length,contactStarted:results.filter(x=>x.ok).length,results});

@@ -6,6 +6,15 @@ import {enqueueGhlProspect,findBusinessEmail,sendGhlProspectWhatsApp} from '@/li
 
 type ApprovedProspect={id:string;name:string;address?:string;rating?:number|null;reviews?:number;score:number;website?:string|null;phone?:string|null;competitorAverageReviews?:number|null;niche?:string;region?:string;competitionMode?:'local_radius'|'city_region'|'search_market';competitionLabel?:string|null;searchIntent?:string|null};
 
+async function trackInitialDispatch(db:any,d:any,source:ApprovedProspect,result:any,channel:'email'|'whatsapp',email:string|null){
+  let business=(await db.from('businesses').select('id').eq('google_place_id',d.place_id).maybeSingle()).data;
+  if(!business){const created=await db.from('businesses').insert({google_place_id:d.place_id,name:d.business_name,phone:source.phone||null,website:source.website||null,source:'outbound',status:'contacted',ghl_contact_id:result.contactId||null,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583'}).select('id').single();business=created.data;}
+  if(!business?.id)return;
+  let lead=(await db.from('leads').select('id').eq('prospect_diagnostic_id',d.id).maybeSingle()).data;
+  if(!lead){const created=await db.from('leads').insert({business_id:business.id,name:d.business_name,email,whatsapp:source.phone||null,consent_email:channel==='email',consent_whatsapp:channel==='whatsapp',origin:'outbound',lifecycle_stage:'mql',automation_track:'meulocal_acquisition',prospect_diagnostic_id:d.id,ghl_contact_id:result.contactId||null,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583'}).select('id').single();lead=created.data;}
+  if(lead?.id)await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:'queued',provider:'highlevel',conversation_id:result.conversationId||null,message_key:'diagnostic_initial',metadata:{source:'prospect_approval'}});
+}
+
 export async function POST(req:Request){
   if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
   try{
@@ -45,7 +54,7 @@ export async function POST(req:Request){
     const {data,error}=await admin.from('prospect_diagnostics').insert(rows).select('id,public_token,place_id,business_name,score,review_count,competitor_avg_reviews,review_gap,competition_mode,competition_label,search_intent');
     if(error)return NextResponse.json({error:'Não foi possível gerar os diagnósticos.',detail:error.message},{status:500});
     const diagnostics=(data||[]).map(d=>({...d,url:`${appUrl}/d/${d.public_token}`}));
-    const dispatched=await Promise.all(diagnostics.map(async(d:any)=>{const source=fresh.find(p=>p.id===d.place_id);const email=await findBusinessEmail(source?.website);const result=email?await enqueueGhlProspect({businessName:d.business_name,email,phone:source?.phone,website:source?.website,diagnosticUrl:d.url}):source?.phone?await sendGhlProspectWhatsApp({businessName:d.business_name,phone:source.phone,diagnosticUrl:d.url}):{ok:false,reason:'E-mail e WhatsApp não encontrados'};if(result.ok)await admin.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);return {id:d.id,email:email||null,channel:email?'email':'whatsapp',...result}}));
+    const dispatched=await Promise.all(diagnostics.map(async(d:any)=>{const source=fresh.find(p=>p.id===d.place_id);const email=await findBusinessEmail(source?.website);const channel=email?'email':'whatsapp';const result=email?await enqueueGhlProspect({businessName:d.business_name,email,phone:source?.phone,website:source?.website,diagnosticUrl:d.url}):source?.phone?await sendGhlProspectWhatsApp({businessName:d.business_name,phone:source.phone,diagnosticUrl:d.url}):{ok:false,reason:'E-mail e WhatsApp não encontrados'};if(result.ok){await admin.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);if(source)await trackInitialDispatch(admin,d,source,result,channel,email)}return {id:d.id,email:email||null,channel,...result}}));
     return NextResponse.json({ok:true,status:'approved',contactStarted:dispatched.some(x=>x.ok),diagnostics,dispatched,skippedDuplicatePlaceIds:[...blocked]});
   }catch{return NextResponse.json({error:'Não foi possível aprovar a lista agora.'},{status:500})}
 }
