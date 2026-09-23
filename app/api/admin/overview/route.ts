@@ -65,11 +65,13 @@ export async function GET(req:Request){
     const failed=event?.event_type==='failed';
     const channel=event?.channel==='whatsapp'?'WhatsApp':event?.channel==='email'?'E-mail':null;
     const reason=failed?(event.metadata?.reason||event.metadata?.error||'Falha ao iniciar a régua'):d.status==='approved'?'E-mail público não encontrado':null;
+    const lead=diagnosticLeads[0]||null;
+    const cadence=lead?.lifecycle_stage==='customer'||d.status==='converted'?'Cliente':lead?.lifecycle_stage==='lost'?'Encerrado':lead?.lifecycle_stage==='nurture'?'Analisando proposta':lead?.lifecycle_stage==='conversation'?'Respondido':failed?'Erro de envio':event?.event_type==='clicked'?'CTA acessado':event?.event_type==='opened'?'Diagnóstico aberto':event?.event_type==='delivered'?'Entregue':d.status==='contacted'?'Enviado':d.status==='approved'?'Aguardando canal':'Em qualificação';
     return {...d,delivery:{
       state:failed?'error':d.status==='contacted'?'contacted':d.status==='converted'?'converted':'pending',
       channel:channel||(d.status==='contacted'?'E-mail':null),reason,
       at:event?.created_at||d.first_contact_at||null
-    }};
+    },cadence,leadId:lead?.id||null};
   });
   const reviewAutomationRows=reviewSettings.map(s=>{
     const enrollments=reviewEnrollments.filter((x:any)=>x.business_id===s.business_id);
