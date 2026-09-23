@@ -19,11 +19,11 @@ export async function GET(req:Request){
     outreachRes,paymentsRes,googleRes,ghlRes,ghlJobsRes,syncRes,reviewSettingsRes,reviewEnrollmentsRes,reviewEventsRes,contactsRes
   ]=await Promise.all([
     db.from('businesses').select('id,name,category,address,city,phone,website,google_rating,google_review_count,source,status,ghl_allocation_status,created_at,updated_at').order('created_at',{ascending:false}).limit(200),
-    db.from('leads').select('id,business_id,name,email,whatsapp,lifecycle_stage,automation_track,next_action_at,created_at,updated_at').order('created_at',{ascending:false}).limit(200),
+    db.from('leads').select('id,business_id,name,email,whatsapp,lifecycle_stage,automation_track,next_action_at,prospect_diagnostic_id,created_at,updated_at').order('created_at',{ascending:false}).limit(200),
     db.from('prospect_diagnostics').select('id,public_token,place_id,business_name,address,rating,review_count,score,niche,region,status,approved_at,first_contact_at,diagnostic_opened_at,cta_clicked_at,converted_at,created_at').order('created_at',{ascending:false}).limit(200),
     db.from('customer_accounts').select('id,user_id,business_id,onboarding_status,payment_provider,payment_status,external_subscription_id,paid_at,created_at,updated_at').order('created_at',{ascending:false}).limit(200),
     db.from('automation_enrollments').select('id,lead_id,track,status,step,next_run_at,started_at,completed_at').order('started_at',{ascending:false}).limit(200),
-    db.from('outreach_events').select('id,lead_id,channel,event_type,provider,message_key,created_at').order('created_at',{ascending:false}).limit(200),
+    db.from('outreach_events').select('id,lead_id,channel,event_type,provider,message_key,metadata,created_at').order('created_at',{ascending:false}).limit(200),
     db.from('payment_checkouts').select('id,business_id,customer_account_id,lead_id,amount_cents,currency,billing_type,cycle,status,paid_at,activation_status,created_at').order('created_at',{ascending:false}).limit(200),
     db.from('google_business_connections').select('id,business_id,status,last_sync_at,last_sync_status,created_at').order('created_at',{ascending:false}).limit(200),
     db.from('ghl_locations').select('id,business_id,ghl_location_id,name,allocation_mode,lifecycle_status,is_internal,provisioned_at,created_at').order('created_at',{ascending:false}).limit(200),
@@ -57,6 +57,19 @@ export async function GET(req:Request){
   const automationRows=automations.map(a=>{
     const lead=leadById.get(a.lead_id)||null;
     return {...a,lead,business:lead?businessById.get(lead.business_id)||null:null};
+  });
+  const diagnosticsRows=diagnostics.map(d=>{
+    const diagnosticLeads=leads.filter(l=>l.prospect_diagnostic_id===d.id);
+    const ids=new Set(diagnosticLeads.map(l=>l.id));
+    const event=outreach.filter(e=>ids.has(e.lead_id)).sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime())[0]||null;
+    const failed=event?.event_type==='failed';
+    const channel=event?.channel==='whatsapp'?'WhatsApp':event?.channel==='email'?'E-mail':null;
+    const reason=failed?(event.metadata?.reason||event.metadata?.error||'Falha ao iniciar a régua'):d.status==='approved'?'E-mail público não encontrado':null;
+    return {...d,delivery:{
+      state:failed?'error':d.status==='contacted'?'contacted':d.status==='converted'?'converted':'pending',
+      channel:channel||(d.status==='contacted'?'E-mail':null),reason,
+      at:event?.created_at||d.first_contact_at||null
+    }};
   });
   const reviewAutomationRows=reviewSettings.map(s=>{
     const enrollments=reviewEnrollments.filter((x:any)=>x.business_id===s.business_id);
@@ -97,7 +110,7 @@ export async function GET(req:Request){
   return NextResponse.json({
     kpis,
     leads:leadRows,
-    diagnostics,
+    diagnostics:diagnosticsRows,
     customers:customerRows,
     automations:[...reviewAutomationRows,...automationRows],
     activity,

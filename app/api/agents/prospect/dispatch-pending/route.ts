@@ -20,6 +20,21 @@ async function placeContact(placeId:string):Promise<PlaceContact>{
   }catch{return {}}
 }
 
+async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null,eventType:'queued'|'failed',reason?:string){
+  let business=(await db.from('businesses').select('id').eq('google_place_id',d.place_id).maybeSingle()).data;
+  if(!business){
+    const inserted=await db.from('businesses').insert({google_place_id:d.place_id,name:d.business_name,phone:contact.phone||null,website:contact.website||null,source:'outbound',status:eventType==='queued'?'contacted':'qualified'}).select('id').single();
+    business=inserted.data;
+  }
+  if(!business?.id)return;
+  let lead=(await db.from('leads').select('id').eq('prospect_diagnostic_id',d.id).maybeSingle()).data;
+  if(!lead){
+    const inserted=await db.from('leads').insert({business_id:business.id,name:d.business_name,email,whatsapp:contact.phone||null,origin:'outbound',lifecycle_stage:eventType==='queued'?'mql':'lead',automation_track:'meulocal_acquisition',prospect_diagnostic_id:d.id}).select('id').single();
+    lead=inserted.data;
+  }
+  if(lead?.id)await db.from('outreach_events').insert({lead_id:lead.id,channel:eventType==='queued'?'email':'system',event_type:eventType,provider:'highlevel',message_key:'diagnostic_initial',metadata:reason?{reason}:{source:'prospect_recovery'}});
+}
+
 export async function POST(req:Request){
   if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -37,12 +52,13 @@ export async function POST(req:Request){
     const results=await Promise.all((diagnostics||[]).map(async(d:any)=>{
       const contact=await placeContact(d.place_id);
       const email=await findBusinessEmail(contact.website);
-      if(!email)return {id:d.id,businessName:d.business_name,ok:false,reason:'E-mail público não encontrado'};
+      if(!email){await trackDispatch(db,d,contact,null,'failed','E-mail público não encontrado');return {id:d.id,businessName:d.business_name,ok:false,reason:'E-mail público não encontrado'};}
       const result=await enqueueGhlProspect({
         businessName:d.business_name,email,phone:contact.phone,website:contact.website,
         diagnosticUrl:`${appUrl}/d/${d.public_token}`
       });
-      if(result.ok)await db.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);
+      if(result.ok){await db.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);await trackDispatch(db,d,contact,email,'queued');}
+      else await trackDispatch(db,d,contact,email,'failed',result.reason);
       return {id:d.id,businessName:d.business_name,email,...result};
     }));
     return NextResponse.json({ok:true,processed:results.length,contactStarted:results.filter(x=>x.ok).length,results});
