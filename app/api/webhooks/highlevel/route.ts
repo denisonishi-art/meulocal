@@ -22,7 +22,7 @@ function normalize(body:any){
     external_event_id:eventId(body),event_type:type,ghl_location_id:body?.locationId||body?.location?.id||null,
     contact_id:body?.contactId||body?.contact?.id||null,conversation_id:body?.conversationId||body?.conversation?.id||null,
     message_id:body?.messageId||body?.message?.id||null,direction,channel,normalized_status:status,opted_out:optedOut,conversion,
-    payload_meta:{hasMessage:Boolean(body?.message||body?.messageId),hasContact:Boolean(body?.contact||body?.contactId),source:'highlevel_webhook'}
+    payload_meta:{hasMessage:Boolean(body?.message||body?.messageId),hasContact:Boolean(body?.contact||body?.contactId),preview:text.slice(0,500),source:'highlevel_webhook'}
   };
 }
 
@@ -97,7 +97,7 @@ export async function POST(request:Request){
       if(eventType){
         const mappedChannel=/whatsapp/i.test(String(row.channel||''))?'whatsapp':/email/i.test(String(row.channel||''))?'email':'system';
         const {data:lastOutbound}=await db.from('outreach_events').select('message_key').eq('lead_id',lead.id).in('event_type',['sent','delivered']).order('created_at',{ascending:false}).limit(1).maybeSingle();
-        await db.from('outreach_events').insert({lead_id:lead.id,channel:mappedChannel,event_type:eventType,provider:'highlevel',external_id:row.message_id,conversation_id:row.conversation_id,message_key:lastOutbound?.message_key||null,metadata:{source:'highlevel_webhook',raw_event_type:row.event_type}});
+        await db.from('outreach_events').insert({lead_id:lead.id,channel:mappedChannel,event_type:eventType,provider:'highlevel',external_id:row.message_id,conversation_id:row.conversation_id,message_key:lastOutbound?.message_key||null,metadata:{source:'highlevel_webhook',raw_event_type:row.event_type,preview:row.payload_meta.preview}});
         const now=new Date().toISOString();
         if(eventType==='unsubscribed'){
           await db.from('leads').update({lifecycle_stage:'lost',opt_out_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id);

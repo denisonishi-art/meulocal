@@ -62,6 +62,7 @@ export async function GET(req:Request){
     const diagnosticLeads=leads.filter(l=>l.prospect_diagnostic_id===d.id);
     const ids=new Set(diagnosticLeads.map(l=>l.id));
     const event=outreach.filter(e=>ids.has(e.lead_id)).sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime())[0]||null;
+    const reply=outreach.filter(e=>ids.has(e.lead_id)&&e.event_type==='replied').sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime())[0]||null;
     const failed=event?.event_type==='failed';
     const channel=event?.channel==='whatsapp'?'WhatsApp':event?.channel==='email'?'E-mail':null;
     const reason=failed?(event.metadata?.reason||event.metadata?.error||'Falha ao iniciar a régua'):d.status==='approved'?'E-mail público não encontrado':null;
@@ -71,7 +72,7 @@ export async function GET(req:Request){
       state:failed?'error':d.status==='contacted'?'contacted':d.status==='converted'?'converted':'pending',
       channel:channel||(d.status==='contacted'?'E-mail':null),reason,
       at:event?.created_at||d.first_contact_at||null
-    },cadence,leadId:lead?.id||null};
+    },cadence,leadId:lead?.id||null,reply:reply?{channel:reply.channel,at:reply.created_at,preview:reply.metadata?.preview||null}:null};
   });
   const reviewAutomationRows=reviewSettings.map(s=>{
     const enrollments=reviewEnrollments.filter((x:any)=>x.business_id===s.business_id);

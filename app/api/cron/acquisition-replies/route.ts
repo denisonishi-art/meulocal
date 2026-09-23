@@ -24,7 +24,7 @@ export async function GET(req:Request){
       if(!inbound||new Date(inbound.dateAdded||0).getTime()<=new Date(lead.created_at).getTime())continue;
       const externalId=String(inbound.id||inbound.messageId||'');
       const {data:exists}=externalId?await db.from('outreach_events').select('id').eq('lead_id',lead.id).eq('external_id',externalId).maybeSingle():{data:null};
-      if(!exists)await db.from('outreach_events').insert({lead_id:lead.id,channel:channel(inbound),event_type:'replied',provider:'highlevel',external_id:externalId||null,conversation_id:conversationId,message_key:'diagnostic_initial',metadata:{source:'highlevel_poll'}});
+      if(!exists)await db.from('outreach_events').insert({lead_id:lead.id,channel:channel(inbound),event_type:'replied',provider:'highlevel',external_id:externalId||null,conversation_id:conversationId,message_key:'diagnostic_initial',metadata:{source:'highlevel_poll',preview:String(inbound.body||inbound.message||'').trim().slice(0,500)}});
       await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:inbound.dateAdded||now,next_action_at:null,updated_at:now}).eq('id',lead.id);
       await db.from('businesses').update({status:'engaged',updated_at:now}).eq('id',lead.business_id);
       await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
