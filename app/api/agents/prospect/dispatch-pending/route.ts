@@ -35,8 +35,19 @@ async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null
   if(lead?.id)await db.from('outreach_events').insert({lead_id:lead.id,channel,eventType:eventType,provider:'highlevel',message_key:'diagnostic_initial',metadata:reason?{reason}:{source:'prospect_recovery'}});
 }
 
+function cronAuthorized(req:Request){const secret=process.env.CRON_SECRET;return Boolean(secret&&req.headers.get('authorization')===`Bearer ${secret}`)}
+
 export async function POST(req:Request){
   if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+  return dispatch(req);
+}
+
+export async function GET(req:Request){
+  if(!cronAuthorized(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+  return dispatch(req);
+}
+
+async function dispatch(req:Request){
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!serviceKey)return NextResponse.json({error:'Banco não configurado.'},{status:503});

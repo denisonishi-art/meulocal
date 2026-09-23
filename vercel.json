@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/acquisition-outreach",
       "schedule": "0 13 * * 1-5"
+    },
+    {
+      "path": "/api/agents/prospect/dispatch-pending",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
