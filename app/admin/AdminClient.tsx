@@ -1,5 +1,5 @@
 'use client';
-import {FormEvent,useEffect,useMemo,useState} from 'react';
+import {FormEvent,useEffect,useMemo,useRef,useState} from 'react';
 import {
   Activity,ArrowUpRight,Bot,Building2,Check,ClipboardCheck,
   Gauge,LogOut,MapPin,RefreshCw,Search,ShieldCheck,Sparkles,Users,Workflow
@@ -26,7 +26,7 @@ function statusLabel(v?:string|null){
 function Pill({value}:{value?:string|null}){const key=(value||'').replaceAll('_','-');return <span className={'statusPill '+key}>{statusLabel(value)}</span>}
 
 export default function AdminClient(){
- const[view,setView]=useState<View>('overview');
+ const[view,setView]=useState<View>('overview');const recoveredApproved=useRef(false);
  const[data,setData]=useState<Overview|null>(null);const[loadingData,setLoadingData]=useState(true);const[dataError,setDataError]=useState('');
  const[niche,setNiche]=useState('');const[region,setRegion]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');const[diagMsg,setDiagMsg]=useState('');
 
@@ -52,6 +52,11 @@ export default function AdminClient(){
      await loadOverview();
    }catch(e:any){setDiagMsg(e.message)}finally{setBusy(false)}
  }
+
+ useEffect(()=>{
+   const pending=(data?.diagnostics||[]).filter((d:any)=>d.status==='approved');
+   if(!recoveredApproved.current&&pending.length){recoveredApproved.current=true;void dispatchApproved(pending)}
+ },[data]);
 
  async function logout(){await fetch('/api/admin/session',{method:'DELETE'});window.location.href='/admin-login'}
 
