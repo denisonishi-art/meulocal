@@ -4,6 +4,11 @@ export type PipecatVoiceCallInput = {
   prospectDiagnosticId?: string | null;
   businessName?: string | null;
   requestedText?: string | null;
+  score?: number | null;
+  rating?: number | null;
+  reviewCount?: number | null;
+  diagnosticSummary?: string | null;
+  salesInstructions?: string | null;
 };
 
 export type PipecatVoiceCallResult =
@@ -38,6 +43,11 @@ export async function startPipecatVoiceCall(input:PipecatVoiceCallInput):Promise
           business_name:input.businessName||null,
           customer_requested_voice:true,
           requested_text:input.requestedText?.slice(0,500)||null,
+          score:input.score??null,
+          rating:input.rating??null,
+          review_count:input.reviewCount??null,
+          diagnostic_summary:input.diagnosticSummary?.slice(0,2000)||null,
+          sales_instructions:input.salesInstructions||null,
         },
       }),
       cache:'no-store',
