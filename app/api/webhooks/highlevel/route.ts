@@ -117,9 +117,14 @@ export async function POST(request:Request){
             const contactPhone=String(body?.contact?.phone||lead.whatsapp||'').trim();
             const {data:business}=await db.from('businesses').select('name').eq('id',lead.business_id).maybeSingle();
             const {data:diagnostic}=lead.prospect_diagnostic_id
-              ? await db.from('prospect_diagnostics').select('score,rating,review_count,summary,diagnostic_summary').eq('id',lead.prospect_diagnostic_id).maybeSingle()
+              ? await db.from('prospect_diagnostics').select('score,rating,review_count,competitor_avg_reviews,review_gap').eq('id',lead.prospect_diagnostic_id).maybeSingle()
               : {data:null as any};
-            const diagnosticSummary=String(diagnostic?.summary||diagnostic?.diagnostic_summary||'').trim()||null;
+            const diagnosticSummary=diagnostic ? [
+              typeof diagnostic.score==='number'?`Score MeuLocal ${diagnostic.score}/100`:null,
+              typeof diagnostic.rating==='number'?`nota ${diagnostic.rating} no Google`:null,
+              typeof diagnostic.review_count==='number'?`${diagnostic.review_count} avaliações`:null,
+              typeof diagnostic.review_gap==='number'&&diagnostic.review_gap>0?`gap de ${diagnostic.review_gap} avaliações em relação à referência comparativa usada no diagnóstico`:null,
+            ].filter(Boolean).join('; ')||null : null;
             const salesInstructions=buildVoiceSalesInstructions({
               businessName:business?.name||null,
               score:typeof diagnostic?.score==='number'?diagnostic.score:null,
