@@ -4,6 +4,7 @@ import {createHash,verify as verifySignature} from 'crypto';
 import {getLocationAccessToken,removeOperationalTags} from '@/lib/highlevel-operational';
 import {isExplicitVoiceRequest} from '@/lib/agents/voice-request';
 import {startPipecatVoiceCall} from '@/lib/pipecat-voice';
+import {buildVoiceSalesInstructions} from '@/lib/agents/voice-sales';
 
 function eventId(body:any){
   const explicit=body?.id||body?.eventId||body?.messageId||body?.message?.id;
@@ -115,6 +116,18 @@ export async function POST(request:Request){
           if(isExplicitVoiceRequest(inboundText)){
             const contactPhone=String(body?.contact?.phone||lead.whatsapp||'').trim();
             const {data:business}=await db.from('businesses').select('name').eq('id',lead.business_id).maybeSingle();
+            const {data:diagnostic}=lead.prospect_diagnostic_id
+              ? await db.from('prospect_diagnostics').select('score,rating,review_count,summary,diagnostic_summary').eq('id',lead.prospect_diagnostic_id).maybeSingle()
+              : {data:null as any};
+            const diagnosticSummary=String(diagnostic?.summary||diagnostic?.diagnostic_summary||'').trim()||null;
+            const salesInstructions=buildVoiceSalesInstructions({
+              businessName:business?.name||null,
+              score:typeof diagnostic?.score==='number'?diagnostic.score:null,
+              rating:typeof diagnostic?.rating==='number'?diagnostic.rating:null,
+              reviewCount:typeof diagnostic?.review_count==='number'?diagnostic.review_count:null,
+              diagnosticSummary,
+              requestedText:inboundText,
+            });
             const voiceRequest={
               lead_id:lead.id,
               prospect_diagnostic_id:lead.prospect_diagnostic_id||null,
@@ -135,6 +148,11 @@ export async function POST(request:Request){
                 prospectDiagnosticId:lead.prospect_diagnostic_id||null,
                 businessName:business?.name||null,
                 requestedText:inboundText,
+                score:typeof diagnostic?.score==='number'?diagnostic.score:null,
+                rating:typeof diagnostic?.rating==='number'?diagnostic.rating:null,
+                reviewCount:typeof diagnostic?.review_count==='number'?diagnostic.review_count:null,
+                diagnosticSummary,
+                salesInstructions,
               });
               if(result.ok){
                 await db.from('voice_call_requests').update({status:'started',external_call_id:result.callId,started_at:now,updated_at:now}).eq('id',voiceRow.id);
