@@ -9,6 +9,7 @@ export async function GET(){
     cron:Boolean(process.env.CRON_SECRET),
     asaas:Boolean(process.env.ASAAS_API_KEY&&process.env.ASAAS_WEBHOOK_TOKEN),
     highlevel:Boolean(process.env.GHL_API_KEY||process.env.GHL_WEBHOOK_SECRET),
+    pipecatVoice:Boolean(process.env.PIPECAT_VOICE_ENABLED==='true'&&process.env.PIPECAT_VOICE_BASE_URL&&process.env.PIPECAT_VOICE_TOKEN),
   };
   const coreReady=required.supabase&&required.google&&required.admin&&required.cron;
   return NextResponse.json({ok:coreReady,status:coreReady?'ready':'partial',integrations:required,externalActivationRequired:{asaas:!required.asaas,highlevel:!required.highlevel}},{status:coreReady?200:503});

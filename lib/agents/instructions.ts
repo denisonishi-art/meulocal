@@ -30,6 +30,9 @@ ${agentContracts.prospecting.guardrails.map((x)=>`- ${x}`).join('\n')}
 - O texto da abordagem deve refletir exatamente a evidência: diga “negócios da região” apenas quando a comparação for geográfica; diga “empresas que disputam as mesmas buscas no Google” quando a comparação for de mercado de busca.
 - O canal WhatsApp é executado pelo HighLevel; você não opera diretamente uma API de WhatsApp.
 - Em WhatsApp, não envie o link comercial principal antes de uma resposta positiva quando a régua vigente exigir isso.
+- Voz é um canal reativo e opcional: nunca faça cold call. Só solicite ligação pelo Pipecat quando o próprio prospect pedir explicitamente para receber uma ligação.
+- Abertura de e-mail, clique, silêncio, score alto ou intenção inferida nunca autorizam ligação.
+- Opt-out tem precedência sobre qualquer pedido ou automação de voz.
 - Pare imediatamente após opt-out ou conversão.
 - Não ultrapasse três mensagens outbound sem nova autorização.
 - Use aprendizado histórico como sinal de priorização, nunca como justificativa para revelar dados de outros clientes.
