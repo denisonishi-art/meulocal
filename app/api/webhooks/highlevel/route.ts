@@ -2,6 +2,8 @@ import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {createHash,verify as verifySignature} from 'crypto';
 import {getLocationAccessToken,removeOperationalTags} from '@/lib/highlevel-operational';
+import {isExplicitVoiceRequest} from '@/lib/agents/voice-request';
+import {startPipecatVoiceCall} from '@/lib/pipecat-voice';
 
 function eventId(body:any){
   const explicit=body?.id||body?.eventId||body?.messageId||body?.message?.id;
@@ -86,7 +88,7 @@ export async function POST(request:Request){
 
   // Acquisition cadence events: keep prospect status synchronized and stop follow-ups on replies/opt-out.
   if(row.ghl_location_id&&row.contact_id){
-    const {data:lead}=await db.from('leads').select('id,business_id,lifecycle_stage,prospect_diagnostic_id,opt_out_at,last_reply_at').eq('ghl_location_id',row.ghl_location_id).eq('ghl_contact_id',row.contact_id).maybeSingle();
+    const {data:lead}=await db.from('leads').select('id,business_id,lifecycle_stage,prospect_diagnostic_id,opt_out_at,last_reply_at,whatsapp').eq('ghl_location_id',row.ghl_location_id).eq('ghl_contact_id',row.contact_id).maybeSingle();
     if(lead){
       let eventType:string|null=null;
       if(row.opted_out)eventType='unsubscribed';
@@ -108,6 +110,39 @@ export async function POST(request:Request){
           await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
           await db.from('businesses').update({status:'engaged',updated_at:now}).eq('id',lead.business_id);
           try{const token=await getLocationAccessToken(row.ghl_location_id);await removeOperationalTags({token,contactId:row.contact_id,tags:['meulocal:prospectar','follow-up']})}catch{}
+
+          const inboundText=String(row.payload_meta?.preview||'').trim();
+          if(isExplicitVoiceRequest(inboundText)){
+            const contactPhone=String(body?.contact?.phone||lead.whatsapp||'').trim();
+            const {data:business}=await db.from('businesses').select('name').eq('id',lead.business_id).maybeSingle();
+            const voiceRequest={
+              lead_id:lead.id,
+              prospect_diagnostic_id:lead.prospect_diagnostic_id||null,
+              external_event_id:row.external_event_id,
+              phone:contactPhone||null,
+              requested_text:inboundText.slice(0,500),
+              provider:'pipecat',
+              status:contactPhone?'requested':'failed',
+              error_message:contactPhone?null:'Telefone indisponível para retorno.',
+              requested_at:now,
+              updated_at:now,
+            };
+            const {data:voiceRow,error:voiceInsertError}=await db.from('voice_call_requests').insert(voiceRequest).select('id').maybeSingle();
+            if(!voiceInsertError&&voiceRow&&contactPhone){
+              const result=await startPipecatVoiceCall({
+                phoneNumber:contactPhone,
+                leadId:lead.id,
+                prospectDiagnosticId:lead.prospect_diagnostic_id||null,
+                businessName:business?.name||null,
+                requestedText:inboundText,
+              });
+              if(result.ok){
+                await db.from('voice_call_requests').update({status:'started',external_call_id:result.callId,started_at:now,updated_at:now}).eq('id',voiceRow.id);
+              }else{
+                await db.from('voice_call_requests').update({status:result.status,error_message:result.reason,updated_at:now}).eq('id',voiceRow.id);
+              }
+            }
+          }
         }
       }
       return NextResponse.json({ok:true,duplicate:false,eventId:row.external_event_id,acquisitionFlow:true});
