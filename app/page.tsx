@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, Bot, Check, Link2, MapPin, MessageCircle, Search, Star, TrendingUp, Upload, Users } from 'lucide-react';
+import { ArrowRight, BarChart3, Bot, Check, Link2, MapPin, Search, Star, TrendingUp, Upload, Users } from 'lucide-react';
 
 const benefits = [
   { icon: Star, title: 'Mais avaliações', text: 'Seus clientes recebem pedidos e lembretes automáticos para avaliar sua empresa no Google.' },
