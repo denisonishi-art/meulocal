@@ -2,6 +2,7 @@ import {notFound} from 'next/navigation';
 import {createClient} from '@supabase/supabase-js';
 import {ArrowRight,MapPin,Star,TrendingDown} from 'lucide-react';
 import './diagnostic.css';
+import OpenTracker from './OpenTracker';
 
 export const dynamic='force-dynamic';
 
@@ -12,7 +13,6 @@ export default async function ProspectDiagnosticPage({params}:{params:{token:str
   const admin=createClient(supabaseUrl,serviceKey);
   const {data}=await admin.from('prospect_diagnostics').select('*').eq('public_token',params.token).maybeSingle();
   if(!data)notFound();
-  if(!data.diagnostic_opened_at)await admin.from('prospect_diagnostics').update({diagnostic_opened_at:new Date().toISOString()}).eq('id',data.id);
 
   const score=Number(data.score||0);
   const band=score<=30?'Crítico':score<=50?'Fraco':score<=70?'Competitivo':'Forte';
@@ -20,7 +20,7 @@ export default async function ProspectDiagnosticPage({params}:{params:{token:str
   const gap=data.review_gap==null?null:Number(data.review_gap);
   const cta=`/api/prospect-diagnostic/click?token=${encodeURIComponent(params.token)}`;
 
-  return <main className="pdPage">
+  return <main className="pdPage"><OpenTracker token={params.token}/>
     <header className="pdNav"><a href="/" className="brand"><span className="brandMark"><MapPin size={19}/></span>MeuLocal</a><span>Diagnóstico de presença local</span></header>
     <section className="pdHero">
       <span className="pdEyebrow">ANÁLISE DA SUA EMPRESA NO GOOGLE</span>
