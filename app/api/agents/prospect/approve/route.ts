@@ -6,13 +6,26 @@ import {enqueueGhlProspect,findBusinessEmail,sendGhlProspectWhatsApp} from '@/li
 
 type ApprovedProspect={id:string;name:string;address?:string;rating?:number|null;reviews?:number;score:number;website?:string|null;phone?:string|null;competitorAverageReviews?:number|null;niche?:string;region?:string;competitionMode?:'local_radius'|'city_region'|'search_market';competitionLabel?:string|null;searchIntent?:string|null};
 
+function addDaysIso(base:string|Date,days:number){const d=new Date(base);d.setUTCDate(d.getUTCDate()+days);d.setUTCHours(13,0,0,0);return d.toISOString()}
+
 async function trackInitialDispatch(db:any,d:any,source:ApprovedProspect,result:any,channel:'email'|'whatsapp',email:string|null){
   let business=(await db.from('businesses').select('id').eq('google_place_id',d.place_id).maybeSingle()).data;
   if(!business){const created=await db.from('businesses').insert({google_place_id:d.place_id,name:d.business_name,phone:source.phone||null,website:source.website||null,source:'outbound',status:'contacted',ghl_contact_id:result.contactId||null,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583'}).select('id').single();business=created.data;}
   if(!business?.id)return;
-  let lead=(await db.from('leads').select('id').eq('prospect_diagnostic_id',d.id).maybeSingle()).data;
-  if(!lead){const created=await db.from('leads').insert({business_id:business.id,name:d.business_name,email,whatsapp:source.phone||null,consent_email:channel==='email',consent_whatsapp:channel==='whatsapp',origin:'outbound',lifecycle_stage:'mql',automation_track:'meulocal_acquisition',prospect_diagnostic_id:d.id,ghl_contact_id:result.contactId||null,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583'}).select('id').single();lead=created.data;}
-  if(lead?.id)await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:'queued',provider:'highlevel',conversation_id:result.conversationId||null,message_key:'diagnostic_initial',metadata:{source:'prospect_approval'}});
+  let lead=(await db.from('leads').select('id,next_action_at').eq('prospect_diagnostic_id',d.id).maybeSingle()).data;
+  if(!lead){const created=await db.from('leads').insert({business_id:business.id,name:d.business_name,email,whatsapp:source.phone||null,consent_email:channel==='email',consent_whatsapp:channel==='whatsapp',origin:'outbound',lifecycle_stage:'mql',automation_track:'meulocal_acquisition',prospect_diagnostic_id:d.id,ghl_contact_id:result.contactId||null,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583'}).select('id,next_action_at').single();lead=created.data;}
+  if(!lead?.id)return;
+  const now=new Date().toISOString();
+  const nextRunAt=addDaysIso(now,3);
+  const eventType=channel==='whatsapp'?'sent':'queued';
+  await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:eventType,provider:'highlevel',external_id:result.messageId||null,conversation_id:result.conversationId||null,message_key:'diagnostic_initial',metadata:{source:'prospect_approval',cadence_step:0}});
+  const existing=await db.from('automation_enrollments').select('id,status,step').eq('lead_id',lead.id).eq('track','meulocal_acquisition').maybeSingle();
+  if(existing.data?.id){
+    await db.from('automation_enrollments').update({status:'active',step:Math.max(Number(existing.data.step||0),1),next_run_at:nextRunAt,completed_at:null}).eq('id',existing.data.id);
+  }else{
+    await db.from('automation_enrollments').insert({lead_id:lead.id,track:'meulocal_acquisition',status:'active',step:1,next_run_at:nextRunAt});
+  }
+  await db.from('leads').update({next_action_at:nextRunAt,updated_at:now}).eq('id',lead.id);
 }
 
 export async function POST(req:Request){
