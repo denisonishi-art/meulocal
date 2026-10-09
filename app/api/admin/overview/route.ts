@@ -46,6 +46,7 @@ export async function GET(req:Request){
   const googleByBusiness=new Map(google.map(x=>[x.business_id,x]));
   const ghlByBusiness=new Map(ghl.map(x=>[x.business_id,x]));
   const paymentByBusiness=new Map(payments.map(x=>[x.business_id,x]));
+  const automationByLead=new Map(automations.filter((x:any)=>x.track==='meulocal_acquisition').map((x:any)=>[x.lead_id,x]));
 
   const leadRows=leads.map(l=>({...l,business:businessById.get(l.business_id)||null}));
   const customerRows=customers.map(c=>({
@@ -67,12 +68,27 @@ export async function GET(req:Request){
     const channel=event?.channel==='whatsapp'?'WhatsApp':event?.channel==='email'?'E-mail':null;
     const reason=failed?(event.metadata?.reason||event.metadata?.error||'Falha ao iniciar a régua'):d.status==='approved'?'E-mail público não encontrado':null;
     const lead=diagnosticLeads[0]||null;
-    const cadence=lead?.lifecycle_stage==='customer'||d.status==='converted'?'Cliente':lead?.lifecycle_stage==='lost'?'Encerrado':lead?.lifecycle_stage==='nurture'?'Analisando proposta':lead?.lifecycle_stage==='conversation'?'Respondido':failed?'Erro de envio':event?.event_type==='clicked'?'CTA acessado':event?.event_type==='opened'?'Diagnóstico aberto':event?.event_type==='delivered'?'Entregue':d.status==='contacted'?'Enviado':d.status==='approved'?'Aguardando canal':'Em qualificação';
+    const automation=lead?automationByLead.get(lead.id)||null:null;
+    const cadence=lead?.lifecycle_stage==='customer'||d.status==='converted'
+      ?'Cliente'
+      :lead?.lifecycle_stage==='lost'
+        ?'Encerrado'
+        :lead?.lifecycle_stage==='conversation'
+          ?'Respondido'
+          :failed
+            ?'Erro de envio'
+            :automation?.status==='active'
+              ?(automation.step===1?'D+3 programado':automation.step===2?'D+7 programado':'Régua ativa')
+              :automation?.status==='completed'
+                ?'Régua concluída'
+                :d.status==='contacted'
+                  ?'Sem régua'
+                  :d.status==='approved'?'Aguardando canal':'Em qualificação';
     return {...d,delivery:{
       state:failed?'error':d.status==='contacted'?'contacted':d.status==='converted'?'converted':'pending',
       channel:channel||(d.status==='contacted'?'E-mail':null),reason,
       at:event?.created_at||d.first_contact_at||null
-    },cadence,leadId:lead?.id||null,reply:reply?{channel:reply.channel,at:reply.created_at,preview:reply.metadata?.preview||null}:null};
+    },cadence,nextCadenceAt:automation?.next_run_at||lead?.next_action_at||null,automationStatus:automation?.status||null,automationStep:automation?.step??null,leadId:lead?.id||null,reply:reply?{channel:reply.channel,at:reply.created_at,preview:reply.metadata?.preview||null}:null};
   });
   const reviewAutomationRows=reviewSettings.map(s=>{
     const enrollments=reviewEnrollments.filter((x:any)=>x.business_id===s.business_id);
