@@ -10,7 +10,7 @@ export async function POST(req:Request){
     const fetchSite=req.headers.get('sec-fetch-site');
     if(fetchSite&&fetchSite!=='same-origin')return NextResponse.json({ok:false},{status:403});
     const ua=req.headers.get('user-agent')||'';
-    if(BOT_RE.test(ua))return NextResponse.json({ok:false},{status:204});
+    if(BOT_RE.test(ua))return NextResponse.json({ok:true,ignored:true});
 
     const body=await req.json().catch(()=>({}));
     const token=String(body?.token||'').trim();
