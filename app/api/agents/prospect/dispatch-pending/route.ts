@@ -20,7 +20,9 @@ async function placeContact(placeId:string):Promise<PlaceContact>{
   }catch{return {}}
 }
 
-async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null,eventType:'queued'|'failed',channel:'email'|'whatsapp'|'system',result?:{contactId?:string|null;conversationId?:string|null},reason?:string){
+function addDaysIso(base:string|Date,days:number){const d=new Date(base);d.setUTCDate(d.getUTCDate()+days);d.setUTCHours(13,0,0,0);return d.toISOString()}
+
+async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null,eventType:'queued'|'failed',channel:'email'|'whatsapp'|'system',result?:{contactId?:string|null;conversationId?:string|null;messageId?:string|null},reason?:string){
   let business=(await db.from('businesses').select('id').eq('google_place_id',d.place_id).maybeSingle()).data;
   if(!business){
     const inserted=await db.from('businesses').insert({google_place_id:d.place_id,name:d.business_name,phone:contact.phone||null,website:contact.website||null,source:'outbound',status:eventType==='queued'?'contacted':'qualified'}).select('id').single();
@@ -33,8 +35,17 @@ async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null
     lead=inserted.data;
   }
   if(lead?.id){
-    if(result?.contactId)await db.from('leads').update({ghl_contact_id:result.contactId,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583',updated_at:new Date().toISOString()}).eq('id',lead.id);
-    await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:eventType,provider:'highlevel',conversation_id:result?.conversationId||null,message_key:'diagnostic_initial',metadata:reason?{reason}:{source:'prospect_recovery'}});
+    const now=new Date().toISOString();
+    if(result?.contactId)await db.from('leads').update({ghl_contact_id:result.contactId,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583',updated_at:now}).eq('id',lead.id);
+    const storedEventType=eventType==='queued'&&channel==='whatsapp'?'sent':eventType;
+    await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:storedEventType,provider:'highlevel',external_id:result?.messageId||null,conversation_id:result?.conversationId||null,message_key:'diagnostic_initial',metadata:reason?{reason}:{source:'prospect_recovery',cadence_step:0}});
+    if(eventType==='queued'){
+      const nextRunAt=addDaysIso(now,3);
+      const existing=await db.from('automation_enrollments').select('id,status,step').eq('lead_id',lead.id).eq('track','meulocal_acquisition').maybeSingle();
+      if(existing.data?.id)await db.from('automation_enrollments').update({status:'active',step:Math.max(Number(existing.data.step||0),1),next_run_at:nextRunAt,completed_at:null}).eq('id',existing.data.id);
+      else await db.from('automation_enrollments').insert({lead_id:lead.id,track:'meulocal_acquisition',status:'active',step:1,next_run_at:nextRunAt});
+      await db.from('leads').update({next_action_at:nextRunAt,updated_at:now}).eq('id',lead.id);
+    }
   }
 }
 
