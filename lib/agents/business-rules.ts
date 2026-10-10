@@ -81,6 +81,15 @@ export const meulocalBusinessRules = {
       'learning_event',
     ] as const,
   },
+  voice: {
+    provider: 'pipecat',
+    enabledByDefault: false,
+    onlyAfterExplicitInboundRequest: true,
+    coldCallsForbidden: true,
+    neverTriggerFromOpenClickOrSilence: true,
+    optOutHasPriority: true,
+    runtimeMustBeExternalToVercel: true,
+  },
   prospecting: {
     requiresHumanApprovalBeforeFirstContact: true,
     maxOutboundMessagesPerProspect: 3,
