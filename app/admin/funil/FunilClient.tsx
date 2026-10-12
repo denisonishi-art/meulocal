@@ -4,13 +4,13 @@ import {ArrowLeft,RefreshCw,AlertTriangle} from 'lucide-react';
 type Channels={queued:number;sent:number;sentWithProviderId:number;repliedEvents:number;failed:number};
 type Metrics={diagnostics:number;diagnosticsContacted:number;diagnosticOpened:number;diagnosticClicked:number;converted:number;withCompetitorComparison:number;leads:number;leadsWithGhlContact:number;repliesInLeads:number;qualified:number;activeAutomations:number;overdueAutomations:number;email:Channels;whatsapp:Channels};
 type Report={asOf:string;metrics:Metrics;limitations:string[];sampleTruncated:boolean};
-function Num({label,note,value}:{label:string;note:string;value:number|string}){return <article style={{padding:18,border:'1px solid #303643',borderRadius:14,background:'#141923',minWidth:170,flex:'1 1 170px'}}><div style={{opacity:.72,fontSize:13}}>{label}</div><strong style={{display:'block',fontSize:30,margin:'6px 0'}}>{value}</strong><small style={{opacity:.7}}>{note}</small></article>}
+function Num({label,note,value}:{label:string;note:string;value:number|string}){return <article style={{padding:18,border:'1px solid #303643',borderRadius:14,background:'#ffffff',color:'#17212b',minWidth:170,flex:'1 1 170px'}}><div style={{color:'#5b6572',fontSize:13}}>{label}</div><strong style={{display:'block',fontSize:30,margin:'6px 0'}}>{value}</strong><small style={{color:'#66717e'}}>{note}</small></article>}
 export default function FunilClient(){
  const [report,setReport]=useState<Report|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  async function load(){setLoading(true);setError('');try{const r=await fetch('/api/admin/funil',{cache:'no-store'});const j=await r.json();if(!r.ok)throw new Error(j.error||'Erro ao carregar');setReport(j)}catch(e:any){setError(e.message)}finally{setLoading(false)}}
  useEffect(()=>{void load()},[]);
  const m=report?.metrics;
- return <main style={{maxWidth:1150,margin:'0 auto',padding:'24px 18px 56px',fontFamily:'inherit'}}>
+ return <main style={{maxWidth:1150,margin:'0 auto',padding:'24px 18px 56px',fontFamily:'inherit',color:'#17212b',background:'#f8fafc'}}>
   <header style={{display:'flex',flexWrap:'wrap',justifyContent:'space-between',gap:12,alignItems:'center'}}>
    <div><a href="/admin" style={{display:'inline-flex',alignItems:'center',gap:6,marginBottom:12}}><ArrowLeft size={16}/> Voltar ao MeuLocal Admin</a><h1 style={{fontSize:32,margin:0}}>Funil comercial</h1><p>Da descoberta ao cliente, com distinção entre registro interno e entrega comprovada.</p></div>
    <button onClick={()=>void load()} disabled={loading} style={{padding:12,borderRadius:10,border:'1px solid #687084',display:'flex',gap:8,alignItems:'center'}}><RefreshCw size={16}/> Atualizar</button>
@@ -34,7 +34,7 @@ export default function FunilClient(){
     <Num label="Leads em conversa" value={m.qualified} note="Etapa do CRM interno"/>
     <Num label="Com comparação competitiva" value={m.withCompetitorComparison} note="Diagnósticos enriquecidos"/>
    </div>
-   <section style={{border:'1px solid #715425',background:'#231d16',borderRadius:12,padding:18,marginBottom:22}}>
+   <section style={{border:'1px solid #715425',background:'#fff8e9',color:'#5e420d',borderRadius:12,padding:18,marginBottom:22}}>
     <h2 style={{fontSize:20,display:'flex',gap:8,alignItems:'center'}}><AlertTriangle size={20}/> Atenção operacional</h2>
     <p><strong>{m.overdueAutomations}</strong> automações ativas estão atrasadas, de <strong>{m.activeAutomations}</strong> ativas.</p>
     <p>Não disparar a fila acumulada sem validar respostas, opt-outs e entregas no GHL.</p>
