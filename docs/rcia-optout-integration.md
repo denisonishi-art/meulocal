@@ -24,3 +24,10 @@ Status: code in development branches. No production deployment authorized.
 
 ## Release gate
 Do not merge/deploy until tests, preview end-to-end proof and GHL workflow enrollment safeguards all pass. Rotate bridge secret exposed in screenshots in a coordinated change window.
+
+## Verified HighLevel removal API (2026-10-12)
+- Per-contact, per-workflow endpoint: DELETE /contacts/:contactId/workflow/:workflowId with scoped contacts.write, Version header, and required JSON eventStartTime. Reference: https://marketplace.gohighlevel.com/docs/ghl/contacts/delete-contact-from-workflow/
+- Workflow IDs for "Aquisição — diagnóstico inicial" and "Régua de aquisição — follow-up" NOT verified. Never substitute guessed IDs.
+- Enrollment start timestamps not verified; validate the API contract with an authorized test contact.
+- HighLevel connector currently returns 401; no live workflow removal performed.
+- MEULOCAL_GHL_WORKFLOW_UNENROLLMENT_READY is a protective placeholder, NOT proof. Keep disabled until the implementation verifies both workflow removals.
