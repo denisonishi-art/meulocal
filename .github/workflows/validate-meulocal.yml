@@ -17,6 +17,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Inbound intent safety checks
+        run: node scripts/check-inbound-intent.cjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: Build
