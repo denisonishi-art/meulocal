@@ -47,6 +47,9 @@ async function run(req:Request){
      .select('conversation_id,created_at,message_key')
      .eq('lead_id',lead.id).eq('provider','highlevel').eq('event_type','sent')
      .not('conversation_id','is',null).order('created_at',{ascending:false}).limit(1).maybeSingle();
+   if(!lead.last_reply_at && !lastOutbound?.conversation_id){
+     failed++;details.push({leadId:lead.id,status:'reply_reconciliation_unavailable'});continue;
+   }
    if(lastOutbound?.conversation_id&&!lead.last_reply_at){
      try{
        const messages=await getOperationalConversationMessages({token:locationToken,conversationId:lastOutbound.conversation_id,limit:50});
