@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
+import {classifyInboundIntent} from '@/lib/agents/inbound-intent';
 import {findOperationalConversation,getLocationAccessToken,getOperationalConversationMessages,removeOperationalTags} from '@/lib/highlevel-operational';
 
 function authorized(req:Request){const secret=process.env.CRON_SECRET;return Boolean(secret&&req.headers.get('authorization')==='Bearer '+secret)}
@@ -24,10 +25,11 @@ export async function GET(req:Request){
       if(!inbound||new Date(inbound.dateAdded||0).getTime()<=new Date(lead.created_at).getTime())continue;
       const externalId=String(inbound.id||inbound.messageId||'');
       const {data:exists}=externalId?await db.from('outreach_events').select('id').eq('lead_id',lead.id).eq('external_id',externalId).maybeSingle():{data:null};
-      if(!exists)await db.from('outreach_events').insert({lead_id:lead.id,channel:channel(inbound),event_type:'replied',provider:'highlevel',external_id:externalId||null,conversation_id:conversationId,message_key:'diagnostic_initial',metadata:{source:'highlevel_poll',preview:String(inbound.body||inbound.message||'').trim().slice(0,500)}});
-      await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:inbound.dateAdded||now,next_action_at:null,updated_at:now}).eq('id',lead.id);
-      await db.from('businesses').update({status:'engaged',updated_at:now}).eq('id',lead.business_id);
-      await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
+      const intent=classifyInboundIntent(String(inbound.body||inbound.message||''));
+      if(!exists)await db.from('outreach_events').insert({lead_id:lead.id,channel:channel(inbound),event_type:intent==='opt_out'?'unsubscribed':'replied',provider:'highlevel',external_id:externalId||null,conversation_id:conversationId,message_key:'diagnostic_initial',metadata:{source:'highlevel_poll',intent,preview:String(inbound.body||inbound.message||'').trim().slice(0,500)}});
+      await db.from('leads').update(intent==='opt_out'?{lifecycle_stage:'lost',opt_out_at:now,last_reply_at:inbound.dateAdded||now,next_action_at:null,updated_at:now}:{lifecycle_stage:'conversation',last_reply_at:inbound.dateAdded||now,next_action_at:null,updated_at:now}).eq('id',lead.id);
+      await db.from('businesses').update({status:intent==='opt_out'?'lost':'engaged',updated_at:now}).eq('id',lead.business_id);
+      await db.from('automation_enrollments').update({status:intent==='opt_out'?'cancelled':'completed',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
       await removeOperationalTags({token,contactId:lead.ghl_contact_id,tags:['meulocal:prospectar','follow-up']}).catch(()=>undefined);
       replied++;
     }catch{}
