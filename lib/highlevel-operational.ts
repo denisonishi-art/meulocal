@@ -47,7 +47,7 @@ export async function sendOperationalMessage(args:{
   // Safety gate: freeform WhatsApp is not a valid cold-outreach mechanism.
   // Require a separately verified 24h session or approved template implementation.
   if(args.channel==='whatsapp')throw new Error('whatsapp_freeform_blocked: no verified session or approved template flow');
-  const type=args.channel==='whatsapp'?'WhatsApp':'Email';
+  const type='Email';
   const payload:any={type,contactId:args.contactId,message:args.message};
   if(type==='Email'){
     payload.subject=args.subject||'Como foi sua experiência?';
