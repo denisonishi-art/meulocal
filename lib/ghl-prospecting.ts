@@ -25,5 +25,5 @@ export async function enqueueGhlProspect(input:{businessName:string;email:string
 export async function sendGhlProspectWhatsApp(_input:{businessName:string;phone:string;diagnosticUrl:string}){
   // No contact upsert, WhatsApp send, or retry while initial-contact eligibility
   // and approved template dispatch are not implemented and verified.
-  return {ok:false,reason:'whatsapp_outreach_blocked: approved template, opt-in and delivery validation required'};
+  return {ok:false,reason:'whatsapp_outreach_blocked: approved template, opt-in and delivery validation required',contactId:null,conversationId:null,messageId:null};
 }
