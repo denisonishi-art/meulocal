@@ -1,6 +1,5 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
-import {getLocationAccessToken,removeOperationalTags} from '@/lib/highlevel-operational';
 
 // Internal-only opt-out sync. Configure the shared secret on both deployments before enabling RCIA calls.
 export async function POST(request:Request){
