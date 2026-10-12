@@ -1,5 +1,5 @@
 'use client';
-import {FormEvent,useEffect,useMemo,useRef,useState} from 'react';
+import {FormEvent,useEffect,useMemo,useState} from 'react';
 import {
   Activity,ArrowUpRight,Bot,Building2,Check,ClipboardCheck,
   Gauge,LogOut,MapPin,RefreshCw,Search,Send,ShieldCheck,Sparkles,Users,Workflow
@@ -27,7 +27,7 @@ function Pill({value}:{value?:string|null}){const key=(value||'').replaceAll('_'
 function DeliveryPill({delivery}:{delivery?:any}){const state=delivery?.state||'pending';const label=state==='contacted'?`Na régua${delivery?.channel?` · ${delivery.channel}`:''}`:state==='error'?`Erro${delivery?.channel?` · ${delivery.channel}`:''}`:state==='converted'?'Convertido':'Pendente';return <span className={'statusPill '+(state==='contacted'?'active':state==='error'?'error':state==='converted'?'converted':'pending')} title={delivery?.reason||label}>{label}</span>}
 
 export default function AdminClient(){
- const[view,setView]=useState<View>('overview');const recoveredApproved=useRef(false);
+ const[view,setView]=useState<View>('overview');
  const[data,setData]=useState<Overview|null>(null);const[loadingData,setLoadingData]=useState(true);const[dataError,setDataError]=useState('');
  const[niche,setNiche]=useState('');const[region,setRegion]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');const[diagMsg,setDiagMsg]=useState('');const[deliveryPeriod,setDeliveryPeriod]=useState<'all'|'week'|'month'>('all');const[replyingTo,setReplyingTo]=useState<string|null>(null);const[replyText,setReplyText]=useState('');
 
@@ -59,10 +59,8 @@ export default function AdminClient(){
    try{const r=await fetch('/api/agents/prospect/reply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leadId:d.leadId,message:replyText,channel:d.reply?.channel})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Não foi possível enviar a resposta.');setReplyingTo(null);setReplyText('');setDiagMsg(`Resposta enviada por ${j.channel==='whatsapp'?'WhatsApp':'e-mail'}.`);await loadOverview()}catch(e:any){setDiagMsg(e.message)}finally{setBusy(false)}
  }
 
- useEffect(()=>{
-   const pending=(data?.diagnostics||[]).filter((d:any)=>d.status==='approved');
-   if(!recoveredApproved.current&&pending.length){recoveredApproved.current=true;void dispatchApproved(pending)}
- },[data]);
+ // Nunca iniciar prospecção automaticamente ao abrir a página administrativa.
+ // Ação de envio exige clique explícito e as proteções do servidor.
 
  async function logout(){await fetch('/api/admin/session',{method:'DELETE'});window.location.href='/admin-login'}
 
@@ -74,6 +72,7 @@ export default function AdminClient(){
      <nav>
        {nav('overview',Gauge)}{nav('prospecting',Search)}{nav('leads',Users)}{nav('diagnostics',ClipboardCheck)}
        {nav('customers',Building2)}{nav('automations',Workflow)}{nav('agents',Bot)}
+       <a href="/admin/funil"><Gauge/>Funil comercial</a>
        <a href="/admin/aprendizado"><Sparkles/>Aprendizado</a>
      </nav>
      <div className="adminSafety"><ShieldCheck/><div><strong>Operação protegida</strong><small>Admin separado da área do cliente. GHL e integrações ficam nos bastidores.</small></div></div>
