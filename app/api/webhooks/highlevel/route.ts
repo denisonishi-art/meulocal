@@ -2,6 +2,7 @@ import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {createHash,verify as verifySignature} from 'crypto';
 import {getLocationAccessToken,removeOperationalTags} from '@/lib/highlevel-operational';
+import {classifyInboundIntent} from '@/lib/agents/inbound-intent';
 
 function eventId(body:any){
   const explicit=body?.id||body?.eventId||body?.messageId||body?.message?.id;
@@ -15,7 +16,7 @@ function normalize(body:any){
   const channel=body?.messageType||body?.channel||body?.message?.type||null;
   const status=body?.status||body?.message?.status||null;
   const text=String(body?.body||body?.message?.body||body?.message||'').trim();
-  const explicitStop=/^(sair|stop|cancelar|unsubscribe)$/i.test(text);
+  const explicitStop=String(direction||'').toLowerCase()==='inbound'&&classifyInboundIntent(text)==='opt_out';
   const optedOut=Boolean(body?.optedOut||body?.dnd||explicitStop||/opt.?out|unsubscribe|dnd/i.test(type));
   const conversion=Boolean(body?.conversion||/conversion|opportunity.*won|payment/i.test(type));
   return {
@@ -103,6 +104,7 @@ export async function POST(request:Request){
           await db.from('leads').update({lifecycle_stage:'lost',opt_out_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id);
           await db.from('automation_enrollments').update({status:'cancelled',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
           await db.from('businesses').update({status:'lost',updated_at:now}).eq('id',lead.business_id);
+          try{const token=await getLocationAccessToken(row.ghl_location_id);await removeOperationalTags({token,contactId:row.contact_id,tags:['meulocal:prospectar','follow-up']})}catch{}
         }else if(eventType==='replied'){
           await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id);
           await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
