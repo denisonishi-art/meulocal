@@ -1,4 +1,4 @@
-import { buildConsultativeApproach } from "./consultative-approach";
+import { buildConsultativeApproach } from "../lib/agents/consultative-approach";
 
 const assert = (condition: boolean, message: string) => { if (!condition) throw new Error(message); };
 const sample = {
