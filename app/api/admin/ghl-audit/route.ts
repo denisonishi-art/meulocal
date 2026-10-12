@@ -20,18 +20,23 @@ export async function GET(req: Request) {
     .order('created_at',{ascending:false}).limit(10);
   if(error) return NextResponse.json({error:'Não foi possível consultar leads.'},{status:502});
   let checked=0,conversationsFound=0,withInbound=0,withOutbound=0,errors=0;
+  let missingLocation=0,tokenFailures=0,conversationFailures=0,messageFailures=0;
+  const failureCodes:Record<string,number>={};
+  const countFailure=(err:unknown)=>{const text=err instanceof Error?err.message:String(err);const match=text.match(/\b(400|401|403|404|405|408|409|422|429|500|502|503|504)\b/);const code=match?`http_${match[1]}`:'other';failureCodes[code]=(failureCodes[code]||0)+1;};
   const byLocation=new Map<string,string>();
   for(const lead of leads||[]) {
     const locationId=String(lead.ghl_location_id||'');
-    if(!locationId) {errors++;continue;}
+    if(!locationId) {errors++;missingLocation++;continue;}
     try {
       let token=byLocation.get(locationId);
-      if(!token){token=await getLocationAccessToken(locationId);byLocation.set(locationId,token);}
-      const id=await findOperationalConversation({token,locationId,contactId:lead.ghl_contact_id});
+      if(!token){try{token=await getLocationAccessToken(locationId);byLocation.set(locationId,token);}catch(err){errors++;tokenFailures++;countFailure(err);continue;}}
+      let id:string|null;
+      try{id=await findOperationalConversation({token,locationId,contactId:lead.ghl_contact_id});}catch(err){errors++;conversationFailures++;countFailure(err);continue;}
       checked++;
       if(!id)continue;
       conversationsFound++;
-      const messages=await getOperationalConversationMessages({token,conversationId:id,limit:50});
+      let messages:any[];
+      try{messages=await getOperationalConversationMessages({token,conversationId:id,limit:50});}catch(err){errors++;messageFailures++;countFailure(err);continue;}
       if(messages.some((m:any)=>String(m?.direction||'').toLowerCase()==='inbound'))withInbound++;
       if(messages.some((m:any)=>String(m?.direction||'').toLowerCase()==='outbound'))withOutbound++;
     } catch {errors++;}
@@ -39,6 +44,7 @@ export async function GET(req: Request) {
   return NextResponse.json({
     status:'read_only_audit',
     sampled:(leads||[]).length,checked,conversationsFound,withInbound,withOutbound,errors,
+    diagnostics:{missingLocation,tokenFailures,conversationFailures,messageFailures,failureCodes},
     note:'Amostra limitada; eventos no GHL não comprovam entrega sem status do provedor.'
   },{headers:{'Cache-Control':'no-store'}});
 }
