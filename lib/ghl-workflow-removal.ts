@@ -14,7 +14,7 @@ export function validateWorkflowRemovals(input:unknown):WorkflowRemoval[] {
     if(!entry||typeof entry!=='object')throw new Error('invalid_workflow_enrollment');
     const value=entry as Record<string,unknown>;
     if(typeof value.workflowId!=='string'||!MEULOCAL_GHL_WORKFLOWS.includes(value.workflowId as typeof MEULOCAL_GHL_WORKFLOWS[number])||seen.has(value.workflowId))throw new Error('workflow_id_not_allowed');
-    if(typeof value.eventStartTime!=='string'||!/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(value.eventStartTime)||!Number.isFinite(Date.parse(value.eventStartTime)))throw new Error('workflow_start_time_missing');
+    if(typeof value.eventStartTime!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value.eventStartTime)||!Number.isFinite(Date.parse(value.eventStartTime)))throw new Error('workflow_start_time_missing');
     seen.add(value.workflowId);result.push({workflowId:value.workflowId,eventStartTime:value.eventStartTime});
   }
   return result;
