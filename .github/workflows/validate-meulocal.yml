@@ -19,6 +19,8 @@ jobs:
       - run: npm ci
       - name: Inbound intent safety checks
         run: node scripts/check-inbound-intent.cjs
+      - name: Workflow removal contract (mock only)
+        run: node scripts/check-ghl-workflow-removal.cjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: Build
