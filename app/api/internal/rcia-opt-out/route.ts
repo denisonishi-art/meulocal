@@ -19,6 +19,9 @@ export async function POST(request:Request){
   const {data:lead,error}=await db.from('leads').select('id,business_id').eq('ghl_location_id',locationId).eq('ghl_contact_id',contactId).maybeSingle();
   if(error)return NextResponse.json({error:'lookup_failed'},{status:500});
   if(!lead)return NextResponse.json({error:'contact_not_found'},{status:404});
+  // Do not report full synchronization until GHL workflow unenrollment is configured and proven.
+  // Tag removal alone does not stop a contact already enrolled in a published workflow.
+  if(process.env.MEULOCAL_GHL_WORKFLOW_UNENROLLMENT_READY!=='true')return NextResponse.json({error:'ghl_workflow_unenrollment_not_verified'},{status:503});
   // GHL tag removal is required before reporting a fully synchronized opt-out.
   let token:string;
   try{token=await getLocationAccessToken(locationId);await removeOperationalTags({token,contactId,tags:['meulocal:prospectar','follow-up']})}
