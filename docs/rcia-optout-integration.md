@@ -31,3 +31,10 @@ Do not merge/deploy until tests, preview end-to-end proof and GHL workflow enrol
 - Enrollment start timestamps not verified; validate the API contract with an authorized test contact.
 - HighLevel connector currently returns 401; no live workflow removal performed.
 - MEULOCAL_GHL_WORKFLOW_UNENROLLMENT_READY is a protective placeholder, NOT proof. Keep disabled until the implementation verifies both workflow removals.
+
+## Workflow links supplied by operator (2026-10-12)
+- GHL location: `uNh3KsM7WFuLeTN8Q583`
+- Workflow A: `bb6f4a2b-46d7-4e23-9c99-176461551583`
+- Workflow B: `f4500c60-e33d-41f5-a461-c146662e226e`
+- Exact name-to-ID association NOT yet verified; verify before edits.
+- Links establish workflow IDs but do not prove live enrollment or allow mutation.
