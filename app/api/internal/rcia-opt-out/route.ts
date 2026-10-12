@@ -19,13 +19,7 @@ export async function POST(request:Request){
   const {data:lead,error}=await db.from('leads').select('id,business_id').eq('ghl_location_id',locationId).eq('ghl_contact_id',contactId).maybeSingle();
   if(error)return NextResponse.json({error:'lookup_failed'},{status:500});
   if(!lead)return NextResponse.json({error:'contact_not_found'},{status:404});
-  // Do not report full synchronization until GHL workflow unenrollment is configured and proven.
-  // Tag removal alone does not stop a contact already enrolled in a published workflow.
-  if(process.env.MEULOCAL_GHL_WORKFLOW_UNENROLLMENT_READY!=='true')return NextResponse.json({error:'ghl_workflow_unenrollment_not_verified'},{status:503});
-  // GHL tag removal is required before reporting a fully synchronized opt-out.
-  let token:string;
-  try{token=await getLocationAccessToken(locationId);await removeOperationalTags({token,contactId,tags:['meulocal:prospectar','follow-up']})}
-  catch{return NextResponse.json({error:'ghl_tag_removal_failed'},{status:503})}
+  // Record the refusal locally first: remote GHL outages must not keep acquisition enabled.
   const now=new Date().toISOString();
   const updates=await Promise.all([
     db.from('leads').update({lifecycle_stage:'lost',opt_out_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id),
@@ -33,5 +27,7 @@ export async function POST(request:Request){
     db.from('businesses').update({status:'lost',updated_at:now}).eq('id',lead.business_id)
   ]);
   if(updates.some(result=>result.error))return NextResponse.json({error:'persistence_failed'},{status:500});
-  return NextResponse.json({ok:true,synchronized:true});
+  // Remote synchronization is still missing verified enrollment lookups and removals.
+  // Never return synchronized:true based on an environment flag or tag removal alone.
+  return NextResponse.json({ok:false,localOptOutRecorded:true,error:'ghl_workflow_unenrollment_not_implemented'},{status:503});
 }
