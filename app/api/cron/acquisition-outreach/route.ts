@@ -67,6 +67,7 @@ async function run(req:Request){
        }
      }catch(reconcileError:any){
        details.push({leadId:lead.id,status:'reply_reconciliation_failed',error:String(reconcileError?.message||reconcileError).slice(0,160)});
+       failed++;continue; // fail closed: do not send while reply state is unknown
      }
    }
    if(lead.opt_out_at||lead.last_reply_at||['conversation','customer','lost'].includes(lead.lifecycle_stage)){await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);stopped++;continue}
