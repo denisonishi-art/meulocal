@@ -5,9 +5,9 @@ export const MEULOCAL_GHL_WORKFLOWS = [
 
 export type WorkflowRemoval = {workflowId:string;eventStartTime:string};
 
-/** Prepare only exact allow-listed GHL workflow removals; no inferred start time. */
+/** Only explicitly verified memberships (one or two) may be removed; no inferred start time. */
 export function validateWorkflowRemovals(input:unknown):WorkflowRemoval[] {
-  if(!Array.isArray(input)||input.length!==MEULOCAL_GHL_WORKFLOWS.length)throw new Error('workflow_enrollments_not_verified');
+  if(!Array.isArray(input)||input.length<1||input.length>MEULOCAL_GHL_WORKFLOWS.length)throw new Error('workflow_enrollments_not_verified');
   const seen=new Set<string>();
   const result:WorkflowRemoval[]=[];
   for(const entry of input){
