@@ -9,3 +9,13 @@ check(rankLeads([{...base,evidence:[evidence,evidence]},base]).length===1,"lead 
 check(qualifyLead({...base,evidence:[evidence,evidence]}).score===30,"evidence deduplication");
 let refused=false;try{validateJob({segment:"geradores",city:"Sao Paulo",state:"SP",requestedLimit:10,mode:"send" as "research_only"})}catch{refused=true}
 check(refused,"outbound mode must be refused");
+
+for (const segment of ['buffet infantil','pizzarias','escolas','despachantes','academias','aluguel de geradores']) {
+  const job=validateJob({segment,city:'Sao Paulo',state:'SP',requestedLimit:5,mode:'research_only'});
+  check(job.segment===segment,'multisector segment accepted: '+segment);
+}
+for (const segment of ['', 'a'.repeat(81)]) {
+  let invalid=false;
+  try {validateJob({segment,city:'Sao Paulo',state:'SP',requestedLimit:5,mode:'research_only'});} catch {invalid=true;}
+  check(invalid,'invalid segment refused');
+}
