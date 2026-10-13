@@ -8,7 +8,7 @@ export type Evidence = { signal: Signal; url: string; observedAt: string; descri
 export type BusinessLead = {
   externalId: string;
   name: string;
-  segment: "geradores" | "clinicas" | "outro";
+  segment: string;
   city: string;
   state: string;
   website?: string;
@@ -61,7 +61,7 @@ export type ProspectingJob = {
   mode: "research_only";
 };
 export function validateJob(input: ProspectingJob): ProspectingJob {
-  if (!["geradores", "clinicas", "outro"].includes(input.segment)) throw new Error("Segmento invalido");
+  if (typeof input.segment !== "string" || !input.segment.trim() || input.segment.length > 80) throw new Error("Segmento invalido");
   if (!input.city.trim() || !input.state.trim()) throw new Error("Localidade obrigatoria");
   if (!Number.isInteger(input.requestedLimit) || input.requestedLimit < 1 || input.requestedLimit > 50)
     throw new Error("Limite permitido: 1 a 50");
