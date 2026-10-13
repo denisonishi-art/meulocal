@@ -4,7 +4,7 @@ import { rankLeads, validateJob, type BusinessLead } from "@/lib/agents/prospect
 
 export const runtime = "nodejs";
 const jobSchema = z.object({
-  segment: z.enum(["geradores", "clinicas", "outro"]),
+  segment: z.string().trim().min(2).max(80),
   city: z.string().min(2).max(100),
   state: z.string().min(2).max(30),
   requestedLimit: z.number().int().min(1).max(50),
@@ -12,7 +12,7 @@ const jobSchema = z.object({
   leads: z.array(z.object({
     externalId: z.string().min(1),
     name: z.string().min(1),
-    segment: z.enum(["geradores", "clinicas", "outro"]),
+    segment: z.string().trim().min(2).max(80),
     city: z.string().min(1),
     state: z.string().min(1),
     website: z.string().optional(),
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   const { leads, ...jobInput } = parsed.data;
   const job = validateJob(jobInput);
   const eligible = (leads as BusinessLead[])
-    .filter(lead => lead.segment === job.segment && lead.city.toLowerCase() === job.city.toLowerCase() && lead.state.toLowerCase() === job.state.toLowerCase())
+    .filter(lead => lead.segment.trim().toLowerCase() === job.segment.trim().toLowerCase() && lead.city.toLowerCase() === job.city.toLowerCase() && lead.state.toLowerCase() === job.state.toLowerCase())
     .slice(0, job.requestedLimit);
   return NextResponse.json({
     mode: "research_only",
