@@ -1,0 +1,59 @@
+name: OpenDots - manual research only
+on:
+  workflow_dispatch:
+    inputs:
+      approved:
+        description: 'Authorize one bounded research run, provider usage and no outreach'
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: opendots-meulocal-research
+  cancel-in-progress: false
+jobs:
+  research:
+    if: inputs.approved && github.repository == 'denisonishi-art/meulocal' && github.ref == 'refs/heads/feat/opendots-prospeccao-meulocal'
+    runs-on: ubuntu-24.04
+    environment: opendots-research
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-10-13
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.21.0'
+      - name: Install existing MeuLocal dependencies from lock
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Prepare pinned existing OpenDots
+        run: node scripts/opendots-worker/bootstrap.cjs
+      - name: Validate worker with synthetic providers
+        env:
+          OPENDOTS_ROOT: ${{ github.workspace }}/.opendots/upstream
+        run: |
+          node --test scripts/opendots-worker/adapter.test.cjs scripts/opendots-worker/backend-mapping.test.cjs scripts/opendots-worker/agent-text.test.cjs scripts/opendots-worker/remote.test.cjs scripts/opendots-worker/credential-environment.test.cjs
+          node --test scripts/opendots-worker/local-integration.test.mjs scripts/opendots-worker/workspace-bootstrap.test.mjs scripts/opendots-worker/run-research.test.mjs
+      - name: Run a single Intelligence research job
+        env:
+          CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MEULOCAL_PROSPECTOR_API_KEY: ${{ secrets.MEULOCAL_PROSPECTOR_API_KEY }}
+          OPENDOTS_EXECUTION_MODE: intelligence
+          MEULOCAL_RESEARCH_LIMIT: '5'
+          DO_NOT_TRACK: '1'
+          COPILOTKIT_TELEMETRY_DISABLED: 'true'
+        run: node scripts/opendots-worker/run-research.mjs
+      - name: Publish sanitized research summary only
+        if: always()
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const dir='.opendots/results';
+          if(fs.existsSync(dir)) for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('.json'))){
+            const r=JSON.parse(fs.readFileSync(dir+'/'+file,'utf8'));
+            const summary={runId:r.runId,status:r.status,mode:r.mode,commercialEligibility:r.commercialEligibility,sourceRequests:r.sourceRequests,modelRequests:r.modelRequests?.length,tokens:r.tokens,estimatedModelUSD:r.estimatedModelUSD,candidates:(r.research?.assessments||[]).map(a=>({externalId:a.lead.externalId,name:a.lead.name,score:a.score,approvalStatus:a.approvalStatus})),drafts:r.research?.drafts,proposedModelText:r.answer,crmWrites:r.crmWrites,outboundMessages:r.outboundMessages};
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\n```json\n'+JSON.stringify(summary,null,2)+'\n```\n');
+          }
+          JS

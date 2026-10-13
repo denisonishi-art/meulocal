@@ -1,0 +1,115 @@
+{
+  "observedAt": "2026-10-13T18:28:34.939Z",
+  "executionMode": "official_DotAgent_local_diagnostic",
+  "status": "INVALIDATED_CREDENTIAL_ORIGIN",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "modelRequests": [
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 1246,
+        "completion_tokens": 57,
+        "total_tokens": 1303,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 2791,
+        "completion_tokens": 606,
+        "total_tokens": 3397,
+        "prompt_tokens_details": {
+          "cached_tokens": 1152,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ],
+  "tokens": {
+    "input": 4037,
+    "cached": 1152,
+    "output": 663
+  },
+  "estimatedModelUSD": 0.00233,
+  "sourceRequests": 1,
+  "qualificationHttpStatus": 200,
+  "qualifiedSignalsForReview": 2,
+  "assessments": [
+    {
+      "lead": {
+        "externalId": "google_places:ChIJYfjsEkdRzpQRuW8xFjj0-xs",
+        "name": "Aluguel de Gerador SP",
+        "segment": "geradores",
+        "city": "Sao Paulo",
+        "state": "SP",
+        "website": "https://aluguelgeradorsp.com.br/",
+        "evidence": [
+          {
+            "signal": "few_reviews",
+            "url": "https://meulocal.ia.br/api/places/search",
+            "observedAt": "2026-10-13T18:28:38.865Z",
+            "description": "Backend MeuLocal retorna 16 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional.",
+            "verified": true
+          }
+        ]
+      },
+      "score": 30,
+      "priority": "media",
+      "reasons": [
+        "Backend MeuLocal retorna 16 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional."
+      ],
+      "approvalStatus": "pending_review"
+    },
+    {
+      "lead": {
+        "externalId": "google_places:ChIJJVVT0zVfzpQRj7YTHWsueaM",
+        "name": "Central de Locação de Geradores de Energia Elétrica",
+        "segment": "geradores",
+        "city": "Sao Paulo",
+        "state": "SP",
+        "website": "https://hajaluzgeradores.lovable.app/",
+        "evidence": [
+          {
+            "signal": "few_reviews",
+            "url": "https://meulocal.ia.br/api/places/search",
+            "observedAt": "2026-10-13T18:28:38.865Z",
+            "description": "Backend MeuLocal retorna 7 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional.",
+            "verified": true
+          }
+        ]
+      },
+      "score": 30,
+      "priority": "media",
+      "reasons": [
+        "Backend MeuLocal retorna 7 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional."
+      ],
+      "approvalStatus": "pending_review"
+    }
+  ],
+  "crmWrites": 0,
+  "messagesSent": 0,
+  "productionQualificationEndpoint": "NOT_VERIFIED_HTTP_404",
+  "intelligenceHeadless": "NOT_VERIFIED_PRIOR_HTTP_502",
+  "draftReview": "Unvalidated model output is private; generic third draft discarded, two real candidates only.",
+  "sourceReportSha256": "e8340e3e72b9654448e346c1259607e3c5003164d05b154a04c9300d867e8303",
+  "sessionIdentifiersRemoved": true,
+  "reason": "Inherited process OPENAI_API_KEY took precedence over Node --env-file. Key source differs from worker file. No value exposed. Account billing NOT_VERIFIED. Not accepted as authorized authentication proof."
+}

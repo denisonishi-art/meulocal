@@ -1,0 +1,57 @@
+{
+  "status": "READY_FOR_CONTROLLED_DEPLOYMENT_CODE_ONLY",
+  "remoteOperation": "NOT_VERIFIED",
+  "campaign": "NO_GO",
+  "publicationBase": "061886a638bd0383d19098921dd33b7f1c067cf2",
+  "upstream": "625452e06cde74cb25b0ce319e2c1be0488f5a5f",
+  "node": "24.21.0",
+  "tests": {
+    "macWorker": {
+      "pass": 22,
+      "fail": 0,
+      "logSha256": "c7eee38e71df3d4ed89b0fb62beb4c7cd1dc1f95c9cbe313001c10be7845e050"
+    },
+    "linuxSynthetic": {
+      "pass": 22,
+      "fail": 0,
+      "architecture": "aarch64",
+      "network": "none",
+      "credentials": "none",
+      "imageDigest": "sha256:3d27e5c11e5786e309ec3e03f93ae536eb36e6e5eb3714d5eb3300a36157add0",
+      "logSha256": "5b75dd7c0f0d7b546c1505ef380baa5c05e3645bae7d059e659d4bf8b184caed"
+    }
+  },
+  "typecheck": "PASS",
+  "build": "PASS_EXISTING_CSS_WARNINGS",
+  "lint": "PASS_WORKER_STATIC_RULES_WITH_EXISTING_ESLINT8_NO_NEW_PACKAGE",
+  "fullPublishedTreeLint": "NOT_RUN_REMOTE_PARENT_REMOVED_ESLINT_CONFIG_AND_DEPENDENCY",
+  "rootPendingRegression": "45_PLUS_INBOUND_INTENT_PASS_NO_APPLICATION_CODE_EDITED",
+  "realCycle": "LOCAL_DIAGNOSTIC_REAL_SOURCE_MODEL_LOCAL_QUALIFIER",
+  "credentialOrigin": "EXPLICIT_AUTHORIZED_WORKER_ENV_FILE_REVALIDATED",
+  "invalidatedAttempt": "PRESERVED_SEPARATELY_NOT_AUTHORIZATION_PROOF",
+  "secretScan": "PASS_KNOWN_AUTHORIZED_AND_INHERITED_VALUES_NO_VALUES_RECORDED",
+  "macAbsoluteCodePaths": "NONE",
+  "sourceModuleSha256": {
+    "prospect-intelligence.ts": "0fe00222eeeb6bc5f11eb574836eea29d21d845898174cd203b7585f230c25c9",
+    "consultative-approach.ts": "242f02020473c90f14fb293512de8b41c6beea58cb35fe91dbcf9d005d91dc84"
+  },
+  "backendGates": {
+    "privateQualificationHTTPS": "HTTP_404",
+    "privateKeyLocalPresence": "ABSENT",
+    "intelligence": "PRIOR_502_NOT_REVALIDATED",
+    "ghl": "PRIOR_403_NO_NEW_ACCESS"
+  },
+  "effects": {
+    "crmWrites": 0,
+    "messages": 0,
+    "migrations": 0,
+    "productionDeploys": 0,
+    "paidInfrastructureCreated": 0,
+    "mainModified": false
+  },
+  "preservation": {
+    "originalPendingFilesMissing": 0,
+    "originalPendingChangesOutsideWorker": 0,
+    "remoteParentApplicationChangesPreserved": true
+  }
+}
