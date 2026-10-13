@@ -12,6 +12,7 @@ export type BusinessLead = {
   city: string;
   state: string;
   website?: string;
+  address?: string;
   evidence: Evidence[];
 };
 export type LeadAssessment = {
@@ -20,6 +21,7 @@ export type LeadAssessment = {
   priority: "alta" | "media" | "baixa" | "sem_evidencias";
   reasons: string[];
   approvalStatus: "pending_review";
+  opportunityStatus: "needs_context" | "evidence_for_review";
 };
 const weights: Record<Signal, number> = {
   few_reviews: 30,
@@ -30,7 +32,7 @@ const weights: Record<Signal, number> = {
 };
 export function qualifyLead(lead: BusinessLead): LeadAssessment {
   const trusted = lead.evidence.filter(e => {
-    if (!e.verified || !e.description.trim() || !Number.isFinite(Date.parse(e.observedAt))) return false;
+    if (!e.verified || !e.description.trim() || (!Number.isFinite(Date.parse(e.observedAt)) || Date.parse(e.observedAt)>Date.now())) return false;
     try { const u = new URL(e.url); return u.protocol === "https:" || u.protocol === "http:"; }
     catch { return false; }
   });
@@ -42,6 +44,7 @@ export function qualifyLead(lead: BusinessLead): LeadAssessment {
     priority: unique.length === 0 ? "sem_evidencias" : score >= 60 ? "alta" : score >= 30 ? "media" : "baixa",
     reasons: unique.map(e => e.description),
     approvalStatus: "pending_review",
+    opportunityStatus: unique.some(e=>e.signal!=="few_reviews") ? "evidence_for_review" : "needs_context",
   };
 }
 export function rankLeads(leads: BusinessLead[]): LeadAssessment[] {

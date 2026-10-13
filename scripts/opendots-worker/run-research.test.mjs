@@ -9,9 +9,9 @@ for(const invalid of [false,true])test('official portable worker with SYNTHETIC 
  try{
   const result=await runResearch(config,{fetch:async(url,init)=>{
    destinations.push(url);
-   if(url==='https://meulocal.ia.br/api/places/search'){
-    sourceCalls++;assert.equal(JSON.stringify(init).includes('SYNTHETIC_PRIVATE_KEY'),false);
-    const place={id:'SYNTHETIC_PLACE',name:'SYNTHETIC Geradores',address:'Rua Exemplo, São Paulo - SP, Brasil',reviewCount:12,rating:4.8};return Response.json({places:[place,place]});
+   if(url===config.discoveryEndpoint){
+    sourceCalls++;assert.equal(init.headers['x-prospector-api-key'],'SYNTHETIC_PRIVATE_KEY');
+    const place={id:'SYNTHETIC_PLACE',name:'SYNTHETIC Geradores',address:'Rua Exemplo, São Paulo - SP, Brasil',reviewCount:12,rating:4.8};return Response.json({contract:'meulocal.places.v1',source:'google_places',observedAt:new Date().toISOString(),places:[place,place],actions:{crmWrite:false,outboundMessages:false,humanReviewRequired:true}});
    }
    if(url===config.endpoint){const payload=JSON.parse(init.body),{leads,...job}=payload;return Response.json({mode:'research_only',job,assessments:rankLeads(leads),actions:{crmWrite:invalid,outboundMessages:false,humanReviewRequired:true}})}
    assert.equal(url,'https://api.openai.com/v1/chat/completions');const payload=JSON.parse(init.body);modelCalls++;

@@ -12,6 +12,6 @@ export function bootstrapWorkspace(WorkspaceStore,file,ownerId,identity){
   fs.chmodSync(file,0o600);
  }
  const workspace=new WorkspaceStore(file,ownerId);const dots=workspace.dots();
- if(dots.length!==1||dots[0].id!==identity.id||dots[0].name!==identity.name||dots[0].spaceId!==identity.spaceId||dots[0].researchAllowed||dots[0].memoryAllowed||dots[0].skillDeliveryEnabled){workspace.close();throw Error('existing_agent_identity_or_permissions_mismatch')}
+ if(dots.length!==1||dots[0].id!==identity.id||dots[0].name!==identity.name||dots[0].spaceId!==identity.spaceId||dots[0].researchAllowed||dots[0].memoryAllowed||dots[0].skillDeliveryEnabled||dots[0].instructions!==instructions.instructions){workspace.close();throw Error('existing_agent_identity_or_permissions_mismatch')}
  return workspace;
 }

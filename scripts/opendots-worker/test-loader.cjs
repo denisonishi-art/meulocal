@@ -2,6 +2,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const ts=require('typescript');
 module.exports=function loader(stubs={}){
+ stubs={'@/lib/rate-limit':{consumeRateLimit:async()=>({allowed:true,mode:'enforced'})},...stubs};
  const cache=new Map();
  function load(file){
   const resolved=path.resolve(file);

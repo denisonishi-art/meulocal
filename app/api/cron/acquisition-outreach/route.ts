@@ -1,5 +1,7 @@
+const commercialReleaseVerified=false;
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
+import {reconcileAcquisitionMessages} from '@/lib/meulocal-inbound';
 import {getLocationAccessToken,getOperationalConversationMessages,sendOperationalMessage,upsertOperationalContact} from '@/lib/highlevel-operational';
 
 function authorized(req:Request){const secret=process.env.CRON_SECRET;return Boolean(secret&&req.headers.get('authorization')==='Bearer '+secret)}
@@ -41,6 +43,8 @@ async function run(req:Request){
  for(const enrollment of enrollments||[]){
    const {data:lead}=await db.from('leads').select('id,business_id,name,email,whatsapp,consent_whatsapp,lifecycle_stage,prospect_diagnostic_id,ghl_contact_id,ghl_location_id,opt_out_at,last_reply_at').eq('id',enrollment.lead_id).maybeSingle();
    if(!lead)continue;
+   if(lead.opt_out_at||lead.last_reply_at||['conversation','customer','lost'].includes(lead.lifecycle_stage)){await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);stopped++;continue}
+   if(lead.ghl_location_id&&lead.ghl_location_id!==locationId){failed++;details.push({leadId:lead.id,status:'wrong_location'});continue}
    // Safety net: reconcile HighLevel replies before any follow-up is sent.
    // This makes reply-stop work even if a webhook is delayed or unavailable.
    const {data:lastOutbound}=await db.from('outreach_events')
@@ -53,27 +57,14 @@ async function run(req:Request){
    if(lastOutbound?.conversation_id&&!lead.last_reply_at){
      try{
        const messages=await getOperationalConversationMessages({token:locationToken,conversationId:lastOutbound.conversation_id,limit:50});
-       const inbound=messages
-         .filter((m:any)=>String(m?.direction||'').toLowerCase()==='inbound')
-         .sort((a:any,b:any)=>new Date(b?.dateAdded||0).getTime()-new Date(a?.dateAdded||0).getTime())[0];
-       if(inbound&&new Date(inbound.dateAdded||0).getTime()>new Date(lastOutbound.created_at||0).getTime()){
-         const repliedAt=inbound.dateAdded||now.toISOString();
-         const inboundId=String(inbound.id||inbound.messageId||'');
-         if(inboundId){
-           const {data:existingReply}=await db.from('outreach_events').select('id').eq('lead_id',lead.id).eq('event_type','replied').eq('external_id',inboundId).maybeSingle();
-           if(!existingReply)await db.from('outreach_events').insert({lead_id:lead.id,channel:/email/i.test(String(inbound.messageType||''))?'email':/whatsapp/i.test(String(inbound.messageType||''))?'whatsapp':'system',event_type:'replied',provider:'highlevel',external_id:inboundId,conversation_id:lastOutbound.conversation_id,message_key:lastOutbound.message_key||null,metadata:{source:'highlevel_reconciliation'}});
-         }
-         await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:repliedAt,next_action_at:null,updated_at:now.toISOString()}).eq('id',lead.id);
-         await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);
-         await db.from('businesses').update({status:'engaged',updated_at:now.toISOString()}).eq('id',lead.business_id);
-         stopped++;details.push({leadId:lead.id,status:'stopped_on_reply_reconciliation'});continue;
-       }
+       if(!lead.ghl_contact_id||lead.ghl_location_id!==locationId)throw new Error('inbound_scope_unverified');
+       const reply=await reconcileAcquisitionMessages(db,{scope:{locationId,contactId:lead.ghl_contact_id},messages,since:lastOutbound.created_at,conversationId:lastOutbound.conversation_id,source:'highlevel_reconciliation'});
+       if(reply.stopped){stopped++;details.push({leadId:lead.id,status:'stopped_on_reply_reconciliation',states:reply.states});continue}
      }catch(reconcileError:any){
-       details.push({leadId:lead.id,status:'reply_reconciliation_failed',error:String(reconcileError?.message||reconcileError).slice(0,160)});
+       details.push({leadId:lead.id,status:'reply_reconciliation_failed'});
        failed++;continue; // fail closed: do not send while reply state is unknown
      }
    }
-   if(lead.opt_out_at||lead.last_reply_at||['conversation','customer','lost'].includes(lead.lifecycle_stage)){await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);stopped++;continue}
    const {data:diag}=await db.from('prospect_diagnostics').select('id,public_token,business_name,status,converted_at,first_contact_at').eq('id',lead.prospect_diagnostic_id).maybeSingle();
    if(!diag)continue;
    if(diag.converted_at||diag.status==='converted'||diag.status==='closed'){await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);stopped++;continue}
@@ -81,10 +72,23 @@ async function run(req:Request){
    if(nextStep>3){await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);continue}
    let channel:'email'|'whatsapp'|null=lead.email?'email':lead.whatsapp&&lead.consent_whatsapp?'whatsapp':null;
    if(!channel){await db.from('outreach_events').insert({lead_id:lead.id,channel:'system',event_type:'failed',provider:'meulocal',message_key:'acquisition_step_'+nextStep,metadata:{reason:'no_approved_channel'}});await db.from('automation_enrollments').update({status:'paused',next_run_at:null}).eq('id',enrollment.id);failed++;continue}
+   // Re-read after reconciliation: the snapshot at the start of the loop may be stale.
+   const eligibility=await db.from('leads').select('opt_out_at,last_reply_at,lifecycle_stage,ghl_location_id').eq('id',lead.id).maybeSingle();
+   if(eligibility.error||!eligibility.data){failed++;details.push({leadId:lead.id,status:'eligibility_unverified'});continue}
+   if(eligibility.data.opt_out_at||eligibility.data.last_reply_at||['conversation','customer','lost'].includes(eligibility.data.lifecycle_stage)){await db.from('automation_enrollments').update({status:'cancelled',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);stopped++;continue}
+   if(eligibility.data.ghl_location_id&&eligibility.data.ghl_location_id!==locationId){failed++;details.push({leadId:lead.id,status:'wrong_location'});continue}
+   // Delivery, DND, legal basis and native opt-out require a controlled pilot.
+   // Existing reply reconciliation above still persists stop events while release is blocked.
+   if(!commercialReleaseVerified){failed++;details.push({leadId:lead.id,status:'commercial_release_not_verified'});continue;}
    try{
      let ghlContactId=lead.ghl_contact_id&&lead.ghl_location_id===locationId?lead.ghl_contact_id:null;
      if(!ghlContactId){const upserted=await upsertOperationalContact({token:locationToken,locationId,name:lead.name||diag.business_name,email:lead.email,phone:lead.whatsapp});ghlContactId=upserted.id;await db.from('leads').update({ghl_contact_id:ghlContactId,ghl_location_id:locationId,updated_at:now.toISOString()}).eq('id',lead.id);await db.from('businesses').update({ghl_contact_id:ghlContactId,ghl_location_id:locationId,status:'contacted',updated_at:now.toISOString()}).eq('id',lead.business_id)}
      const dUrl=diagnosticUrl(diag.public_token);const message=channel==='email'?emailBody(nextStep,diag.business_name,dUrl):whatsappBody(nextStep,diag.business_name,dUrl);
+     // Contact resolution may have awaited GHL; check the local refusal again at send time.
+     const beforeSend=await db.from('leads').select('opt_out_at,last_reply_at,lifecycle_stage,ghl_location_id').eq('id',lead.id).maybeSingle();
+     if(beforeSend.error||!beforeSend.data){failed++;details.push({leadId:lead.id,status:'eligibility_unverified'});continue}
+     if(beforeSend.data.opt_out_at||beforeSend.data.last_reply_at||['conversation','customer','lost'].includes(beforeSend.data.lifecycle_stage)){await db.from('automation_enrollments').update({status:'cancelled',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);stopped++;continue}
+     if(beforeSend.data.ghl_location_id&&beforeSend.data.ghl_location_id!==locationId){failed++;details.push({leadId:lead.id,status:'wrong_location'});continue}
      const sent=await sendOperationalMessage({token:locationToken,contactId:ghlContactId,channel,message,subject:channel==='email'?subject(nextStep,diag.business_name):undefined,email:lead.email});
      const nr=nextRun(nextStep,now);
      await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:'sent',provider:'highlevel',external_id:sent.messageId||null,conversation_id:sent.conversationId||null,message_key:'acquisition_step_'+nextStep,metadata:{step:nextStep,diagnostic_id:diag.id,diagnostic_url:dUrl}});

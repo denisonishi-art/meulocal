@@ -1,0 +1,91 @@
+{
+  "checkpoint": "7acbffe1e0ac8d3b220b2d6df86cde67b3cffe89",
+  "construction": "IMPLEMENTED_TESTED_SYNTHETIC",
+  "activation": "BLOCKED_EXTERNAL_NO_GO",
+  "localReal": "HISTORICAL_CHECKPOINT_ONLY_NEW_CONTRACT_NOT_RETESTED_REAL",
+  "remoteReal": "NOT_VERIFIED",
+  "tests": {
+    "local": 69,
+    "linux": 69,
+    "failures": 0,
+    "standaloneChecks": [
+      "GHL removal contract",
+      "inbound intent",
+      "consultative approach",
+      "prospect intelligence"
+    ],
+    "linuxArchitecture": "aarch64",
+    "linuxNetwork": "none",
+    "freshCleanLinuxInstall": "NOT_VERIFIED_REUSED_PINNED_EXISTING_DEPENDENCIES_AND_BUILD",
+    "bootstrapReuse": "PASS"
+  },
+  "typecheck": "PASS",
+  "lint": "PASS_TWO_PREEXISTING_HOOK_WARNINGS",
+  "workerStaticLint": "PASS",
+  "build": "PASS_EXISTING_CSS_WARNINGS",
+  "preflightRunId": "7bc1a28b-1674-4582-be8d-741ec9844035",
+  "preflightCredentials": "NONE",
+  "newProviderCalls": {
+    "GooglePlaces": 0,
+    "OpenAI": 0,
+    "GHLReal": 0,
+    "IntelligenceReal": 0
+  },
+  "cost": {
+    "newModelTokens": 0,
+    "newModelCostObserved": 0,
+    "newGoogleRequests": 0,
+    "infrastructureProvisionedPaid": false,
+    "futureTotal": "NOT_VERIFIED"
+  },
+  "environment": {
+    "name": "opendots-research",
+    "requiredHumanReviewer": "denisonishi-art",
+    "branch": "feat/opendots-prospeccao-meulocal",
+    "adminsBypass": false,
+    "secretsConfigured": 0,
+    "workflowDispatchExecuted": false
+  },
+  "publishedBackendGET": {
+    "qualification": 404,
+    "discovery": 404
+  },
+  "migrationAndManifestChecksumsPreserved": {
+    "supabase/migrations/20261012_001_rcia_opt_out_sync.sql": "5bb1d83f4029e35f97bfa3ef70c789b553e47b3cf62d4da0b3ee03052bdecaf7",
+    "supabase/migrations/20261013_001_inbound_opt_out_gates.sql": "b3f11c5cfc0ff918c3cbb44c8e04175c9fc2c8d0ca87882301216def7598b61e",
+    "supabase/migrations/20261013_002_native_opt_out_reconciliation.sql": "a6d545db248b9b0a0b50c96bc04eeb2dbb3bbeacbd2a9cd0fd32630bc09b2c6b",
+    "docs/manifests/optout-hybrid.json": "4a090b23abeee63adbc027728e475d718e7ada51691b729bd172aa6886184bb5",
+    "docs/manifests/optout-hybrid.sha256": "ce0db299dd038f8ab6dc42487a94ea61e562033fe3cbfb8ad328db1e4c483ece"
+  },
+  "logSha256": {
+    "consolidated": "bbcd0b87b6f4c14d8150dadf2ef534a7f1ce7ef55ba0302d33c081198a13413a",
+    "linux": "aadf2c7d6e0da8b894a18f12a915f9e9a5c242edaa389e4968986dbdc9cb6f6e",
+    "typecheck": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "lint": "c41c18756999862713a7d3c4b19a48629f78b274a0f5101b2ac5846f8b9dd209",
+    "build": "cb352a52b888b8aa44cb7c0ec51f4bc4429f244a1a173b1e5940cc22622268fb",
+    "worker-lint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "pending": [
+    "register minimal workflow PR without merging feature",
+    "approve isolated SQL preview gate before activation of RPCs",
+    "publish approved backend release and verify distributed quota",
+    "configure three existing authorized secrets securely",
+    "validate Intelligence service and remote five-company research",
+    "recover approved commercial copy",
+    "GHL permissions, global history, channel/legal basis, delivery and native workflow removal pilot"
+  ],
+  "effects": {
+    "messagesSent": 0,
+    "ghlContactWrites": 0,
+    "publishedWorkflowChanges": 0,
+    "remoteMigrations": 0,
+    "productionDeploys": 0,
+    "mainChanged": false
+  },
+  "notes": [
+    "Eligibility never grants contactAllowed:true in this block",
+    "Legacy initial contact and follow-up remain frozen while release proof is unimplemented/unverified",
+    "Source contract, provenance, timestamp and actions required for private discovery",
+    "No PIT substitution; exact lookup v3 OAuth-only compatibility not assumed"
+  ]
+}

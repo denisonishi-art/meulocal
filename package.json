@@ -9,7 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node scripts/opendots-worker/run-tests.cjs"
   },
   "dependencies": {
     "@openai/agents": "0.17.0",
@@ -28,6 +29,8 @@
     "autoprefixer": "10.4.20",
     "postcss": "8.4.41",
     "tailwindcss": "3.4.10",
-    "typescript": "5.5.4"
+    "typescript": "5.5.4",
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.35"
   }
 }

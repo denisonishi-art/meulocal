@@ -34,7 +34,7 @@ function mapPlaces(places,observedAt){
  }
  return {leads,metrics,excluded};
 }
-function mapBackendPlaces(places,observedAt){
+function mapBackendPlaces(places,observedAt,job={segment:'geradores',city:'Sao Paulo',state:'SP'}){
  if(!(observedAt instanceof Date)||!Number.isFinite(observedAt.getTime())||observedAt.getTime()>Date.now())throw Error('observation_invalid');
  const leads=[],metrics={},seen=new Set(),sites=new Set();let excluded=0;
  for(const place of places){
@@ -42,13 +42,14 @@ function mapBackendPlaces(places,observedAt){
   // The existing projection defaults absent counts to zero. Zero is not evidence.
   const cityObserved=/(?:^|,)\s*sao paulo\s*-\s*sp(?:\s*,|\s*$)/.test(normalize(place.address));
   const website=publicUrl(place.website),site=website?.hostname.replace(/^www\./,'');
+  const sourceUrl=publicUrl(place.googleMapsUri,true)?.href||job.sourceUrl||BACKEND_SOURCE;
   const lowRating=Number.isFinite(rating)&&rating>=1&&rating<4.3;
-  if(!id||!name||!cityObserved||!Number.isInteger(count)||count<=0||!(count<=50||lowRating)||seen.has(id)||site&&sites.has(site)){excluded++;continue}
+  if(!id||!name||!cityObserved||place.businessStatus&&place.businessStatus!=='OPERATIONAL'||!Number.isInteger(count)||count<=0||!(count<=50||lowRating)||seen.has(id)||site&&sites.has(site)){excluded++;continue}
   seen.add(id);if(site)sites.add(site);const externalId='google_places:'+id,evidence=[];
-  if(count<=50)evidence.push({signal:'few_reviews',url:BACKEND_SOURCE,observedAt:observedAt.toISOString(),description:`Backend MeuLocal retorna ${count} avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional.`,verified:true});
-  if(lowRating)evidence.push({signal:'low_rating',url:BACKEND_SOURCE,observedAt:observedAt.toISOString(),description:`Backend MeuLocal retorna nota ${rating}/5 de Google Places.`,verified:true});
-  leads.push({externalId,name,segment:'geradores',city:'Sao Paulo',state:'SP',...(website?{website:website.href}:{}),evidence});
-  metrics[externalId]={reviewCount:count,rating:Number.isFinite(rating)?rating:null,sourceUrl:BACKEND_SOURCE,sourceObservedAt:observedAt.toISOString(),businessStatus:'NOT_VERIFIED',structuredLocation:'NOT_VERIFIED'};
+  if(count<=50)evidence.push({signal:'few_reviews',url:sourceUrl,observedAt:observedAt.toISOString(),description:`Backend MeuLocal retorna ${count} avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional.`,verified:true});
+  if(lowRating)evidence.push({signal:'low_rating',url:sourceUrl,observedAt:observedAt.toISOString(),description:`Backend MeuLocal retorna nota ${rating}/5 de Google Places.`,verified:true});
+  leads.push({externalId,name,segment:job.segment,city:job.city,state:job.state,address:place.address,...(website?{website:website.href}:{}),evidence});
+  metrics[externalId]={reviewCount:count,rating:Number.isFinite(rating)?rating:null,sourceUrl,sourceObservedAt:observedAt.toISOString(),businessStatus:place.businessStatus==='OPERATIONAL'?'OPERATIONAL':'NOT_VERIFIED',structuredLocation:'NOT_VERIFIED'};
  }
  return {leads,metrics,excluded};
 }
@@ -61,6 +62,10 @@ function createResearchWorker(settings,{fetch=globalThis.fetch}={}){
  if(endpoint.pathname!=='/api/agents/prospecting'||endpoint.search||endpoint.hash||endpoint.username||endpoint.password)throw Error('qualification_endpoint_invalid');
  const repoRoot=path.resolve(settings.repoRoot);
  const backend=settings.sourceProvider==='meulocal_backend';
+ const sourceEndpoint=settings.sourceEndpoint||BACKEND_SOURCE;
+ if(![BACKEND_SOURCE,'https://meulocal.ia.br/api/agents/prospecting/discover'].includes(sourceEndpoint))throw Error('source_endpoint_denied');
+ const segment=settings.segment||'geradores',city=settings.city||'Sao Paulo',state=settings.state||'SP';
+ const query=segment==='geradores'?QUERY:`${segment} em ${city} ${state}`;
  if(settings.sourceProvider&&!['google_places','meulocal_backend'].includes(settings.sourceProvider))throw Error('source_provider_invalid');
  const shared=path.resolve(settings.sharedRoot||path.join(__dirname,'shared'));
  const {rankLeads}=require(path.join(shared,'prospect-intelligence.cjs'));
@@ -77,18 +82,21 @@ function createResearchWorker(settings,{fetch=globalThis.fetch}={}){
   if(!backend&&!settings.placesKey)throw Error('source_not_configured');
   running=true;
   try{
-   const source=await jsonRequest(backend?BACKEND_SOURCE:'https://places.googleapis.com/v1/places:searchText',backend?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:QUERY})}:{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':settings.placesKey,'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.addressComponents,places.businessStatus,places.websiteUri,places.googleMapsUri,places.rating,places.userRatingCount'},body:JSON.stringify({textQuery:QUERY,languageCode:'pt-BR',regionCode:'BR',pageSize:20})},'source');
+   const source=await jsonRequest(backend?sourceEndpoint:'https://places.googleapis.com/v1/places:searchText',backend?{method:'POST',headers:{'Content-Type':'application/json',...(sourceEndpoint!==BACKEND_SOURCE?{'x-prospector-api-key':settings.apiKey}:{})},body:JSON.stringify({query,limit})}:{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':settings.placesKey,'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.addressComponents,places.businessStatus,places.websiteUri,places.googleMapsUri,places.rating,places.userRatingCount'},body:JSON.stringify({textQuery:QUERY,languageCode:'pt-BR',regionCode:'BR',pageSize:20})},'source');
    if(!Array.isArray(source.places)&&source.places!==undefined)throw Error('source_schema_invalid');
    if(backend&&!Array.isArray(source.places))throw Error('source_schema_invalid');
+   const sourceDate=sourceEndpoint===BACKEND_SOURCE?new Date():new Date(source.observedAt);
+   if(backend&&sourceEndpoint!==BACKEND_SOURCE&&(source.contract!=='meulocal.places.v1'||source.source!=='google_places'||!Number.isFinite(sourceDate.getTime())||sourceDate.getTime()>Date.now()||Date.now()-sourceDate.getTime()>300000||!isDeepStrictEqual(source.actions,{crmWrite:false,outboundMessages:false,humanReviewRequired:true})))throw Error('source_confirmation_invalid');
    const observed=source.places||[];
-   const mapped=(backend?mapBackendPlaces:mapPlaces)(observed.slice(0,backend?limit:observed.length),new Date());
+   const mapped=(backend?mapBackendPlaces:mapPlaces)(observed.slice(0,backend?limit:observed.length),sourceDate,{segment,city,state,sourceUrl:sourceEndpoint});
    const leads=mapped.leads.slice(0,limit);
-   const job={segment:'geradores',city:'Sao Paulo',state:'SP',requestedLimit:limit,mode:'research_only'};
+   const job={segment,city,state,requestedLimit:limit,mode:'research_only'};
    const response=await jsonRequest(endpoint.href,{method:'POST',headers:{'Content-Type':'application/json','x-prospector-api-key':settings.apiKey},body:JSON.stringify({...job,leads})},'qualification');
    const actions={crmWrite:false,outboundMessages:false,humanReviewRequired:true};
    if(response.mode!=='research_only'||!isDeepStrictEqual(response.job,job)||!isDeepStrictEqual(response.actions,actions)||!isDeepStrictEqual(response.assessments,rankLeads(leads)))throw Error('qualification_confirmation_invalid');
-   const drafts=response.assessments.map(a=>({externalId:a.lead.externalId,approvalStatus:'pending_review',draft:buildConsultativeApproach({businessName:a.lead.name,niche:'aluguel de geradores',region:'São Paulo',...mapped.metrics[a.lead.externalId]})}));
-   return {mode:'research_only',assessments:response.assessments,drafts,actions,provider:backend?'meulocal_backend':'google_places',providerRequests:1,sourceReturned:observed.length,evaluated:backend?Math.min(observed.length,limit):observed.length,metrics:Object.fromEntries(leads.map(l=>[l.externalId,mapped.metrics[l.externalId]])),excluded:mapped.excluded,limit,commercialEligibility:'NOT_VERIFIED',warning:'Qualificado para revisão. Segmento, decisor, duplicidade no CRM e opt-out precisam de conferência humana. Não é autorização de contato.'};
+   const drafts=response.assessments.map(a=>({externalId:a.lead.externalId,approvalStatus:'pending_review',draft:buildConsultativeApproach({businessName:a.lead.name,niche:segment==='geradores'?'aluguel de geradores':segment,region:city,...mapped.metrics[a.lead.externalId]})}));
+   const reference=leads.map(l=>({externalId:l.externalId,reviewCount:mapped.metrics[l.externalId]?.reviewCount,rating:mapped.metrics[l.externalId]?.rating}));
+   return {comparison:{kind:'same_query_sample',competitorRelationship:'NOT_VERIFIED',observations:reference},eligibility:response.eligibility||leads.map(l=>({externalId:l.externalId,status:'NOT_VERIFIED',reason:'history_not_checked'})),mode:'research_only',assessments:response.assessments,drafts,actions,provider:backend?'meulocal_backend':'google_places',providerRequests:1,sourceReturned:observed.length,evaluated:backend?Math.min(observed.length,limit):observed.length,metrics:Object.fromEntries(leads.map(l=>[l.externalId,mapped.metrics[l.externalId]])),excluded:mapped.excluded,limit,commercialEligibility:'NOT_VERIFIED',warning:'Qualificado para revisão. Segmento, decisor, duplicidade no CRM e opt-out precisam de conferência humana. Não é autorização de contato.'};
   }finally{running=false}
  }
  return {research};

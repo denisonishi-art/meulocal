@@ -11,15 +11,9 @@ export async function findBusinessEmail(website?:string|null){
  }catch{}return null;
 }
 export async function enqueueGhlProspect(input:{businessName:string;email:string;phone?:string|null;website?:string|null;diagnosticUrl:string}){
- const token=process.env.GHL_API_KEY;const locationId=process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583';
- if(!token)return {ok:false,reason:'GHL_API_KEY não configurada'};
- const headers={'Authorization':`Bearer ${token}`,'Version':'2021-07-28','Content-Type':'application/json'};
- let customField:any=null;
- try{const fields=await fetch(`${API}/locations/${locationId}/customFields?model=contact`,{headers});const payload=await fields.json();customField=(payload.customFields||payload.data||[]).find((field:any)=>normalize(field.name||field.fieldKey||'')==='link do diagnostico')}catch{}
- if(!customField)return {ok:false,reason:'Campo “Link do diagnóstico” não encontrado no GHL'};
- const payload={locationId,name:input.businessName,email:input.email,phone:input.phone||undefined,website:input.website||undefined,tags:['meulocal:prospectar','origem: prospecção'],customFields:[{id:customField.id,value:input.diagnosticUrl}]};
- const response=await fetch(`${API}/contacts/upsert`,{method:'POST',headers,body:JSON.stringify(payload)});if(!response.ok)return {ok:false,reason:`GHL recusou o contato (${response.status})`};
- const body=await response.json().catch(()=>({}));return {ok:true,contactId:body.contact?.id||body.id||null};
+ // Tagging/upsert can trigger a published workflow. No server-owned eligibility,
+ // approved-copy or delivery receipt is wired; environment flags are not proof.
+ void input;return {ok:false,reason:'commercial_release_not_verified',contactId:null};
 }
 
 export async function sendGhlProspectWhatsApp(_input:{businessName:string;phone:string;diagnosticUrl:string}){

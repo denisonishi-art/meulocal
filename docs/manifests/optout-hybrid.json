@@ -1,0 +1,657 @@
+{
+  "schemaVersion": 1,
+  "release": "meulocal-hybrid-optout-v1",
+  "branch": "feat/opendots-prospeccao-meulocal",
+  "evidenceDate": "2026-10-13",
+  "productionProjectRef": "vznecxfmnthyxvsxwpzi",
+  "evidenceScope": "Previously collected read-only metadata, not live remote verification",
+  "authority": {
+    "remoteApplicationAuthorized": false,
+    "productionGo": false,
+    "isolatedPreview": "NOT_VERIFIED"
+  },
+  "versionPolicy": "Unique release filenames are staged copies; original migration files and historical IDs are unchanged",
+  "executionPolicy": {
+    "atomicAllThree": true,
+    "historyWritePrepared": false,
+    "remoteExecution": false,
+    "rootDbPushAllowed": false,
+    "onExistingOrPartialObjects": "STOP_AND_ATTEST_NO_AUTOMATIC_REPLAY",
+    "historyRegistration": "NOT_VERIFIED_REQUIRES_ATTESTED_SCHEMA_AND_AUTHORIZED_METHOD"
+  },
+  "inputs": [
+    {
+      "file": "docs/evidence/supabase-environment-attestation/project.json",
+      "sha256": "5e63f0bd08aacff082abbf89a01381a401458374caf4ca74bca647aacc0a6566"
+    },
+    {
+      "file": "docs/evidence/supabase-environment-attestation/catalog.json",
+      "sha256": "2057e48092674e319ebbe069729f6a365cd0ad80962a949aa495fc71568bda50"
+    },
+    {
+      "file": "docs/evidence/supabase-environment-attestation/migration-history.json",
+      "sha256": "ee52a4571299b1d711e037b5c3f8f5fe48b085a3c5dfe216dcc0f960d04e04d2"
+    },
+    {
+      "file": "docs/evidence/supabase-environment-attestation/extension-resolution.json",
+      "sha256": "54b706c0730dbc38736ce684483649d4f5171490263f0c3a9895da3595514ffe"
+    },
+    {
+      "file": "docs/evidence/supabase-environment-attestation/digest-availability.json",
+      "sha256": "7b159f077b62d1cc084beddefb54a17555888aa9b40c8cbc2a0aed2d998507d2"
+    },
+    {
+      "file": "docs/evidence/supabase-environment-attestation/branches.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "file": "scripts/fixtures/observed-customer-contacts.sql",
+      "sha256": "9cb0ce892496d735a8f14e1fe6a1f08526e595aa9ec46aa3e49a7712dc24fdbe"
+    },
+    {
+      "file": "scripts/fixtures/observed-opt-out-security.sql",
+      "sha256": "b8653073cf79327bc61465a6bb4436c9ec16cbe38b0447650827de61a2109015"
+    },
+    {
+      "file": "scripts/preview-opt-out-internal-gates.sql",
+      "sha256": "a4fb5ae637f15465b4420335e068e2f6600724df4e0651f4d6a724d716da8006"
+    },
+    {
+      "file": "scripts/preview-opt-out-preflight.sql",
+      "sha256": "1f91d35669a75efef6af6856c79db1f9ad50c1fc2f9cbc9ab3f8f2916ce718a0"
+    },
+    {
+      "file": "scripts/check-opt-out-internal-sql.sql",
+      "sha256": "8da5e7cc00b29e05872ca6b64366317c09495062b55d48a34bd71107dc46074e"
+    },
+    {
+      "file": "scripts/check-native-opt-out-reconciliation.sql",
+      "sha256": "98169776938b361ffcf97f1a8a8e1c11595060948aa96f1918d0b4698d8b1916"
+    },
+    {
+      "file": "scripts/check-preview-validation-extra.sql",
+      "sha256": "3ba4e3c8ccb0ec9faa30b87ddb449355e82fa119b4d19b10c6f7bb48899a0f44"
+    },
+    {
+      "file": "scripts/check-customer-contact-contract.sql",
+      "sha256": "5d88a8e470b841d79d2e8ba02f3e94a52960307109cb34134176f38802979dfd"
+    },
+    {
+      "file": "scripts/check-opt-out-compatible-rls.sql",
+      "sha256": "493c529577cdb23f667ab8221f6a9cf1b0f7a4385e5f83e4e75e5db3fd09a75f"
+    },
+    {
+      "file": "scripts/check-opt-out-service-rpcs.sql",
+      "sha256": "a144726e8dcef6127709d205242d22fc6089bae66353a34692c2afad11422363"
+    },
+    {
+      "file": "scripts/check-preview-validation-gate.cjs",
+      "sha256": "a7d80ab64ebfd2dff1bb43cf122b6cae1aa9e2537534431d719d3b52ea50c82c"
+    },
+    {
+      "file": "scripts/opt-out-migration-manifest.cjs",
+      "sha256": "c7854261623e587c43e35a0e79bb5d18f415696ef322172fbdf97869f625aef2"
+    },
+    {
+      "file": "scripts/check-opt-out-migration-manifest.cjs",
+      "sha256": "f5c707576f8c6019f629660fcaa615123996137100db2714e5b8e4287ce6c265"
+    }
+  ],
+  "localInventory": [
+    {
+      "localVersionPrefix": "20260828",
+      "file": "supabase/migrations/20260828_001_core.sql",
+      "sha256": "f8a392f026e5a23a9630fe4c7c427a70eaa9b7a1600ea9619cab2b03a0ae3ba7",
+      "dependencies": [],
+      "category": "HISTORICAL_EQUIVALENCE_NOT_VERIFIED",
+      "remoteState": "BASELINE_OBJECTS_OBSERVED_SOURCE_EQUIVALENCE_NOT_VERIFIED",
+      "exactRemoteVersionMatches": [],
+      "semanticRemoteCandidates": [
+        {
+          "version": "20260828211031",
+          "name": "meulocal_core"
+        },
+        {
+          "version": "20260917231739",
+          "name": "core_schema"
+        }
+      ],
+      "applicationOrder": null,
+      "releaseVersion": null,
+      "applicationDependencies": []
+    },
+    {
+      "localVersionPrefix": "20260829",
+      "file": "supabase/migrations/20260829_prospect_diagnostics.sql",
+      "sha256": "57288f67763193a97c0781876f6ff68e399087921ac7f78dcc80acc9bf0983f3",
+      "dependencies": [
+        "supabase/migrations/20260828_001_core.sql"
+      ],
+      "category": "HISTORICAL_EQUIVALENCE_NOT_VERIFIED",
+      "remoteState": "BASELINE_OBJECTS_OBSERVED_SOURCE_EQUIVALENCE_NOT_VERIFIED",
+      "exactRemoteVersionMatches": [],
+      "semanticRemoteCandidates": [
+        {
+          "version": "20260829035401",
+          "name": "prospect_diagnostics_v1"
+        },
+        {
+          "version": "20260917231750",
+          "name": "prospect_diagnostics"
+        }
+      ],
+      "applicationOrder": null,
+      "releaseVersion": null,
+      "applicationDependencies": []
+    },
+    {
+      "localVersionPrefix": "20260917",
+      "file": "supabase/migrations/20260917_001_customer_access_and_platform.sql",
+      "sha256": "fdc0ca8f9d7937c102f2061f0368791deaed9244147deb768bad29ca389c2eed",
+      "dependencies": [
+        "supabase/migrations/20260828_001_core.sql",
+        "supabase/migrations/20260829_prospect_diagnostics.sql"
+      ],
+      "category": "HISTORICAL_EQUIVALENCE_NOT_VERIFIED",
+      "remoteState": "BASELINE_OBJECTS_OBSERVED_SOURCE_EQUIVALENCE_NOT_VERIFIED",
+      "exactRemoteVersionMatches": [],
+      "semanticRemoteCandidates": [
+        {
+          "version": "20260917231823",
+          "name": "customer_access_platform_part1"
+        },
+        {
+          "version": "20260917231853",
+          "name": "customer_access_platform_tables"
+        },
+        {
+          "version": "20260917231931",
+          "name": "customer_access_platform_indexes"
+        },
+        {
+          "version": "20260917232026",
+          "name": "enable_customer_account_rls"
+        },
+        {
+          "version": "20260917232045",
+          "name": "enable_payment_and_google_rls"
+        },
+        {
+          "version": "20260917232057",
+          "name": "enable_ghl_rls"
+        },
+        {
+          "version": "20260917232207",
+          "name": "customer_account_select_policy"
+        },
+        {
+          "version": "20260917232222",
+          "name": "customer_score_select_policy"
+        }
+      ],
+      "applicationOrder": null,
+      "releaseVersion": null,
+      "applicationDependencies": []
+    },
+    {
+      "localVersionPrefix": "20260920",
+      "file": "supabase/migrations/20260920_002_review_request_activation_rules.sql",
+      "sha256": "bcd5c39f1e4aed7f1c7c127f7fcabc4009604219eab8884e7263c9b236ed1865",
+      "dependencies": [
+        "supabase/migrations/20260828_001_core.sql",
+        "supabase/migrations/20260917_001_customer_access_and_platform.sql"
+      ],
+      "category": "HISTORICAL_EQUIVALENCE_NOT_VERIFIED",
+      "remoteState": "BASELINE_OBJECTS_OBSERVED_SOURCE_EQUIVALENCE_NOT_VERIFIED",
+      "exactRemoteVersionMatches": [],
+      "semanticRemoteCandidates": [
+        {
+          "version": "20260920193240",
+          "name": "review_request_activation_rules"
+        }
+      ],
+      "applicationOrder": null,
+      "releaseVersion": null,
+      "applicationDependencies": []
+    },
+    {
+      "localVersionPrefix": "20260920",
+      "file": "supabase/migrations/20260920_003_review_delivery_connection_fields.sql",
+      "sha256": "eaf9820deaf739b5bf9728855d83d771eae04d1f52c6e4476e9b9ca01d9bdc77",
+      "dependencies": [
+        "supabase/migrations/20260917_001_customer_access_and_platform.sql",
+        "supabase/migrations/20260920_002_review_request_activation_rules.sql"
+      ],
+      "category": "HISTORICAL_EQUIVALENCE_NOT_VERIFIED",
+      "remoteState": "BASELINE_OBJECTS_OBSERVED_SOURCE_EQUIVALENCE_NOT_VERIFIED",
+      "exactRemoteVersionMatches": [],
+      "semanticRemoteCandidates": [
+        {
+          "version": "20260920194225",
+          "name": "review_delivery_connection_fields"
+        }
+      ],
+      "applicationOrder": null,
+      "releaseVersion": null,
+      "applicationDependencies": []
+    },
+    {
+      "localVersionPrefix": "20260920",
+      "file": "supabase/migrations/20260920_004_acquisition_automation_linkage.sql",
+      "sha256": "213a7787f0fd921041515e806d7fd307af8e35a8cc2a3a729cd73389c2e94972",
+      "dependencies": [
+        "supabase/migrations/20260828_001_core.sql",
+        "supabase/migrations/20260829_prospect_diagnostics.sql"
+      ],
+      "category": "HISTORICAL_EQUIVALENCE_NOT_VERIFIED",
+      "remoteState": "BASELINE_OBJECTS_OBSERVED_SOURCE_EQUIVALENCE_NOT_VERIFIED",
+      "exactRemoteVersionMatches": [],
+      "semanticRemoteCandidates": [
+        {
+          "version": "20260920195352",
+          "name": "acquisition_automation_linkage"
+        }
+      ],
+      "applicationOrder": null,
+      "releaseVersion": null,
+      "applicationDependencies": []
+    },
+    {
+      "localVersionPrefix": "20261012",
+      "file": "supabase/migrations/20261012_001_rcia_opt_out_sync.sql",
+      "sha256": "5bb1d83f4029e35f97bfa3ef70c789b553e47b3cf62d4da0b3ee03052bdecaf7",
+      "dependencies": [],
+      "category": "PENDING_OBJECTS_ABSENT_AT_ATTESTATION",
+      "remoteState": "NEW_OPT_OUT_OBJECTS_ABSENT",
+      "exactRemoteVersionMatches": [],
+      "semanticRemoteCandidates": [],
+      "applicationOrder": 1,
+      "releaseVersion": "20261013010000",
+      "applicationDependencies": [
+        "BASELINE_PRODUCTION_COMPATIBLE"
+      ]
+    },
+    {
+      "localVersionPrefix": "20261013",
+      "file": "supabase/migrations/20261013_001_inbound_opt_out_gates.sql",
+      "sha256": "b3f11c5cfc0ff918c3cbb44c8e04175c9fc2c8d0ca87882301216def7598b61e",
+      "dependencies": [],
+      "category": "PENDING_OBJECTS_ABSENT_AT_ATTESTATION",
+      "remoteState": "NEW_OPT_OUT_OBJECTS_ABSENT",
+      "exactRemoteVersionMatches": [],
+      "semanticRemoteCandidates": [],
+      "applicationOrder": 2,
+      "releaseVersion": "20261013020000",
+      "applicationDependencies": [
+        "20261013010000"
+      ]
+    },
+    {
+      "localVersionPrefix": "20261013",
+      "file": "supabase/migrations/20261013_002_native_opt_out_reconciliation.sql",
+      "sha256": "a6d545db248b9b0a0b50c96bc04eeb2dbb3bbeacbd2a9cd0fd32630bc09b2c6b",
+      "dependencies": [],
+      "category": "PENDING_OBJECTS_ABSENT_AT_ATTESTATION",
+      "remoteState": "NEW_OPT_OUT_OBJECTS_ABSENT",
+      "exactRemoteVersionMatches": [],
+      "semanticRemoteCandidates": [],
+      "applicationOrder": 3,
+      "releaseVersion": "20261013030000",
+      "applicationDependencies": [
+        "20261013020000"
+      ]
+    }
+  ],
+  "remoteInventory": [
+    {
+      "version": "20260828211031",
+      "name": "meulocal_core",
+      "statement_count": 1,
+      "stored_statements_hash": "bb6eaeb4bd153ba1dcaa8393bdc5bdf7",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260828211647",
+      "name": "security_and_indexes",
+      "statement_count": 1,
+      "stored_statements_hash": "1c2d094bbec15c5aae64b68ff9b73bec",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260828212216",
+      "name": "presence_score_engine_v1",
+      "statement_count": 1,
+      "stored_statements_hash": "1b1213f7d739c0afd63cb1cd6ec65f51",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260829032215",
+      "name": "customer_dashboard_v1",
+      "statement_count": 1,
+      "stored_statements_hash": "dc04cad6b6fce52aa26ce586184c4020",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260829033301",
+      "name": "google_business_connections",
+      "statement_count": 1,
+      "stored_statements_hash": "03f467897a69c922951d94b42ae31ae1",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260829035401",
+      "name": "prospect_diagnostics_v1",
+      "statement_count": 1,
+      "stored_statements_hash": "852648727391dfd7298c4893ffc7024f",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260829035824",
+      "name": "prospecting_learning_layer",
+      "statement_count": 1,
+      "stored_statements_hash": "8c1808c4278c6e8e49ed8230aba4e6d0",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830022508",
+      "name": "asaas_payments_foundation",
+      "statement_count": 1,
+      "stored_statements_hash": "2b8053e41ba70a173411ded59ca89b7a",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830022547",
+      "name": "asaas_checkout_customer_fields",
+      "statement_count": 1,
+      "stored_statements_hash": "f7b3ce37e12afbcfd86c7d88ec74aa30",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830023131",
+      "name": "reputation_score_v1_and_sync_logs",
+      "statement_count": 1,
+      "stored_statements_hash": "b7f5dbc3022df67ffdc1001b722bfd41",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830023342",
+      "name": "prospect_competition_scope",
+      "statement_count": 1,
+      "stored_statements_hash": "9e8a04b0a3ccf5040ced8d5dd62158fa",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830023502",
+      "name": "ghl_event_ledger",
+      "statement_count": 1,
+      "stored_statements_hash": "528bb5386769e02ebea846a30ca9aa06",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830023523",
+      "name": "seo_intelligence_foundation",
+      "statement_count": 1,
+      "stored_statements_hash": "43ae486e35e92dc4d91ab93223f81f1f",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830023830",
+      "name": "ghl_multitenant_foundation",
+      "statement_count": 1,
+      "stored_statements_hash": "75d0c27cf1458d073bb51620fd87e423",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830024026",
+      "name": "payment_customer_activation_linkage",
+      "statement_count": 1,
+      "stored_statements_hash": "15a97d4a7107b7fd783e6262152cfe9d",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830024144",
+      "name": "payment_access_activation_status",
+      "statement_count": 1,
+      "stored_statements_hash": "4f9d6c69b59eec8410348b182104246c",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260830024857",
+      "name": "public_api_rate_limits",
+      "statement_count": 1,
+      "stored_statements_hash": "410f00cba2d50a2ae17a44f4bc58ac92",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917231739",
+      "name": "core_schema",
+      "statement_count": 1,
+      "stored_statements_hash": "4ebea2e8d66e2b9fd3ba04c16b0ce9de",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917231750",
+      "name": "prospect_diagnostics",
+      "statement_count": 1,
+      "stored_statements_hash": "f313f322e56ae19ed9ff6c9190e84917",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917231823",
+      "name": "customer_access_platform_part1",
+      "statement_count": 1,
+      "stored_statements_hash": "96b8d6dbe1c691e7606de215c263dfeb",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917231853",
+      "name": "customer_access_platform_tables",
+      "statement_count": 1,
+      "stored_statements_hash": "488e40bb916d2ad3f46f9483acdcec7b",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917231931",
+      "name": "customer_access_platform_indexes",
+      "statement_count": 1,
+      "stored_statements_hash": "4e2250831fbb8aafc3e33fc0ff89affd",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917232026",
+      "name": "enable_customer_account_rls",
+      "statement_count": 1,
+      "stored_statements_hash": "3991b126023510ad9cddcf4e936c60f0",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917232045",
+      "name": "enable_payment_and_google_rls",
+      "statement_count": 1,
+      "stored_statements_hash": "5ecf7ac01ccf03271e6cf9cd9a296fdc",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917232057",
+      "name": "enable_ghl_rls",
+      "statement_count": 1,
+      "stored_statements_hash": "ef4a825c3ef25fd10e162573ae01f609",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917232207",
+      "name": "customer_account_select_policy",
+      "statement_count": 1,
+      "stored_statements_hash": "a84ae252495e83f96b27e5cca5677178",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917232222",
+      "name": "customer_score_select_policy",
+      "statement_count": 1,
+      "stored_statements_hash": "a16e56127b78082bbad0c2143e20cecd",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260917232412",
+      "name": "leads_business_email_unique",
+      "statement_count": 1,
+      "stored_statements_hash": "bf01d885bc09e88eb771ce3579600ffa",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260920193203",
+      "name": "customer_base_activation_flywheel",
+      "statement_count": 1,
+      "stored_statements_hash": "2db4dfdf3b7501f784ea920e02298802",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260920193240",
+      "name": "review_request_activation_rules",
+      "statement_count": 1,
+      "stored_statements_hash": "66664d1d85c63d1dbe91177852cbe14d",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260920194225",
+      "name": "review_delivery_connection_fields",
+      "statement_count": 1,
+      "stored_statements_hash": "b72a9d20a3300d8fb651d7734a3e94fa",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260920195352",
+      "name": "acquisition_automation_linkage",
+      "statement_count": 1,
+      "stored_statements_hash": "60dbdcc92874ee0ab1fdd768b67d600e",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260928175245",
+      "name": "decision_receipts",
+      "statement_count": 10,
+      "stored_statements_hash": "dffae33496b5906871a2d0db3a1b1e1b",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    },
+    {
+      "version": "20260928200721",
+      "name": "acquisition_http_scheduler",
+      "statement_count": 3,
+      "stored_statements_hash": "61760c4d554e22b0a7d95ae559474f66",
+      "state": "APPLIED_HISTORY_ENTRY_CONFIRMED_IN_SNAPSHOT",
+      "localSourceEquality": "NOT_VERIFIED"
+    }
+  ],
+  "duplicateLocalPrefixes": [
+    {
+      "prefix": "20260920",
+      "files": [
+        "supabase/migrations/20260920_002_review_request_activation_rules.sql",
+        "supabase/migrations/20260920_003_review_delivery_connection_fields.sql",
+        "supabase/migrations/20260920_004_acquisition_automation_linkage.sql"
+      ]
+    },
+    {
+      "prefix": "20261013",
+      "files": [
+        "supabase/migrations/20261013_001_inbound_opt_out_gates.sql",
+        "supabase/migrations/20261013_002_native_opt_out_reconciliation.sql"
+      ]
+    }
+  ],
+  "application": [
+    {
+      "version": "20261013010000",
+      "file": "supabase/migrations/20261012_001_rcia_opt_out_sync.sql",
+      "deliveryFile": "20261013010000_rcia_opt_out_sync.sql",
+      "sha256": "5bb1d83f4029e35f97bfa3ef70c789b553e47b3cf62d4da0b3ee03052bdecaf7",
+      "dependencies": [
+        "BASELINE_PRODUCTION_COMPATIBLE"
+      ],
+      "baselineDependencies": [
+        "leads",
+        "automation_enrollments",
+        "outreach_events",
+        "anon",
+        "authenticated",
+        "service_role"
+      ],
+      "remoteState": "PENDING_OBJECTS_ABSENT_AT_ATTESTATION",
+      "applicationOrder": 1
+    },
+    {
+      "version": "20261013020000",
+      "file": "supabase/migrations/20261013_001_inbound_opt_out_gates.sql",
+      "deliveryFile": "20261013020000_inbound_opt_out_gates.sql",
+      "sha256": "b3f11c5cfc0ff918c3cbb44c8e04175c9fc2c8d0ca87882301216def7598b61e",
+      "dependencies": [
+        "20261013010000"
+      ],
+      "baselineDependencies": [
+        "businesses",
+        "leads",
+        "customer_contacts",
+        "customer_accounts",
+        "ghl_locations",
+        "ghl_events",
+        "review_request_enrollments",
+        "review_request_events",
+        "outreach_events",
+        "automation_enrollments"
+      ],
+      "remoteState": "PENDING_OBJECTS_ABSENT_AT_ATTESTATION",
+      "applicationOrder": 2
+    },
+    {
+      "version": "20261013030000",
+      "file": "supabase/migrations/20261013_002_native_opt_out_reconciliation.sql",
+      "deliveryFile": "20261013030000_native_opt_out_reconciliation.sql",
+      "sha256": "a6d545db248b9b0a0b50c96bc04eeb2dbb3bbeacbd2a9cd0fd32630bc09b2c6b",
+      "dependencies": [
+        "20261013020000"
+      ],
+      "baselineDependencies": [
+        "meulocal_opt_out_sync",
+        "leads",
+        "outreach_events",
+        "extensions.digest(text,text)"
+      ],
+      "remoteState": "PENDING_OBJECTS_ABSENT_AT_ATTESTATION",
+      "applicationOrder": 3
+    }
+  ]
+}

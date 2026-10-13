@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/admin-auth";
-import { getLocationAccessToken } from "@/lib/highlevel-operational";
+
 
 /** Read-only scope probe. No PII, token values, contact writes or workflow changes. */
 export async function GET(request: Request) {
@@ -8,9 +8,9 @@ export async function GET(request: Request) {
   const locationId = "uNh3KsM7WFuLeTN8Q583";
   if (process.env.GHL_LOCATION_ID && process.env.GHL_LOCATION_ID !== locationId)
     return NextResponse.json({ error: "location_mismatch" }, { status: 409 });
-  let token: string;
-  try { token = await getLocationAccessToken(locationId); }
-  catch { return NextResponse.json({ error: "credential_unavailable" }, { status: 503 }); }
+  const token=process.env.GHL_API_KEY;
+  if(!token)return NextResponse.json({error:'private_integration_token_unavailable'},{status:503});
+  // Read-only probes must never exchange an agency token through POST.
 
   const base = "https://services.leadconnectorhq.com";
   const checks = [
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
         cache: "no-store", signal: AbortSignal.timeout(10000)
       });
       return { resource: check.resource, requiredScope: check.scope, httpStatus: res.status,
-        accessible: res.ok, permissionOrLocationIssue: res.status === 401 || res.status === 403 };
+        accessible: res.ok, httpClass:res.status===401?"authentication_failed":res.status===403?"permission_or_location_denied":res.status===404?"route_or_resource_not_found":res.status===429?"rate_limited":res.status>=500?"provider_unavailable":res.ok?"http_success_contract_not_verified":"http_failure", permissionOrLocationIssue: res.status === 401 || res.status === 403 };
     } catch {
       return { resource: check.resource, requiredScope: check.scope, httpStatus: null,
         accessible: false, permissionOrLocationIssue: false, networkFailure: true };

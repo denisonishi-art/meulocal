@@ -1,3 +1,5 @@
+// Server-owned release proof is not wired; flags/body cannot authorize outreach.
+const commercialReleaseVerified=false;
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {isAdminRequest} from '@/lib/admin-auth';
@@ -62,7 +64,7 @@ export async function GET(req:Request){
 }
 
 async function dispatch(req:Request){
-  if(process.env.MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED !== 'true') return NextResponse.json({error:'Envio inicial temporariamente desativado ate reconciliacao do GHL.',contactStarted:false,status:'outreach_disabled'},{status:423});
+  if(!commercialReleaseVerified || process.env.MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED !== 'true') return NextResponse.json({error:'Envio inicial temporariamente desativado ate reconciliacao do GHL.',contactStarted:false,status:'outreach_disabled'},{status:423});
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!serviceKey)return NextResponse.json({error:'Banco não configurado.'},{status:503});

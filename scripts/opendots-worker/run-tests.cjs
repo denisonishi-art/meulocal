@@ -1,0 +1,12 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
+if(process.versions.node!=='24.21.0')throw Error('Node_24_21_0_required');
+const root=path.resolve(__dirname,'../..');process.chdir(root);
+process.env.OPENDOTS_ROOT=path.resolve(process.env.OPENDOTS_ROOT||'.opendots/upstream');
+const run=args=>cp.execFileSync(process.execPath,args,{cwd:root,env:process.env,stdio:'inherit'});
+run(['scripts/opendots-worker/prepare-installation.cjs']);
+const tests=fs.readdirSync(__dirname).filter(name=>/\.test\.(cjs|mjs)$/.test(name)).sort().map(name=>'scripts/opendots-worker/'+name);
+run(['--test',...tests,'scripts/check-rcia-opt-out.cjs','scripts/check-inbound-gates.cjs','scripts/check-native-reconciliation.cjs','scripts/check-ghl-native-opt-out.cjs']);
+for(const file of ['scripts/check-ghl-workflow-removal.cjs','scripts/check-inbound-intent.cjs'])run([file]);
+const load=require('./test-loader.cjs')();load('lib/agents/prospect-intelligence.test.ts');load('scripts/check-consultative-approach.ts');
+console.log('Local/synthetic regression passed; no real provider or CRM calls.');

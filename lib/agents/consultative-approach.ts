@@ -14,6 +14,7 @@ export type ApproachInput = {
 };
 export type ApproachDraft = {
  status: 'ready_for_review' | 'needs_evidence';
+ messageApproval?: 'NOT_VERIFIED';
  reason: string;
  angle?: 'review_gap' | 'review_presence';
  evidence?: string;
@@ -53,8 +54,8 @@ export function buildConsultativeApproach(input: ApproachInput): ApproachDraft {
    ? 'Talvez exista uma oportunidade de fortalecer a prova social da empresa nas buscas locais.'
    : 'Esse é um dos sinais que clientes podem observar antes de entrar em contato; vale entender o contexto antes de recomendar qualquer mudança.';
  const question='Preparei uma análise inicial para contextualizar esse ponto. Posso compartilhar com você?';
- const emailBody=`Olá, tudo bem?\n\n${opener}\n\n${observation}\n\n${insight}\n\n${question}\n\nAbraço,\nEquipe MeuLocal\n\nSe preferir não receber novos contatos, responda SAIR.`;
- const whatsapp=`Olá! Tudo bem?\n\n${opener}\n\n${observation}\n\n${question}\n\nSe preferir não receber novas mensagens, responda SAIR.`;
- return { status:'ready_for_review',reason:'Mensagem gerada com base nos dados fornecidos; confirmar fonte e contexto antes de aprovar.',angle,evidence,
+ const emailBody=`Olá, tudo bem?\n\n${opener}\n\n${observation}\n\n${insight}\n\n${question}\n\nAbraço,\nDenis, fundador da MeuLocal\n\nSe preferir não receber novos contatos, responda SAIR.`;
+ const whatsapp=`Olá! Sou Denis, fundador da MeuLocal. Tudo bem?\n\n${opener}\n\n${observation}\n\n${question}\n\nSe preferir não receber novas mensagens, responda SAIR.`;
+ return { status:'ready_for_review',messageApproval:'NOT_VERIFIED',reason:'Mensagem gerada com base nos dados fornecidos; confirmar fonte e contexto antes de aprovar.',angle,evidence,
   email:{subject:`Uma observação sobre a presença da ${business} no Google`,body:emailBody},whatsapp};
 }

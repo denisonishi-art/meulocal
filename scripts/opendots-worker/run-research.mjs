@@ -2,6 +2,7 @@ import fs from 'node:fs';import path from 'node:path';import http from 'node:htt
 import {bootstrapWorkspace} from './workspace-bootstrap.mjs';
 const require=createRequire(import.meta.url);
 const {configuration}=require('./remote-config.cjs'),{createMcpBridge}=require('./mcp-server.cjs'),{textDelta}=require('./agent-text.cjs');
+const {classifyExternalFailure,cleanupOwnedResources}=require('./external-failures.cjs');
 const repoRoot=path.resolve(import.meta.dirname,'../..');
 const identity=JSON.parse(fs.readFileSync(new URL('./dot-identity.json',import.meta.url),'utf8'));
 const listen=server=>new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',()=>resolve('http://127.0.0.1:'+server.address().port))});
@@ -26,9 +27,9 @@ export async function runResearch(config,{fetch:transport=globalThis.fetch,prefl
   workspace=bootstrapWorkspace(WorkspaceStore,path.join(config.dataDir,'workspace.sqlite'),config.ownerId,identity);
   store=new Store(path.join(config.dataDir,'workspace.sqlite'));if(store.settings().paused)throw Error('worker_paused');store.updateSettings({researchAllowed:false,memoryAllowed:false});
   if(workspace.connections.list(identity.id).some(c=>c.enabled))throw Error('unexpected_existing_connection');
-  if(preflight){report.status='PREFLIGHT_LOCAL_ONLY';report.authentication='NOT_VERIFIED';stage('portable_upstream_and_existing_identity_validated');return report}
-  bridge=createMcpBridge({openDotsRoot:config.official,repoRoot:config.repoRoot,endpoint:config.endpoint,approvedRemoteOrigin:config.approvedRemoteOrigin,apiKey:config.apiKey,sourceProvider:'meulocal_backend',token:ownerToken,onResearchComplete:result=>{report.research=result;stage('qualification_confirmed_by_adapter')},fetch:async(url,init)=>{
-   if(url==='https://meulocal.ia.br/api/places/search'){
+  if(preflight){report.status='PREFLIGHT_LOCAL_ONLY';report.authentication='NOT_VERIFIED';report.missingCredentials=config.missingCredentials||[];stage('portable_upstream_and_existing_identity_validated');return report}
+  bridge=createMcpBridge({openDotsRoot:config.official,repoRoot:config.repoRoot,endpoint:config.endpoint,approvedRemoteOrigin:config.approvedRemoteOrigin,apiKey:config.apiKey,sourceEndpoint:config.discoveryEndpoint,segment:config.segment,city:config.city,state:config.state,sourceProvider:'meulocal_backend',token:ownerToken,onResearchComplete:result=>{report.research=result;stage('qualification_confirmed_by_adapter')},fetch:async(url,init)=>{
+   if(url===(config.discoveryEndpoint||'https://meulocal.ia.br/api/places/search')){
     if(report.sourceRequests>=1)throw Error('source_request_budget_exhausted');report.sourceRequests++;stage('source_requested');
     const response=await transport(url,init);report.sourceHttpStatus=response.status;
     const data=await response.clone().json();report.sourceReturned=Array.isArray(data.places)?data.places.length:null;
@@ -59,7 +60,7 @@ export async function runResearch(config,{fetch:transport=globalThis.fetch,prefl
   });const runtimeUrl=await listen(runtime);
   platform=new Platform(store,workspace,{intelligenceKey:config.intelligenceKey,model:config.model,apiKey:config.modelKey,baseUrl:proxyUrl+'/v1',runtimeUrl:runtimeUrl+'/api/copilotkit',ownerToken,voiceName:'alloy',slackUsers:[],webSearchProvider:'disabled'});
   connection=await platform.connections.add(identity.id,{name:'MeuLocal Research',url:bridgeUrl+'/mcp',token:ownerToken});stage('official_mcp_connected');
-  const prompt=`Use somente a conexão MeuLocal Research: research_readiness e research_generator_prospects uma única vez, limit=${config.limit}. Não use outras ferramentas, não salve páginas, não envie mensagens e não faça retries. Apresente nomes, externalId, score, evidências e um rascunho por empresa realmente qualificada, no máximo três, para revisão humana de gestão de avaliações Google por R$397/mês. Não produza terceiros genéricos. Não invente dados, condições contratuais como "sem compromisso", nem prometa resultados. Nota média não comprova notas individuais. CRM, supressões, opt-out, status operacional e consentimento são NOT_VERIFIED. Todos os resultados permanecem pending_review. Nunca autorize contato ou follow-up.`;
+  const prompt=`Use somente a conexão MeuLocal Research: research_readiness e research_generator_prospects uma única vez, limit=${config.limit}. Não use outras ferramentas, não salve páginas, não envie mensagens e não faça retries. Apresente nomes, externalId, score, evidências e um rascunho por empresa realmente qualificada, no máximo três, para revisão humana de observação consultiva útil, identificação Denis, fundador da MeuLocal e pedido de permissão para compartilhar diagnóstico. Não mencione preço no primeiro contato. Não produza terceiros genéricos. Não invente dados, condições contratuais como "sem compromisso", nem prometa resultados. Nota média não comprova notas individuais. CRM, supressões, opt-out, status operacional e consentimento são NOT_VERIFIED. Todos os resultados permanecem pending_review. A mensagem aprovada ainda deve ser recuperada: identifique todos os rascunhos como não aprovados. Nunca autorize contato ou follow-up.`;
   if(config.mode==='intelligence'){
    await platform.start();const conversation=await platform.createConversation(identity.id,'MeuLocal research '+runId);report.threadId=conversation.id;stage('intelligence_thread_created');
    report.answer=await platform.turn(conversation.id,prompt,AbortSignal.timeout(120000));
@@ -73,11 +74,17 @@ export async function runResearch(config,{fetch:transport=globalThis.fetch,prefl
   const assessment=report.research?.assessments,ids=assessment?.map(a=>a.lead.externalId)||[];
   if(report.sourceRequests!==1||report.sourceHttpStatus!==200||report.qualificationHttpStatus!==200||!Array.isArray(assessment)||ids.length!==new Set(ids).size||!report.answer?.trim())throw Error('research_confirmation_missing');
   report.status=config.mode==='intelligence'?'INTELLIGENCE_RESEARCH_VERIFIED':'LOCAL_DIAGNOSTIC_RESEARCH_VERIFIED';stage('research_finished');
- }catch(error){report.failure=redact(error?.message||'worker_failed').slice(0,300);report.status='BLOCKED';save()}
+ }catch(error){report.failure=redact(error?.message||'worker_failed').slice(0,300);report.failureClass=classifyExternalFailure(error);report.retryPolicy='no_automatic_retry';report.status='BLOCKED';save()}
  finally{
-  if(connection)workspace.connections.remove(connection.id);
-  await platform?.stop().catch(()=>{});await close(runtime);await close(bridge);await close(proxy);workspace?.close();store?.close();fs.unlinkSync(lock);
-  report.cleanup='loopback services closed; own temporary MCP connection removed; no schedule';
+  const failed=await cleanupOwnedResources([
+   {name:'own_mcp_connection',close:()=>connection&&workspace.connections.remove(connection.id)},
+   {name:'platform',close:()=>platform?.stop()},
+   {name:'runtime',close:()=>close(runtime)},{name:'bridge',close:()=>close(bridge)},{name:'proxy',close:()=>close(proxy)},
+   {name:'workspace',close:()=>workspace?.close()},{name:'store',close:()=>store?.close()},
+   {name:'own_lock',close:()=>fs.unlinkSync(lock)}
+  ]);
+  report.cleanupFailures=failed;
+  report.cleanup=failed.length?'PARTIAL_FAILURE':'OWNED_RESOURCES_CLOSED';if(failed.length)report.status='BLOCKED';
   const usages=report.modelRequests.map(r=>r.usage).filter(Boolean);report.measuredUsage=usages.length>0&&usages.length===report.modelRequests.length;
   report.tokens={input:usages.reduce((s,u)=>s+(u.prompt_tokens||0),0),cached:usages.reduce((s,u)=>s+(u.prompt_tokens_details?.cached_tokens||0),0),output:usages.reduce((s,u)=>s+(u.completion_tokens||0),0)};
   report.estimatedModelUSD=report.measuredUsage?((report.tokens.input-report.tokens.cached)*0.40+report.tokens.cached*0.10+report.tokens.output*1.60)/1000000:null;
@@ -86,6 +93,6 @@ export async function runResearch(config,{fetch:transport=globalThis.fetch,prefl
  return report;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===path.resolve(import.meta.filename)){
- try{const env=require('./credential-environment.cjs').credentialEnvironment(process.env),config=configuration(env,repoRoot),report=await runResearch(config,{preflight:process.argv.includes('--preflight')});console.log(JSON.stringify({status:report.status,runId:report.runId,sourceRequests:report.sourceRequests,modelRequests:report.modelRequests.length,commercialEligibility:report.commercialEligibility,outputDir:config.outputDir}));if(report.status==='BLOCKED')process.exitCode=1}
+ try{const env=require('./credential-environment.cjs').credentialEnvironment(process.env),config=configuration(env,repoRoot,{preflight:process.argv.includes('--preflight')}),report=await runResearch(config,{preflight:process.argv.includes('--preflight')});console.log(JSON.stringify({status:report.status,runId:report.runId,sourceRequests:report.sourceRequests,modelRequests:report.modelRequests.length,commercialEligibility:report.commercialEligibility,outputDir:config.outputDir}));if(report.status==='BLOCKED')process.exitCode=1}
  catch(error){console.error(JSON.stringify({status:'BLOCKED_CONFIGURATION',reason:error.message}));process.exitCode=1}
 }
