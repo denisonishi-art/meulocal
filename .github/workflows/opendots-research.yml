@@ -76,6 +76,11 @@ jobs:
           if(fs.existsSync(dir)) for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('.json'))){
             const r=JSON.parse(fs.readFileSync(dir+'/'+file,'utf8'));
             const summary={runId:r.runId,status:r.status,failureClass:r.failureClass||null,stages:r.stages||[],sourceHttpStatus:r.sourceHttpStatus||null,sourceReturned:r.sourceReturned??null,qualificationHttpStatus:r.qualificationHttpStatus||null,commercialEligibility:r.commercialEligibility,sourceRequests:r.sourceRequests,modelRequests:r.modelRequests?.length,tokens:r.tokens,estimatedModelUSD:r.estimatedModelUSD,candidates:(r.research?.assessments||[]).map(a=>({externalId:a.lead.externalId,name:a.lead.name,score:a.score,approvalStatus:a.approvalStatus})),drafts:r.research?.drafts,modelDraftStatus:r.answer?"PENDING_HUMAN_REVIEW":"ABSENT",eligibility:r.research?.eligibility,crmWrites:r.crmWrites,outboundMessages:r.outboundMessages};
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\n```json\n'+JSON.stringify(summary,null,2)+'\n```\n');
+            const eligibilityById=new Map((r.research?.eligibility||[]).map(e=>[e.externalId,e]));
+            const reviewQueue=(r.research?.drafts||[]).slice(0,10).map(item=>{
+              const eligibility=eligibilityById.get(item.externalId);
+              return {externalId:item.externalId,approvalStatus:'pending_review',contactAllowed:false,eligibilityStatus:eligibility?.status||'NOT_VERIFIED',ghlStatus:eligibility?.ghlStatus||'NOT_VERIFIED',reasons:eligibility?.reasons||['eligibility_not_verified'],email:item.draft?.email||null,whatsapp:item.draft?.whatsapp||null};
+            });
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\n\`\`\`json\n'+JSON.stringify({...summary,reviewQueue},null,2)+'\n\`\`\`\n');
           }
           JS
