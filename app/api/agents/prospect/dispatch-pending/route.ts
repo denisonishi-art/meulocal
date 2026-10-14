@@ -31,13 +31,13 @@ async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null
   if(!business?.id)return;
   let lead=(await db.from('leads').select('id').eq('prospect_diagnostic_id',d.id).maybeSingle()).data;
   if(!lead){
-    const inserted=await db.from('leads').insert({business_id:business.id,name:d.business_name,email,whatsapp:contact.phone||null,consent_email:channel==='email',consent_whatsapp:channel==='whatsapp',origin:'outbound',lifecycle_stage:eventType==='queued'?'mql':'lead',automation_track:'meulocal_acquisition',prospect_diagnostic_id:d.id}).select('id').single();
+    const inserted=await db.from('leads').insert({business_id:business.id,name:d.business_name,email,whatsapp:contact.phone||null,consent_email:false,consent_whatsapp:false,origin:'outbound',lifecycle_stage:eventType==='queued'?'mql':'lead',automation_track:'meulocal_acquisition',prospect_diagnostic_id:d.id}).select('id').single();
     lead=inserted.data;
   }
   if(lead?.id){
     const now=new Date().toISOString();
     if(result?.contactId)await db.from('leads').update({ghl_contact_id:result.contactId,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583',updated_at:now}).eq('id',lead.id);
-    const storedEventType=eventType==='queued'&&channel==='whatsapp'?'sent':eventType;
+    const storedEventType=eventType;
     await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:storedEventType,provider:'highlevel',external_id:result?.messageId||null,conversation_id:result?.conversationId||null,message_key:'diagnostic_initial',metadata:reason?{reason}:{source:'prospect_recovery',cadence_step:0}});
     if(eventType==='queued'){
       const nextRunAt=addDaysIso(now,3);
@@ -88,7 +88,7 @@ async function dispatch(req:Request){
         businessName:d.business_name,email,phone:contact.phone,website:contact.website,
         diagnosticUrl:`${appUrl}/d/${d.public_token}`
       });
-      if(result.ok){await db.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);await trackDispatch(db,d,contact,email,'queued','email',result);}
+      if(result.ok){await trackDispatch(db,d,contact,email,'queued','email',result);}
       else await trackDispatch(db,d,contact,email,'failed','email',undefined,result.reason);
       return {id:d.id,businessName:d.business_name,email,...result};
     }));
