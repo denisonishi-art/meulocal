@@ -8,9 +8,9 @@ on:
         options: [preflight, research]
         default: preflight
       segment:
-        description: 'Local business segment in Sao Paulo'
+        description: 'Local segment or automatic daily rotation (one bounded query)'
         type: choice
-        options: [geradores, buffets, pizzarias, escolas, despachantes, academias, clinicas, servicos locais]
+        options: [automatico, geradores, buffets, pizzarias, restaurantes, imobiliarias, lojas de colchoes, escolas, despachantes, academias, clinicas, pet shops, oficinas, saloes de beleza, servicos locais]
         default: geradores
       approved:
         description: 'Authorize one bounded research run, provider usage and no outreach'
