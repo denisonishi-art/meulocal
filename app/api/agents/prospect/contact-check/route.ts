@@ -32,7 +32,7 @@ export async function POST(req:Request){
  const locationId=process.env.GHL_LOCATION_ID||'';
  const verified=[];
  for(const row of results){
-  const eligibility=await assessProspectEligibility({lead:{externalId:'google_places:'+row.id.replace(/^places\\//,''),name:row.name},locationId,db,token:process.env.GHL_API_KEY});
+  const eligibility=await assessProspectEligibility({lead:{externalId:'google_places:'+(row.id.startsWith('places/')?row.id.slice(7):row.id),name:row.name},locationId,db,token:process.env.GHL_API_KEY});
   verified.push({...row,eligibilityStatus:eligibility.status,ghlStatus:eligibility.ghlStatus,eligibilityReasons:eligibility.reasons,contactAllowed:false});
  }
  return NextResponse.json({results:verified,contactAuthorized:false,dispatched:0},{headers:{'Cache-Control':'no-store'}});
