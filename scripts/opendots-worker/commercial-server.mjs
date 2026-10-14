@@ -45,7 +45,22 @@ async function start(){
  const workspace=bootstrapWorkspace(WorkspaceStore,database,'meulocal-research-local',identity);
  const store=new Store(database);
  if(store.settings().paused)throw Error('worker_paused');
- const platform=new Platform(store,workspace,{intelligenceKey,model:'gpt-4.1-mini-2025-04-14',apiKey,ownerToken:randomUUID(),voiceName:'alloy',slackUsers:[],webSearchProvider:'disabled'});
+ const ownerToken=randomUUID();
+ let platform;
+ const runtime=http.createServer(async(req,res)=>{
+  try{
+   if(req.headers.origin||req.headers.authorization!=='Bearer '+ownerToken){res.writeHead(401);return res.end()}
+   const url='http://127.0.0.1:'+runtime.address().port+'/api/copilotkit'+req.url;
+   const body=['GET','HEAD'].includes(req.method)?undefined:await bodyText(req);
+   const response=await platform.handle(new Request(url,{method:req.method,headers:req.headers,...(body===undefined?{}:{body})}));
+   res.writeHead(response.status,Object.fromEntries(response.headers));
+   if(response.body){for await(const chunk of response.body)res.write(chunk)}
+   res.end();
+  }catch(error){console.error('opendots_runtime_request_failed',String(error?.message||error).slice(0,160));if(!res.headersSent)res.writeHead(500);res.end()}
+ });
+ await new Promise((resolve,reject)=>{runtime.once('error',reject);runtime.listen(0,'127.0.0.1',resolve)});
+ const runtimeUrl='http://127.0.0.1:'+runtime.address().port+'/api/copilotkit';
+ platform=new Platform(store,workspace,{intelligenceKey,model:'gpt-4.1-mini-2025-04-14',apiKey,runtimeUrl,ownerToken,voiceName:'alloy',slackUsers:[],webSearchProvider:'disabled'});
  await platform.start();
  const outputDir=path.join(dataDir,'commercial-decisions');fs.mkdirSync(outputDir,{recursive:true,mode:0o700});
  const server=createReceiver({secret,modelTurn:async prompt=>{
@@ -60,7 +75,7 @@ async function start(){
  const port=Number(process.env.OPENDOTS_COMMERCIAL_PORT||8787);
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'0.0.0.0',resolve)});
  console.log(JSON.stringify({status:'READY',port,service:'opendots_commercial',dispatch:false}));
- const close=async()=>{server.close();await platform.stop();workspace.close();store.close()};
+ const close=async()=>{server.close();runtime.closeAllConnections?.();await new Promise(resolve=>runtime.close(resolve));await platform.stop();workspace.close();store.close()};
  process.once('SIGTERM',()=>{void close()});process.once('SIGINT',()=>{void close()});
 }
 export {createReceiver,sameSignature};
