@@ -22,3 +22,14 @@ test('backend transport needs no exported Google key and never forwards the priv
  const result=await worker.research({limit:5});assert.equal(result.provider,'meulocal_backend');assert.equal(result.commercialEligibility,'NOT_VERIFIED');assert.equal(result.assessments[0].score,30);
  assert.equal(JSON.stringify(calls[0]).includes('SYNTHETIC_PRIVATE_KEY'),false);assert.equal(calls.length,2);
 });
+
+test('stronger opportunity gate excludes established profiles with weak rating-only evidence',()=>{
+ const result=adapter.mapBackendPlaces([
+  place('established',{reviewCount:301,rating:4.2}),
+  place('mild',{reviewCount:100,rating:4.1}),
+  place('urgent',{reviewCount:100,rating:3.7}),
+  place('small',{reviewCount:24,rating:4.8})
+ ],observed);
+ assert.deepEqual(result.leads.map(x=>x.externalId),['google_places:urgent','google_places:small']);
+ assert.equal(result.excluded,2);
+});
