@@ -16,3 +16,14 @@ test('portable configuration reads process env, rejects missing auth and prevent
  assert.throws(()=>configuration({...env,OPENDOTS_EXECUTION_MODE:'fallback'},'/workspace/meulocal'),/mode/);
  assert.throws(()=>configuration({...env,MEULOCAL_PROSPECTOR_ENDPOINT:'https://evil.example/api/agents/prospecting'},'/workspace/meulocal'),/endpoint/);
 });
+
+test('automatic mode rotates distinct local sectors without increasing per-run limit',()=>{
+ const {configuration}=require('./remote-config.cjs');
+ const env={MEULOCAL_PROSPECTOR_API_KEY:'SYNTHETIC_KEY',CPK_INTELLIGENCE_API_KEY:'SYNTHETIC_INTELLIGENCE',OPENAI_API_KEY:'SYNTHETIC_MODEL',MEULOCAL_RESEARCH_SEGMENT:'automatico'};
+ const one=configuration({...env,MEULOCAL_RESEARCH_DATE:'2026-10-13'},'/workspace/meulocal');
+ const two=configuration({...env,MEULOCAL_RESEARCH_DATE:'2026-10-14'},'/workspace/meulocal');
+ assert.notEqual(one.segment,two.segment);
+ assert.equal(one.limit,5);assert.equal(two.limit,5);
+ assert.equal(configuration({...env,MEULOCAL_RESEARCH_SEGMENT:'lojas de colchoes'},'/workspace/meulocal').segment,'lojas de colchoes');
+ assert.throws(()=>configuration({...env,MEULOCAL_RESEARCH_SEGMENT:'segmento-nao-permitido'},'/workspace/meulocal'),/segment_invalid/);
+});
