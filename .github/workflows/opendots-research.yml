@@ -62,7 +62,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           MEULOCAL_PROSPECTOR_API_KEY: ${{ secrets.MEULOCAL_PROSPECTOR_API_KEY }}
           OPENDOTS_EXECUTION_MODE: intelligence
-          MEULOCAL_RESEARCH_LIMIT: '5'
+          MEULOCAL_RESEARCH_LIMIT: '10'
           MEULOCAL_RESEARCH_SEGMENT: ${{ github.event_name == 'schedule' && 'automatico' || inputs.segment }}
           DO_NOT_TRACK: '1'
           COPILOTKIT_TELEMETRY_DISABLED: 'true'
