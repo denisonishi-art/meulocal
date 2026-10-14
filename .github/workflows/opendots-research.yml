@@ -72,7 +72,7 @@ jobs:
           const dir='.opendots/results';
           if(fs.existsSync(dir)) for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('.json'))){
             const r=JSON.parse(fs.readFileSync(dir+'/'+file,'utf8'));
-            const summary={runId:r.runId,status:r.status,mode:r.mode,commercialEligibility:r.commercialEligibility,sourceRequests:r.sourceRequests,modelRequests:r.modelRequests?.length,tokens:r.tokens,estimatedModelUSD:r.estimatedModelUSD,candidates:(r.research?.assessments||[]).map(a=>({externalId:a.lead.externalId,name:a.lead.name,score:a.score,approvalStatus:a.approvalStatus})),drafts:r.research?.drafts,modelDraftStatus:r.answer?"PENDING_HUMAN_REVIEW":"ABSENT",eligibility:r.research?.eligibility,crmWrites:r.crmWrites,outboundMessages:r.outboundMessages};
+            const summary={runId:r.runId,status:r.status,failureClass:r.failureClass||null,stages:r.stages||[],sourceHttpStatus:r.sourceHttpStatus||null,sourceReturned:r.sourceReturned??null,qualificationHttpStatus:r.qualificationHttpStatus||null,commercialEligibility:r.commercialEligibility,sourceRequests:r.sourceRequests,modelRequests:r.modelRequests?.length,tokens:r.tokens,estimatedModelUSD:r.estimatedModelUSD,candidates:(r.research?.assessments||[]).map(a=>({externalId:a.lead.externalId,name:a.lead.name,score:a.score,approvalStatus:a.approvalStatus})),drafts:r.research?.drafts,modelDraftStatus:r.answer?"PENDING_HUMAN_REVIEW":"ABSENT",eligibility:r.research?.eligibility,crmWrites:r.crmWrites,outboundMessages:r.outboundMessages};
             fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'\n```json\n'+JSON.stringify(summary,null,2)+'\n```\n');
           }
           JS
