@@ -14,7 +14,7 @@ export async function forwardInboundToOpenDots(input:{eventId:string;leadId:stri
  const body=JSON.stringify({version:1,kind:'meulocal.acquisition.inbound',...input,permissions:{initialSend:false,autoReply:false,crmWrite:false},occurredAt:new Date().toISOString()});
  const signature=createHmac('sha256',secret).update(body).digest('hex');
  try{
-  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-MeuLocal-Signature':'sha256='+signature,'X-MeuLocal-Event-Id':input.eventId},body,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(3500)});
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-MeuLocal-Signature':'sha256='+signature,'X-MeuLocal-Event-Id':input.eventId},body,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});
   return {status:res.ok?'accepted':'rejected',httpStatus:res.status} as const;
  }catch{return {status:'unavailable'} as const}
 }
