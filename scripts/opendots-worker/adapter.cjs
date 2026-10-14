@@ -43,8 +43,11 @@ function mapBackendPlaces(places,observedAt,job={segment:'geradores',city:'Sao P
   const cityObserved=/(?:^|,)\s*sao paulo\s*-\s*sp(?:\s*,|\s*$)/.test(normalize(place.address));
   const website=publicUrl(place.website),site=website?.hostname.replace(/^www\./,'');
   const sourceUrl=publicUrl(place.googleMapsUri,true)?.href||job.sourceUrl||BACKEND_SOURCE;
-  const lowRating=Number.isFinite(rating)&&rating>=1&&rating<4.3;
-  if(!id||!name||!cityObserved||place.businessStatus&&place.businessStatus!=='OPERATIONAL'||!Number.isInteger(count)||count<=0||!(count<=50||lowRating)||seen.has(id)||site&&sites.has(site)){excluded++;continue}
+  const lowRating=Number.isFinite(rating)&&rating>=1&&rating<4.0;
+  // A weak rating alone on an established profile is not a compelling reviews-management opportunity.
+  // Prefer modest review volumes; retain severe low ratings only with <=200 observed reviews.
+  const meaningfulSignal=count<=50||(lowRating&&count<=200);
+  if(!id||!name||!cityObserved||place.businessStatus&&place.businessStatus!=='OPERATIONAL'||!Number.isInteger(count)||count<=0||!meaningfulSignal||seen.has(id)||site&&sites.has(site)){excluded++;continue}
   seen.add(id);if(site)sites.add(site);const externalId='google_places:'+id,evidence=[];
   if(count<=50)evidence.push({signal:'few_reviews',url:sourceUrl,observedAt:observedAt.toISOString(),description:`Backend MeuLocal retorna ${count} avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional.`,verified:true});
   if(lowRating)evidence.push({signal:'low_rating',url:sourceUrl,observedAt:observedAt.toISOString(),description:`Backend MeuLocal retorna nota ${rating}/5 de Google Places.`,verified:true});
