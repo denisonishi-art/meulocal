@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/opendots-prospeccao-meulocal]
   pull_request:
     branches: [main]
 
@@ -21,6 +21,8 @@ jobs:
           cache-dependency-path: package.json
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: OpenDots commercial decision tests
+        run: node --test scripts/opendots-worker/commercial-engine.test.cjs
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Build
