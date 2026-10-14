@@ -49,8 +49,9 @@ export async function POST(req:Request){
  const verified=[];
  for(const row of results){
   const eligibility=await assessProspectEligibility({lead:{externalId:'google_places:'+(row.id.startsWith('places/')?row.id.slice(7):row.id),name:row.name},locationId,db,token:process.env.GHL_API_KEY});
-  const {lookupPhone,...safeRow}=row;
-  const identifier=await checkGhlIdentifier({email:row.email||null,phone:lookupPhone||'',locationId,token:process.env.GHL_API_KEY});
+  const lookupPhone='lookupPhone' in row?String(row.lookupPhone||''):'';
+  const safeRow={...row};delete (safeRow as {lookupPhone?:string}).lookupPhone;
+  const identifier=await checkGhlIdentifier({email:'email' in row?String(row.email||''):null,phone:lookupPhone,locationId,token:process.env.GHL_API_KEY});
   verified.push({...safeRow,...identifier,eligibilityStatus:eligibility.status,ghlStatus:eligibility.ghlStatus,eligibilityReasons:eligibility.reasons,contactAllowed:false});
  }
  return NextResponse.json({results:verified,contactAuthorized:false,dispatched:0},{headers:{'Cache-Control':'no-store'}});
