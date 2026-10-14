@@ -35,7 +35,7 @@ function validWebhook(request:Request,raw:string){
     try{return verifySignature(null,Buffer.from(raw,'utf8'),GHL_PUBLIC_KEY,Buffer.from(signed,'base64'))}catch{return false}
   }
   const secret=process.env.GHL_WEBHOOK_SECRET;
-  return Boolean(secret&&request.headers.get('x-meulocal-webhook-token')===secret);
+  return Boolean(secret&&(request.headers.get('x-meulocal-webhook-token')===secret||request.headers.get('x-bridge-secret')===secret));
 }
 
 export async function POST(request:Request){
