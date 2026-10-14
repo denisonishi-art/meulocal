@@ -1,5 +1,8 @@
 name: OpenDots - manual research only
 on:
+  # 09:00 Sao Paulo (12:00 UTC); research remains environment-gated.
+  schedule:
+    - cron: '0 12 * * 1-5'
   workflow_dispatch:
     inputs:
       mode:
@@ -24,7 +27,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   research:
-    if: github.repository == 'denisonishi-art/meulocal' && github.ref == 'refs/heads/feat/opendots-prospeccao-meulocal'
+    if: github.repository == 'denisonishi-art/meulocal' && (github.event_name == 'schedule' || github.ref == 'refs/heads/feat/opendots-prospeccao-meulocal')
     runs-on: ubuntu-24.04
     environment: opendots-research
     timeout-minutes: 15
@@ -32,7 +35,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-10-13
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
+          ref: ${{ github.event_name == 'schedule' && 'afd5ccbe67d3b53b98e8536dae290859f7900a0c' || github.sha }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24.21.0'
@@ -50,17 +53,17 @@ jobs:
       - name: Offline preflight
         run: node scripts/opendots-worker/run-research.mjs --preflight
       - name: Reject research without explicit approval
-        if: inputs.mode == 'research' && !inputs.approved
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'research' && !inputs.approved
         run: exit 1
       - name: Run a single Intelligence research job
-        if: inputs.mode == 'research' && inputs.approved
+        if: github.event_name == 'schedule' || (inputs.mode == 'research' && inputs.approved)
         env:
           CPK_INTELLIGENCE_API_KEY: ${{ secrets.CPK_INTELLIGENCE_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           MEULOCAL_PROSPECTOR_API_KEY: ${{ secrets.MEULOCAL_PROSPECTOR_API_KEY }}
           OPENDOTS_EXECUTION_MODE: intelligence
           MEULOCAL_RESEARCH_LIMIT: '5'
-          MEULOCAL_RESEARCH_SEGMENT: ${{ inputs.segment }}
+          MEULOCAL_RESEARCH_SEGMENT: ${{ github.event_name == 'schedule' && 'automatico' || inputs.segment }}
           DO_NOT_TRACK: '1'
           COPILOTKIT_TELEMETRY_DISABLED: 'true'
         run: node scripts/opendots-worker/run-research.mjs
