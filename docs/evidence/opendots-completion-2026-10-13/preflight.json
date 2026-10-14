@@ -1,0 +1,16 @@
+{
+  "runId": "7bc1a28b-1674-4582-be8d-741ec9844035",
+  "status": "PREFLIGHT_LOCAL_ONLY",
+  "mode": "intelligence",
+  "sourceRequests": 0,
+  "modelRequests": [],
+  "missingCredentials": [
+    "OPENAI_API_KEY",
+    "CPK_INTELLIGENCE_API_KEY",
+    "MEULOCAL_PROSPECTOR_API_KEY"
+  ],
+  "authentication": "NOT_VERIFIED",
+  "cleanup": "OWNED_RESOURCES_CLOSED",
+  "cleanupFailures": [],
+  "commercialEligibility": "NOT_VERIFIED"
+}

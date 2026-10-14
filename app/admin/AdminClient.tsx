@@ -1,5 +1,5 @@
 'use client';
-import {FormEvent,useEffect,useMemo,useRef,useState} from 'react';
+import {FormEvent,useEffect,useMemo,useState} from 'react';
 import {
   Activity,ArrowUpRight,Bot,Building2,Check,ClipboardCheck,
   Gauge,LogOut,MapPin,RefreshCw,Search,Send,ShieldCheck,Sparkles,Users,Workflow
@@ -27,7 +27,7 @@ function Pill({value}:{value?:string|null}){const key=(value||'').replaceAll('_'
 function DeliveryPill({delivery}:{delivery?:any}){const state=delivery?.state||'pending';const label=state==='contacted'?`Na régua${delivery?.channel?` · ${delivery.channel}`:''}`:state==='error'?`Erro${delivery?.channel?` · ${delivery.channel}`:''}`:state==='converted'?'Convertido':'Pendente';return <span className={'statusPill '+(state==='contacted'?'active':state==='error'?'error':state==='converted'?'converted':'pending')} title={delivery?.reason||label}>{label}</span>}
 
 export default function AdminClient(){
- const[view,setView]=useState<View>('overview');const recoveredApproved=useRef(false);
+ const[view,setView]=useState<View>('overview');
  const[data,setData]=useState<Overview|null>(null);const[loadingData,setLoadingData]=useState(true);const[dataError,setDataError]=useState('');
  const[niche,setNiche]=useState('');const[region,setRegion]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');const[diagMsg,setDiagMsg]=useState('');const[deliveryPeriod,setDeliveryPeriod]=useState<'all'|'week'|'month'>('all');const[replyingTo,setReplyingTo]=useState<string|null>(null);const[replyText,setReplyText]=useState('');
 
@@ -42,7 +42,7 @@ export default function AdminClient(){
    const approved=rows.filter(x=>selected.includes(x.id)).map(x=>({id:x.id,name:x.name,address:x.address,rating:x.rating,reviews:x.reviews,score:x.score,website:x.website,phone:x.phone,competitorAverageReviews:x.competitorAverageReviews,niche,region,competitionMode:x.competitionMode,competitionLabel:x.competitionLabel,searchIntent:x.searchIntent}));
    const r=await fetch('/api/agents/prospect/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approved,niche,location:region})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na aprovação');
    const started=Number(j.contactStarted||0);const pending=Number(j.diagnostics?.length||0)-started;
-   setMsg(selected.length+' prospect'+(selected.length>1?'s':'')+' processado'+(selected.length>1?'s':'')+'. '+started+' contato'+(started!==1?'s':'')+' entrou'+(started!==1?'aram':'')+' automaticamente na régua GHL.'+(pending>0?' '+pending+' ficou'+(pending!==1?'ram':'')+' pendente'+(pending!==1?'s':'')+' por não haver e-mail público no site.':''));setSelected([]);await loadOverview();
+   setMsg(selected.length+' prospect'+(selected.length>1?'s':'')+' processado'+(selected.length>1?'s':'')+'. '+started+' contato'+(started!==1?'s':'')+' encaminhado'+(started!==1?'s':'')+' ao GHL (entrega não confirmada).'+(pending>0?' '+pending+' pendente'+(pending!==1?'s':'')+' de encaminhamento.':''));setSelected([]);await loadOverview();
  }catch(e:any){setMsg(e.message)}finally{setBusy(false)}}
  async function dispatchApproved(diagnostics?:any[]){
    setBusy(true);setDiagMsg('');
@@ -59,10 +59,8 @@ export default function AdminClient(){
    try{const r=await fetch('/api/agents/prospect/reply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leadId:d.leadId,message:replyText,channel:d.reply?.channel})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Não foi possível enviar a resposta.');setReplyingTo(null);setReplyText('');setDiagMsg(`Resposta enviada por ${j.channel==='whatsapp'?'WhatsApp':'e-mail'}.`);await loadOverview()}catch(e:any){setDiagMsg(e.message)}finally{setBusy(false)}
  }
 
- useEffect(()=>{
-   const pending=(data?.diagnostics||[]).filter((d:any)=>d.status==='approved');
-   if(!recoveredApproved.current&&pending.length){recoveredApproved.current=true;void dispatchApproved(pending)}
- },[data]);
+ // Nunca iniciar prospecção automaticamente ao abrir a página administrativa.
+ // Ação de envio exige clique explícito e as proteções do servidor.
 
  async function logout(){await fetch('/api/admin/session',{method:'DELETE'});window.location.href='/admin-login'}
 
@@ -74,6 +72,7 @@ export default function AdminClient(){
      <nav>
        {nav('overview',Gauge)}{nav('prospecting',Search)}{nav('leads',Users)}{nav('diagnostics',ClipboardCheck)}
        {nav('customers',Building2)}{nav('automations',Workflow)}{nav('agents',Bot)}
+       <a href="/admin/funil"><Gauge/>Funil comercial</a>
        <a href="/admin/aprendizado"><Sparkles/>Aprendizado</a>
      </nav>
      <div className="adminSafety"><ShieldCheck/><div><strong>Operação protegida</strong><small>Admin separado da área do cliente. GHL e integrações ficam nos bastidores.</small></div></div>
@@ -117,7 +116,7 @@ export default function AdminClient(){
      {view==='prospecting'&&<>
        <form className="commandCard" onSubmit={search}><div className="commandIcon"><Bot/></div><div className="commandFields"><label>O que você quer prospectar?<input value={niche} onChange={e=>setNiche(e.target.value)} placeholder="Ex.: empresas que alugam geradores" required/></label><label>Onde?<input value={region} onChange={e=>setRegion(e.target.value)} placeholder="Ex.: São Paulo, SP" required/></label></div><button disabled={busy}>{busy?'Pesquisando...':'Buscar oportunidades'} <ArrowUpRight/></button></form>
        {msg&&<div className="adminMessage">{msg}</div>}
-       {rows.length>0&&<><div className="resultHeader"><div><span>OPORTUNIDADES ENCONTRADAS</span><h2>Prioridade sugerida pelo MeuLocal</h2><p>Ordenadas do menor Score para o maior. A seleção gera o diagnóstico e inicia a régua automaticamente quando houver e-mail público.</p></div><button className="approveBtn" onClick={approve} disabled={!selected.length||busy}><Check/> Prospectar e avaliar {selected.length||''}</button></div><div className="prospectList">{rows.map((r,i)=><article key={r.id} className={selected.includes(r.id)?'selected':''} onClick={()=>toggle(r.id)}><div className="selectBox">{selected.includes(r.id)&&<Check/>}</div><div className="rank">#{i+1}</div><div className="prospectInfo"><strong>{r.name}</strong><span>{r.address}</span><small>{r.rating?'★ '+r.rating:'Sem nota'} · {r.reviews} avaliações</small></div><div className="scoreBox"><span>Score MeuLocal</span><strong>{r.score}<small>/100</small></strong><em>{r.priority.replace('_',' ')}</em></div></article>)}</div></>}
+       {rows.length>0&&<><div className="resultHeader"><div><span>OPORTUNIDADES ENCONTRADAS</span><h2>Prioridade sugerida pelo MeuLocal</h2><p>Ordenadas do menor Score para o maior. Este score indica sinais de reputação, não probabilidade comprovada de compra. O envio só funciona quando autorizado no servidor.</p></div><button className="approveBtn" onClick={approve} disabled={!selected.length||busy}><Check/> Prospectar e avaliar {selected.length||''}</button></div><div className="prospectList">{rows.map((r,i)=><article key={r.id} className={selected.includes(r.id)?'selected':''} onClick={()=>toggle(r.id)}><div className="selectBox">{selected.includes(r.id)&&<Check/>}</div><div className="rank">#{i+1}</div><div className="prospectInfo"><strong>{r.name}</strong><span>{r.address}</span><small>{r.rating?'★ '+r.rating:'Sem nota'} · {r.reviews} avaliações</small></div><div className="scoreBox"><span>Score MeuLocal</span><strong>{r.score}<small>/100</small></strong><em>{r.priority.replace('_',' ')}</em></div></article>)}</div></>}
      </>}
 
      {view==='leads'&&data&&<section className="adminPanel tablePanel"><div className="panelHead"><div><span>FUNIL COMERCIAL</span><h2>Leads</h2></div><b>{data.leads.length}</b></div><div className="adminTable"><div className="tableRow tableHead"><span>Empresa / contato</span><span>Etapa</span><span>Automação</span><span>Próxima ação</span></div>{data.leads.map((l:any)=><div className="tableRow" key={l.id}><span><strong>{l.business?.name||l.name||'Sem empresa'}</strong><small>{l.email||l.whatsapp||'Sem contato'}</small></span><span><Pill value={l.lifecycle_stage}/></span><span>{l.automation_track||'—'}</span><span>{fmtDate(l.next_action_at)}</span></div>)}</div>{!data.leads.length&&<p className="empty">Nenhum lead ainda.</p>}</section>}

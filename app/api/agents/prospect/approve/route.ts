@@ -1,3 +1,5 @@
+// Server-owned release proof is not wired; flags/body cannot authorize outreach.
+const commercialReleaseVerified=false;
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {agentPolicies} from '@/lib/agents/config';
@@ -29,6 +31,7 @@ async function trackInitialDispatch(db:any,d:any,source:ApprovedProspect,result:
 }
 
 export async function POST(req:Request){
+  if(!commercialReleaseVerified || process.env.MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED !== 'true') return NextResponse.json({error:'Envio inicial temporariamente desativado ate reconciliacao do GHL.',contactStarted:false,status:'outreach_disabled'},{status:423});
   if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
   try{
     const body=await req.json();

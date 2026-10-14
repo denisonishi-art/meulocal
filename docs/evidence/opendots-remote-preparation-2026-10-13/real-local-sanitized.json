@@ -1,0 +1,150 @@
+{
+  "observedAt": "2026-10-13T18:49:09.707Z",
+  "executionMode": "official_DotAgent_local_diagnostic",
+  "status": "LOCAL_AGENT_CYCLE_EXECUTED",
+  "model": "gpt-4.1-mini-2025-04-14",
+  "keySource": "explicit file overrides inherited credentials",
+  "modelRequests": [
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 1246,
+        "completion_tokens": 57,
+        "total_tokens": 1303,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    },
+    {
+      "model": "gpt-4.1-mini-2025-04-14",
+      "status": 200,
+      "usage": {
+        "prompt_tokens": 3416,
+        "completion_tokens": 659,
+        "total_tokens": 4075,
+        "prompt_tokens_details": {
+          "cached_tokens": 1152,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      }
+    }
+  ],
+  "tokens": {
+    "input": 4662,
+    "cached": 1152,
+    "output": 716
+  },
+  "estimatedModelUSD": 0.0026648,
+  "sourceRequests": 1,
+  "qualificationHttpStatus": 200,
+  "crmWrites": 0,
+  "messagesSent": 0,
+  "sourceReturned": 8,
+  "evaluated": 5,
+  "sourceIds": [
+    "ChIJSwQcqckJz5QR-oS3-qZsFIM",
+    "ChIJX0RpQcrzeicReFGkGVl2RTY",
+    "ChIJYfjsEkdRzpQRuW8xFjj0-xs",
+    "ChIJGQPaYpf3zpQRRsfM0RuYSJA",
+    "ChIJHfWU5wx7zpQR6vY2vU4400g"
+  ],
+  "duplicatesInBatch": 0,
+  "qualifiedSignalsForReview": 3,
+  "assessments": [
+    {
+      "lead": {
+        "externalId": "google_places:ChIJX0RpQcrzeicReFGkGVl2RTY",
+        "name": "Alugar Gerador",
+        "segment": "geradores",
+        "city": "Sao Paulo",
+        "state": "SP",
+        "website": "https://www.alugargerador.com.br/",
+        "evidence": [
+          {
+            "signal": "few_reviews",
+            "url": "https://meulocal.ia.br/api/places/search",
+            "observedAt": "2026-10-13T18:49:14.738Z",
+            "description": "Backend MeuLocal retorna 17 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional.",
+            "verified": true
+          }
+        ]
+      },
+      "score": 30,
+      "priority": "media",
+      "reasons": [
+        "Backend MeuLocal retorna 17 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional."
+      ],
+      "approvalStatus": "pending_review"
+    },
+    {
+      "lead": {
+        "externalId": "google_places:ChIJYfjsEkdRzpQRuW8xFjj0-xs",
+        "name": "Aluguel de Gerador SP",
+        "segment": "geradores",
+        "city": "Sao Paulo",
+        "state": "SP",
+        "website": "https://aluguelgeradorsp.com.br/",
+        "evidence": [
+          {
+            "signal": "few_reviews",
+            "url": "https://meulocal.ia.br/api/places/search",
+            "observedAt": "2026-10-13T18:49:14.738Z",
+            "description": "Backend MeuLocal retorna 16 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional.",
+            "verified": true
+          }
+        ]
+      },
+      "score": 30,
+      "priority": "media",
+      "reasons": [
+        "Backend MeuLocal retorna 16 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional."
+      ],
+      "approvalStatus": "pending_review"
+    },
+    {
+      "lead": {
+        "externalId": "google_places:ChIJGQPaYpf3zpQRRsfM0RuYSJA",
+        "name": "GR Produções e Locações de Geradores Ltda",
+        "segment": "geradores",
+        "city": "Sao Paulo",
+        "state": "SP",
+        "website": "https://wa.me/5511983922660",
+        "evidence": [
+          {
+            "signal": "few_reviews",
+            "url": "https://meulocal.ia.br/api/places/search",
+            "observedAt": "2026-10-13T18:49:14.738Z",
+            "description": "Backend MeuLocal retorna 17 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional.",
+            "verified": true
+          }
+        ]
+      },
+      "score": 30,
+      "priority": "media",
+      "reasons": [
+        "Backend MeuLocal retorna 17 avaliações de Google Places. Origem: projeção existente; ausência de dados estruturados não comprova status operacional."
+      ],
+      "approvalStatus": "pending_review"
+    }
+  ],
+  "productionQualificationEndpoint": "NOT_VERIFIED_HTTP_404",
+  "intelligenceHeadless": "NOT_VERIFIED_PRIOR_HTTP_502",
+  "draftReview": "Three proposals generated from three real candidates; commercial authorization and opt-out NOT_VERIFIED; model text remains private.",
+  "sourceReportSha256": "ba4120a24391b0ad595067c930806146751198df469432468c6a5f3a620b827e",
+  "sessionIdentifiersRemoved": true
+}

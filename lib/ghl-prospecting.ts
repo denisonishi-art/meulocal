@@ -1,4 +1,3 @@
-import {sendOperationalMessage,upsertOperationalContact} from '@/lib/highlevel-operational';
 const API='https://services.leadconnectorhq.com';
 
 const normalize=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -12,24 +11,13 @@ export async function findBusinessEmail(website?:string|null){
  }catch{}return null;
 }
 export async function enqueueGhlProspect(input:{businessName:string;email:string;phone?:string|null;website?:string|null;diagnosticUrl:string}){
- const token=process.env.GHL_API_KEY;const locationId=process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583';
- if(!token)return {ok:false,reason:'GHL_API_KEY não configurada'};
- const headers={'Authorization':`Bearer ${token}`,'Version':'2021-07-28','Content-Type':'application/json'};
- let customField:any=null;
- try{const fields=await fetch(`${API}/locations/${locationId}/customFields?model=contact`,{headers});const payload=await fields.json();customField=(payload.customFields||payload.data||[]).find((field:any)=>normalize(field.name||field.fieldKey||'')==='link do diagnostico')}catch{}
- if(!customField)return {ok:false,reason:'Campo “Link do diagnóstico” não encontrado no GHL'};
- const payload={locationId,name:input.businessName,email:input.email,phone:input.phone||undefined,website:input.website||undefined,tags:['meulocal:prospectar','origem: prospecção'],customFields:[{id:customField.id,value:input.diagnosticUrl}]};
- const response=await fetch(`${API}/contacts/upsert`,{method:'POST',headers,body:JSON.stringify(payload)});if(!response.ok)return {ok:false,reason:`GHL recusou o contato (${response.status})`};
- const body=await response.json().catch(()=>({}));return {ok:true,contactId:body.contact?.id||body.id||null};
+ // Tagging/upsert can trigger a published workflow. No server-owned eligibility,
+ // approved-copy or delivery receipt is wired; environment flags are not proof.
+ void input;return {ok:false,reason:'commercial_release_not_verified',contactId:null};
 }
 
-export async function sendGhlProspectWhatsApp(input:{businessName:string;phone:string;diagnosticUrl:string}){
- const token=process.env.GHL_API_KEY;const locationId=process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583';
- if(!token)return {ok:false,reason:'GHL_API_KEY não configurada'};
- try{
-   const contact=await upsertOperationalContact({token,locationId,name:input.businessName,phone:input.phone});
-   const message=`Olá! Fizemos uma análise rápida da presença da ${input.businessName} no Google. O diagnóstico está aqui: ${input.diagnosticUrl}\n\nVocê tem interesse em melhorar seu perfil e aumentar suas vendas? Para não receber novas mensagens, responda SAIR.`;
-   const sent=await sendOperationalMessage({token,contactId:contact.id,channel:'whatsapp',message});
-   return {ok:true,contactId:contact.id,messageId:sent.messageId||null,conversationId:sent.conversationId||null,channel:'whatsapp'};
- }catch(error:any){return {ok:false,reason:String(error?.message||error).slice(0,240)}}
+export async function sendGhlProspectWhatsApp(_input:{businessName:string;phone:string;diagnosticUrl:string}){
+  // No contact upsert, WhatsApp send, or retry while initial-contact eligibility
+  // and approved template dispatch are not implemented and verified.
+  return {ok:false,reason:'whatsapp_outreach_blocked: approved template, opt-in and delivery validation required',contactId:null,conversationId:null,messageId:null};
 }

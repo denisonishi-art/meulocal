@@ -1,0 +1,1 @@
+{"can_admins_bypass":false,"deployment_branch_policy":{"custom_branch_policies":true,"protected_branches":false},"name":"opendots-research","protection_rules":[{"prevent_self_review":false,"reviewers":[{"login":"denisonishi-art","type":"User"}],"type":"required_reviewers"},{"prevent_self_review":null,"reviewers":[],"type":"branch_policy"}]}

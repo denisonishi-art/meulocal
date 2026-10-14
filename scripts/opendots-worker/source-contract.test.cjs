@@ -1,0 +1,5 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const path=require('node:path');const {createResearchWorker}=require('./adapter.cjs');
+test('private source needs provenance, timestamp and read-only confirmation, not isolated HTTP 200',async()=>{
+ const settings={repoRoot:process.cwd(),sharedRoot:path.join(process.env.OPENDOTS_ROOT,'meulocal-adapter/shared'),apiKey:'SYNTHETIC',endpoint:'https://meulocal.ia.br/api/agents/prospecting',approvedRemoteOrigin:'https://meulocal.ia.br',sourceProvider:'meulocal_backend',sourceEndpoint:'https://meulocal.ia.br/api/agents/prospecting/discover'};
+ for(const payload of [{places:[]},{contract:'meulocal.places.v1',source:'google_places',observedAt:'2099-01-01T00:00:00Z',places:[],actions:{crmWrite:false,outboundMessages:false,humanReviewRequired:true}}]){let calls=0;const worker=createResearchWorker(settings,{fetch:async()=>{calls++;return Response.json(payload)}});await assert.rejects(worker.research({limit:5}),/source_confirmation_invalid/);assert.equal(calls,1)}
+});
