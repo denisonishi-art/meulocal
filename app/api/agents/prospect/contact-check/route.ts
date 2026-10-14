@@ -52,7 +52,7 @@ export async function POST(req:Request){
   const lookupPhone='lookupPhone' in row?String(row.lookupPhone||''):'';
   const safeRow={...row};delete (safeRow as {lookupPhone?:string}).lookupPhone;
   const identifier=await checkGhlIdentifier({email:'email' in row?String(row.email||''):null,phone:lookupPhone,locationId,token:process.env.GHL_API_KEY});
-  verified.push({...safeRow,...identifier,eligibilityStatus:eligibility.status,ghlStatus:eligibility.ghlStatus,eligibilityReasons:eligibility.reasons,contactAllowed:false});
+  verified.push({...safeRow,phone:lookupPhone?('+'+lookupPhone):null,...identifier,eligibilityStatus:eligibility.status,ghlStatus:eligibility.ghlStatus,eligibilityReasons:eligibility.reasons,contactAllowed:false});
  }
  return NextResponse.json({results:verified,contactAuthorized:false,dispatched:0},{headers:{'Cache-Control':'no-store'}});
 }
