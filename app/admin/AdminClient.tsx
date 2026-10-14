@@ -29,7 +29,7 @@ function DeliveryPill({delivery}:{delivery?:any}){const state=delivery?.state||'
 export default function AdminClient(){
  const[prepared,setPrepared]=useState<Array<{name:string;message:string}>>([]);
  const[dispatchPreview,setDispatchPreview]=useState<Array<{name:string;status:string;reasons:string[]}>>([]);
- const[contactCheck,setContactCheck]=useState<Array<{name:string;channel:string;email?:string|null;phoneFound?:boolean;reason:string;ghlStatus?:string;eligibilityStatus?:string;eligibilityReasons?:string[];identifierStatus?:string;existingContact?:boolean;dnd?:boolean;reason:string}>>([]);
+ const[contactCheck,setContactCheck]=useState<Array<{name:string;channel:string;email?:string|null;phoneFound?:boolean;reason:string;ghlStatus?:string;eligibilityStatus?:string;eligibilityReasons?:string[];identifierStatus?:string;existingContact?:boolean;dnd?:boolean}>>([]);
  const[view,setView]=useState<View>('overview');const recoveredApproved=useRef(false);
  const[data,setData]=useState<Overview|null>(null);const[loadingData,setLoadingData]=useState(true);const[dataError,setDataError]=useState('');
  const[niche,setNiche]=useState('');const[region,setRegion]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');const[diagMsg,setDiagMsg]=useState('');const[deliveryPeriod,setDeliveryPeriod]=useState<'all'|'week'|'month'>('all');const[replyingTo,setReplyingTo]=useState<string|null>(null);const[replyText,setReplyText]=useState('');
