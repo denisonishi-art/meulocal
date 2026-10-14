@@ -2,6 +2,8 @@ import {NextResponse} from 'next/server';
 import {z} from 'zod';
 import {isAdminRequest} from '@/lib/admin-auth';
 import {findBusinessEmail} from '@/lib/ghl-prospecting';
+import {createClient} from '@supabase/supabase-js';
+import {assessProspectEligibility} from '@/lib/agents/prospect-eligibility';
 export const runtime='nodejs';
 export const maxDuration=60;
 const schema=z.object({companies:z.array(z.object({id:z.string().min(5).max(180),name:z.string().min(2).max(180)}).strict()).min(1).max(5)}).strict();
@@ -25,5 +27,13 @@ export async function POST(req:Request){
    results.push({id:business.id,name:business.name,channel,email:email||null,phoneFound:phone.length>=10,reason:channel==='blocked'?'contact_not_found':'eligibility_and_delivery_NOT_VERIFIED'});
   }catch{results.push({id:business.id,name:business.name,channel:'blocked',reason:'contact_lookup_failed'})}
  }
- return NextResponse.json({results,contactAuthorized:false,dispatched:0},{headers:{'Cache-Control':'no-store'}});
+ const url=process.env.NEXT_PUBLIC_SUPABASE_URL,serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
+ const db=url&&serviceKey?createClient(url,serviceKey,{auth:{persistSession:false}}):undefined;
+ const locationId=process.env.GHL_LOCATION_ID||'';
+ const verified=[];
+ for(const row of results){
+  const eligibility=await assessProspectEligibility({lead:{externalId:'google_places:'+row.id.replace(/^places\\//,''),name:row.name},locationId,db,token:process.env.GHL_API_KEY});
+  verified.push({...row,eligibilityStatus:eligibility.status,ghlStatus:eligibility.ghlStatus,eligibilityReasons:eligibility.reasons,contactAllowed:false});
+ }
+ return NextResponse.json({results:verified,contactAuthorized:false,dispatched:0},{headers:{'Cache-Control':'no-store'}});
 }
