@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-10-13
         with:
           persist-credentials: false
-          ref: ${{ github.event_name == 'schedule' && 'afd5ccbe67d3b53b98e8536dae290859f7900a0c' || github.sha }}
+          ref: ${{ github.event_name == 'schedule' && '62269fa6d23db57283a6cee81b318ef17e8247e3' || github.sha }}
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24.21.0'
