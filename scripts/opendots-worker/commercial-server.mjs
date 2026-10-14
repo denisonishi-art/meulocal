@@ -50,7 +50,7 @@ async function start(){
  const runtime=http.createServer(async(req,res)=>{
   try{
    if(req.headers.origin||req.headers.authorization!=='Bearer '+ownerToken){res.writeHead(401);return res.end()}
-   const url='http://127.0.0.1:'+runtime.address().port+'/api/copilotkit'+req.url;
+   const url='http://127.0.0.1:'+runtime.address().port+req.url;
    const body=['GET','HEAD'].includes(req.method)?undefined:await bodyText(req);
    const response=await platform.handle(new Request(url,{method:req.method,headers:req.headers,...(body===undefined?{}:{body})}));
    res.writeHead(response.status,Object.fromEntries(response.headers));
