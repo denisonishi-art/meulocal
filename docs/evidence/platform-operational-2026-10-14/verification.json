@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T04:33:56.830Z",
+  "at": "2026-10-15T04:43:49.002Z",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
@@ -66,6 +66,18 @@
       "passed": 2,
       "failed": 0,
       "scope": "actual_outbox_isolated_real_postgresql"
+    },
+    "customerAccess": {
+      "tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "scope": "actual_route_isolated_auth_real_postgresql"
+    },
+    "customerDashboard": {
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "scope": "actual_react_handlers_isolated_provider"
     }
   },
   "typescript": "pass_exit_0",
@@ -73,5 +85,6 @@
   "productionRelease": "not_executed",
   "newNativeAppCreated": false,
   "paymentRecovery": "local_verified_handler_checkout_recovery_not_published",
-  "asaasConfiguration": "authenticated_read_only_existing_webhook_missing_checkout_events_token_not_returned_by_get"
+  "asaasConfiguration": "authenticated_read_only_existing_webhook_missing_checkout_events_token_not_returned_by_get",
+  "realPaymentEvidence": "blocked_no_prior_payment_user_confirmed_no_new_charge"
 }
