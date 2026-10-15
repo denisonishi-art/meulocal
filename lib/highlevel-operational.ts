@@ -89,3 +89,27 @@ export async function removeOperationalTags(args:{token:string;contactId:string;
   });
   await parse(res);
 }
+
+/** Read an exact ID through the existing authorized conversation history API.
+ * Pagination is bounded; exhaustion is a refusal, never substitution by text. */
+export async function getOperationalMessage(args:{token:string;messageId:string;conversationId:string}){
+ let cursor:string|undefined;
+ for(let page=0;page<5;page++){
+  const query=new URLSearchParams({limit:'50',...(cursor?{lastMessageId:cursor}:{})});
+  const res=await fetch(API+'/conversations/'+encodeURIComponent(args.conversationId)+'/messages?'+query,{
+   headers:{Authorization:'Bearer '+args.token,Accept:'application/json',Version:'v3'},
+   cache:'no-store',signal:AbortSignal.timeout(10000)
+  });
+  const data=await parse(res),batch=data?.messages;
+  const found=batch?.messages?.find((message:any)=>message.id===args.messageId);
+  if(found)return found;
+  if(!batch?.nextPage||!batch.lastMessageId||batch.lastMessageId===cursor)break;
+  cursor=batch.lastMessageId;
+ }
+ return null;
+}
+
+export async function getOperationalContact(args:{token:string;contactId:string}){
+ const res=await fetch(API+'/contacts/'+encodeURIComponent(args.contactId),{headers:{Authorization:'Bearer '+args.token,Accept:'application/json',Version:'2021-07-28'},cache:'no-store',signal:AbortSignal.timeout(10000)});
+ const data=await parse(res);return data.contact;
+}

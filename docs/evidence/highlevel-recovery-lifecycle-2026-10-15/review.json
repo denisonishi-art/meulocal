@@ -1,0 +1,20 @@
+{
+  "review": "independent_read_only",
+  "originalThreeFindings": "corrected_in_code",
+  "adjacentFindings": [
+    "ambiguous_lead_mapping",
+    "resumable_operational_tags"
+  ],
+  "rereview": "no_new_blocking_finding",
+  "nativeAdapterRereview": "no_new_finding",
+  "externalReception": "not_verified",
+  "files": {
+    "app/api/webhooks/highlevel/route.ts": "82ade437a8c32adf66ec8f1136abb3705d96354527e06a3191dcc401777e5724",
+    "lib/ghl-controlled-inbound.ts": "5760e5b967b35be6dfd19f0de90a0b56975c471d67c9549378cfec83b25e6b57",
+    "lib/agents/opendots-outbox.ts": "29aed347574d9200e8c50d86e278d57cf768ebd4f6763ae5e89e67ccfb633372",
+    "supabase/migrations/20261015_opendots_durable_handoffs.sql": "9010bc020245bb03b12f6280926e383d0ee07b493a00d99ac2ebb53c2f834dc0",
+    "scripts/opendots-worker/commercial-server.mjs": "b2760037df5aba84bf4df1c8759d7bf0885966bdfdbb708de8774ab7893d1f8a",
+    "scripts/opendots-worker/commercial-receipts.mjs": "ae92f0f272c45fa09225ed43958b9395083a099463d2ab43e2032a1ead484bc3",
+    "scripts/opendots-worker/commercial-engine.cjs": "c709239acfedaa8b091c5149601803128b615d5736e4d3bc27bc7e32b805e5ad"
+  }
+}
