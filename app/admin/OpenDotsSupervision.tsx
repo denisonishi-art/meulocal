@@ -2,7 +2,8 @@
 import {useEffect,useState} from 'react';
 import type {OpenDotsGuidance} from '@/lib/agents/opendots-guidance';
 type Row={eventId:string;businessId:string;state:string;attempts:number;guidance:OpenDotsGuidance|null};
-type Data={pending:{count:number;rows:Row[]};completed:{count:number;rows:Row[]}};
+type Operation={kind:string;count:number;rows:Array<{id:string;state:string;partial:boolean;nextStep:string;businessId?:string;leadId?:string;checkoutId?:string}>};
+type Data={operations?:Operation[];pending:{count:number;rows:Row[]};completed:{count:number;rows:Row[]}};
 export default function OpenDotsSupervision(){
  const[data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  async function load(){setLoading(true);setError('');try{
@@ -20,7 +21,8 @@ export default function OpenDotsSupervision(){
    <h3>Pendências de processamento: {data.pending.count}</h3>
    <p>Até 20 pendências mais antigas. Tentativas não comprovam conclusão.</p>
    {!data.pending.count&&<p>Nenhuma pendência registrada.</p>}
-   {data.pending.rows.map(row=><article className="replyCard" key={row.eventId}><div><strong>{row.state==='processing'?'Em processamento':'Aguardando processamento'}</strong><small>Evento: {row.eventId} · Empresa: {row.businessId} · Tentativas: {row.attempts}</small><p>{row.guidance?'Decisão salva; há etapas de processamento pendentes.':'Orientação ainda não disponível neste recibo.'}</p>{row.guidance&&<><p>{row.guidance.message}</p><p>{row.guidance.rationale}</p></>}</div></article>)}
+   {data.pending.rows.map(row=><article className="replyCard" key={row.eventId}><div><strong>{row.state==='processing'?'Em processamento':'Aguardando processamento'}</strong><small>Evento: {row.eventId} · Empresa: {row.businessId} · Tentativas: {row.attempts}</small><p>{row.guidance?'Decisão salva; há etapas de processamento pendentes.':'Orientação ainda não disponível neste recibo.'}</p><p>Próximo passo: conferir o recibo e a retomada deste mesmo evento. Não aprovar nem executar uma orientação sem decisão salva.</p>{row.guidance&&<><p>{row.guidance.message}</p><p>{row.guidance.rationale}</p></>}</div></article>)}
+   {data.operations?.map(group=><section key={group.kind}><h3>{group.kind==='payment'?'Pagamento e acesso':group.kind==='reviews'?'Avaliações':'Aquisição e respostas'}: {group.count} pendência(s)</h3><p>Até 20 pendências mais antigas. Resultado incerto não comprova envio, entrega ou conclusão.</p>{group.rows.map(row=><article className="replyCard" key={row.id}><div><strong>{row.state==='ambiguous'||row.state==='dispatching'?'Resultado incerto':row.partial?'Falha parcial — retomada pendente':'Processamento pendente'}</strong><small>Registro: {row.id}{row.businessId?' · Empresa: '+row.businessId:''}{row.leadId?' · Lead: '+row.leadId:''}{row.checkoutId?' · Checkout: '+row.checkoutId:''}</small><p>Próximo passo: {row.nextStep}</p></div></article>)}</section>)}
    <h3>Decisões salvas: {data.completed.count}</h3><p>Até 20 decisões mais recentes. O salvamento não significa aprovação humana ou execução.</p>
    {data.completed.rows.map(row=><article className="replyCard" key={row.eventId}><div><strong>Revisão humana necessária</strong><small>Evento: {row.eventId} · Empresa: {row.businessId}</small>{row.guidance?<><p>{row.guidance.message}</p><p>{row.guidance.rationale}</p>{row.guidance.nextPath&&<a href={row.guidance.nextPath}>{row.guidance.nextPath==='/onboarding'?'Consultar onboarding existente':'Consultar painel existente'}</a>}</>:<p>Orientação não disponível neste recibo. Consulte o registro original do OpenDots.</p>}</div></article>)}
   </>}

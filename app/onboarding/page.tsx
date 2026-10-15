@@ -23,7 +23,7 @@ export default function OnboardingPage() {
     try {
       const s=await session();
       if(!s){setProgressError('Sua sessão expirou. Entre novamente para salvar.');return false}
-      const res=await fetch('/api/onboarding/status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({status})});
+      const res=await fetch('/api/onboarding/status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({status,businessConfirmed:status==='in_progress',confirmed:status==='completed'})});
       if(!res.ok){
         const data=await res.json().catch(()=>({}));
         setProgressError(typeof data.error==='string'?data.error:'Não foi possível salvar sua configuração. Tente novamente.');
@@ -40,11 +40,12 @@ export default function OnboardingPage() {
   async function chooseLocation(location:Location){setGoogleBusy(true);setGoogleError('');const s=await session();if(!s){setGoogleBusy(false);return}const res=await fetch('/api/google-business/select',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${s.access_token}`},body:JSON.stringify({accountId:location.accountId,locationId:location.id,title:location.title,placeId:location.placeId||null,mapsUri:location.mapsUri||null,newReviewUri:location.newReviewUri||null})});if(!res.ok){const data=await res.json();setGoogleError(data.error||'Não foi possível selecionar a unidade.');setGoogleBusy(false);return}const sync=await fetch('/api/google-business/sync',{method:'POST',headers:{Authorization:`Bearer ${s.access_token}`}});if(!sync.ok){const data=await sync.json().catch(()=>({}));setGoogleError(data.error||'Google conectado, mas a primeira sincronização falhou. Tente novamente.');setGoogleBusy(false);return}setSelected(location.id);setGoogleConnected(true);setGoogleBusy(false)}
   async function advance(){
     if(step===0&&!(await setStatus('in_progress')))return;
-    if(step===2){if(await setStatus('completed'))setStep(3);return}
+    if(step===2){if(!window.confirm('Confirmar a configuração inicial? A ativação do serviço será feita separadamente no painel.'))return;if(await setStatus('completed'))setStep(3);return}
     setStep(step+1);
   }
   async function deferStep(){
     if(step===1){setStep(2);return}
+    if(!window.confirm('Concluir a configuração sem importar a base agora? O serviço continuará aguardando ativação no painel.'))return;
     if(await setStatus('completed')){setSkipped(true);setStep(3)}
   }
   useEffect(()=>{
@@ -88,10 +89,10 @@ export default function OnboardingPage() {
             {googleConnected&&<div className="onboardingSummary"><strong>Google conectado ✓</strong><span>A primeira sincronização da sua reputação foi concluída.</span></div>}
             {googleError&&<div className="loginError">{googleError}</div>}
           </div>}
-          {step === 2 && <CustomerBaseSetup onReady={setBaseReady}/>} 
+          {step === 2 && <CustomerBaseSetup onboarding onReady={setBaseReady}/>}
           {progressError&&<div className="loginError" role="alert">{progressError}</div>}
-          <div className="onboardingActions"><button className="primary" type="button" onClick={advance} disabled={(step===1&&!googleConnected)||(step===2&&!baseReady)}>{step === 2 ? 'Concluir configuração' : 'Continuar'} <ArrowRight size={18}/></button>{(step === 1||step === 2) && <button className="linkButton" type="button" onClick={deferStep}>Fazer isso depois</button>}</div>
-        </> : <div className="onboardingDone"><div className="stepIcon"><Check size={27}/></div><h2>Configuração concluída.</h2><p>{skipped ? 'Sua configuração inicial foi salva. Você pode enviar sua base depois pelo painel.' : 'Sua configuração inicial foi salva. Seu painel já está disponível.'}</p><p>{googleConnected?'A primeira sincronização do Google foi concluída.':'Você pode consultar a conexão com o Google e os dados disponíveis no painel.'}</p><a className="primary" href="/dashboard">Ver meu dashboard <ArrowRight size={18}/></a></div>}
+          <div className="onboardingActions"><button className="primary" type="button" onClick={advance} disabled={(step===1&&!googleConnected)||(step===2&&!baseReady)}>{step === 2 ? 'Concluir configuração' : step===0?'Confirmar negócio':'Continuar'} <ArrowRight size={18}/></button>{(step === 1||step === 2) && <button className="linkButton" type="button" onClick={deferStep}>Fazer isso depois</button>}</div>
+        </> : <div className="onboardingDone"><div className="stepIcon"><Check size={27}/></div><h2>Configuração concluída.</h2><p>{skipped ? 'Sua configuração inicial foi salva. Você pode enviar sua base depois pelo painel.' : 'Sua configuração inicial foi salva. Confira as pendências e aprove a ativação separadamente no painel.'}</p><p>{googleConnected?'A primeira sincronização do Google foi concluída.':'Você pode consultar a conexão com o Google e os dados disponíveis no painel.'}</p><a className="primary" href="/dashboard">Ver meu dashboard <ArrowRight size={18}/></a></div>}
       </div>
       <div className="privacyNote">Toda a experiência acontece dentro do MeuLocal.</div>
     </section>

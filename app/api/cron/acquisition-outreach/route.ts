@@ -1,94 +1,32 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
-import {getLocationAccessToken,getOperationalConversationMessages,sendOperationalMessage,upsertOperationalContact} from '@/lib/highlevel-operational';
-
-function authorized(req:Request){const secret=process.env.CRON_SECRET;return Boolean(secret&&req.headers.get('authorization')==='Bearer '+secret)}
-function addDays(date:Date,days:number){const d=new Date(date);d.setUTCDate(d.getUTCDate()+days);d.setUTCHours(13,0,0,0);return d}
-function nextRun(step:number,now:Date){if(step>=3)return null;return addDays(now,step===1?3:4).toISOString()}
-function diagnosticUrl(token:string){return (process.env.NEXT_PUBLIC_APP_URL||'https://meulocal.ia.br')+'/d/'+token}
-function subject(step:number,business:string){return step===1?'Diagnóstico do Google de '+business:step===2?'Você viu o diagnóstico da '+business+'?':'Último lembrete sobre seu diagnóstico'}
-function emailBody(step:number,business:string,url:string){
- if(step===1)return 'Olá! Fizemos uma análise rápida da presença da '+business+' no Google e encontramos oportunidades objetivas para melhorar sua reputação local. Você pode ver o diagnóstico aqui:\n'+url+'\n\nSe fizer sentido, responda este e-mail e eu te explico os próximos passos. Se não quiser receber novos contatos, responda SAIR.';
- if(step===2)return 'Olá! Passando para confirmar se você conseguiu ver o diagnóstico da '+business+':\n'+url+'\n\nSe quiser, responda este e-mail e eu te mostro o que priorizar primeiro. Se não quiser receber novos contatos, responda SAIR.';
- return 'Olá! Este é meu último contato sobre o diagnóstico da '+business+'. Caso queira consultar, ele continua disponível aqui:\n'+url+'\n\nSe fizer sentido conversar, basta responder este e-mail. Se não quiser receber novos contatos, responda SAIR.';
-}
-function whatsappBody(step:number,business:string,url:string){
- if(step===1)return 'Olá! Fizemos uma análise rápida da presença da '+business+' no Google. O diagnóstico está aqui: '+url+'\n\nSe quiser, responda por aqui e eu te explico os principais pontos. Para não receber novas mensagens, responda SAIR.';
- if(step===2)return 'Olá! Só lembrando do diagnóstico da '+business+': '+url+'\n\nSe quiser, posso te explicar o que vale priorizar primeiro. Para não receber novas mensagens, responda SAIR.';
- return 'Olá! Último lembrete sobre o diagnóstico da '+business+': '+url+'\n\nSe quiser conversar, é só responder. Para não receber novas mensagens, responda SAIR.';
-}
-async function internalLocation(db:any){
- const fromEnv=process.env.GHL_INTERNAL_LOCATION_ID;if(fromEnv)return fromEnv;
- const {data}=await db.from('ghl_locations').select('ghl_location_id').eq('is_internal',true).eq('lifecycle_status','active').order('created_at',{ascending:false}).limit(1).maybeSingle();
- return data?.ghl_location_id||null;
-}
+import {deliverAcquisitionMessage} from '@/lib/acquisition/delivery';
+export const maxDuration=60;
+function dbClient(){const url=process.env.NEXT_PUBLIC_SUPABASE_URL||process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;return url&&key?createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(5000)})}}):null}
+const unavailable=()=>NextResponse.json({error:'Não foi possível consultar a operação. Tente novamente.'},{status:503});
 export async function GET(req:Request){return run(req)}
 export async function POST(req:Request){return run(req)}
 async function run(req:Request){
- if(!authorized(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
- if(process.env.MEULOCAL_ACQUISITION_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados. A liberação depende da validação operacional.'},{status:200});
- const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
- if(!url||!key)return NextResponse.json({error:'Banco não configurado.'},{status:503});
- const db=createClient(url,key,{auth:{persistSession:false}});
- const locationId=await internalLocation(db);
- if(!locationId)return NextResponse.json({ok:true,processed:0,status:'internal_location_not_configured'});
- let locationToken:string;
- try{locationToken=await getLocationAccessToken(locationId)}catch(error:any){return NextResponse.json({ok:true,processed:0,status:'location_token_error',error:String(error?.message||error).slice(0,200)})}
- const now=new Date();
- const {data:enrollments,error}=await db.from('automation_enrollments').select('id,lead_id,track,status,step,next_run_at,started_at,completed_at').eq('track','meulocal_acquisition').eq('status','active').lte('next_run_at',now.toISOString()).order('next_run_at',{ascending:true}).limit(50);
- if(error)return NextResponse.json({error:error.message},{status:500});
- let processed=0,failed=0,stopped=0;const details:any[]=[];
- for(const enrollment of enrollments||[]){
-   const {data:lead}=await db.from('leads').select('id,business_id,name,email,whatsapp,consent_whatsapp,lifecycle_stage,prospect_diagnostic_id,ghl_contact_id,ghl_location_id,opt_out_at,last_reply_at').eq('id',enrollment.lead_id).maybeSingle();
-   if(!lead)continue;
-   // Safety net: reconcile HighLevel replies before any follow-up is sent.
-   // This makes reply-stop work even if a webhook is delayed or unavailable.
-   const {data:lastOutbound}=await db.from('outreach_events')
-     .select('conversation_id,created_at,message_key')
-     .eq('lead_id',lead.id).eq('provider','highlevel').eq('event_type','sent')
-     .not('conversation_id','is',null).order('created_at',{ascending:false}).limit(1).maybeSingle();
-   if(lastOutbound?.conversation_id&&!lead.last_reply_at){
-     try{
-       const messages=await getOperationalConversationMessages({token:locationToken,conversationId:lastOutbound.conversation_id,limit:50});
-       const inbound=messages
-         .filter((m:any)=>String(m?.direction||'').toLowerCase()==='inbound')
-         .sort((a:any,b:any)=>new Date(b?.dateAdded||0).getTime()-new Date(a?.dateAdded||0).getTime())[0];
-       if(inbound&&new Date(inbound.dateAdded||0).getTime()>new Date(lastOutbound.created_at||0).getTime()){
-         const repliedAt=inbound.dateAdded||now.toISOString();
-         const inboundId=String(inbound.id||inbound.messageId||'');
-         if(inboundId){
-           const {data:existingReply}=await db.from('outreach_events').select('id').eq('lead_id',lead.id).eq('event_type','replied').eq('external_id',inboundId).maybeSingle();
-           if(!existingReply)await db.from('outreach_events').insert({lead_id:lead.id,channel:/email/i.test(String(inbound.messageType||''))?'email':/whatsapp/i.test(String(inbound.messageType||''))?'whatsapp':'system',event_type:'replied',provider:'highlevel',external_id:inboundId,conversation_id:lastOutbound.conversation_id,message_key:lastOutbound.message_key||null,metadata:{source:'highlevel_reconciliation'}});
-         }
-         await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:repliedAt,next_action_at:null,updated_at:now.toISOString()}).eq('id',lead.id);
-         await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);
-         await db.from('businesses').update({status:'engaged',updated_at:now.toISOString()}).eq('id',lead.business_id);
-         stopped++;details.push({leadId:lead.id,status:'stopped_on_reply_reconciliation'});continue;
-       }
-     }catch(reconcileError:any){
-       details.push({leadId:lead.id,status:'reply_reconciliation_failed',error:String(reconcileError?.message||reconcileError).slice(0,160)});
-     }
-   }
-   if(lead.opt_out_at||lead.last_reply_at||['conversation','customer','lost'].includes(lead.lifecycle_stage)){await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);stopped++;continue}
-   const {data:diag}=await db.from('prospect_diagnostics').select('id,public_token,business_name,status,converted_at,first_contact_at').eq('id',lead.prospect_diagnostic_id).maybeSingle();
-   if(!diag)continue;
-   if(diag.converted_at||diag.status==='converted'||diag.status==='closed'){await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);stopped++;continue}
-   const nextStep=(enrollment.step||0)+1;
-   if(nextStep>3){await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now.toISOString()}).eq('id',enrollment.id);continue}
-   let channel:'email'|'whatsapp'|null=lead.email?'email':lead.whatsapp&&lead.consent_whatsapp?'whatsapp':null;
-   if(!channel){await db.from('outreach_events').insert({lead_id:lead.id,channel:'system',event_type:'failed',provider:'meulocal',message_key:'acquisition_step_'+nextStep,metadata:{reason:'no_approved_channel'}});await db.from('automation_enrollments').update({status:'paused',next_run_at:null}).eq('id',enrollment.id);failed++;continue}
-   try{
-     let ghlContactId=lead.ghl_contact_id&&lead.ghl_location_id===locationId?lead.ghl_contact_id:null;
-     if(!ghlContactId){const upserted=await upsertOperationalContact({token:locationToken,locationId,name:lead.name||diag.business_name,email:lead.email,phone:lead.whatsapp});ghlContactId=upserted.id;await db.from('leads').update({ghl_contact_id:ghlContactId,ghl_location_id:locationId,updated_at:now.toISOString()}).eq('id',lead.id);await db.from('businesses').update({ghl_contact_id:ghlContactId,ghl_location_id:locationId,status:'contacted',updated_at:now.toISOString()}).eq('id',lead.business_id)}
-     const dUrl=diagnosticUrl(diag.public_token);const message=channel==='email'?emailBody(nextStep,diag.business_name,dUrl):whatsappBody(nextStep,diag.business_name,dUrl);
-     const sent=await sendOperationalMessage({token:locationToken,contactId:ghlContactId,channel,message,subject:channel==='email'?subject(nextStep,diag.business_name):undefined,email:lead.email});
-     const nr=nextRun(nextStep,now);
-     await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:'sent',provider:'highlevel',external_id:sent.messageId||null,conversation_id:sent.conversationId||null,message_key:'acquisition_step_'+nextStep,metadata:{step:nextStep,diagnostic_id:diag.id,diagnostic_url:dUrl}});
-     await db.from('automation_enrollments').update({step:nextStep,status:nextStep>=3?'completed':'active',next_run_at:nextStep>=3?null:nr,completed_at:nextStep>=3?now.toISOString():null}).eq('id',enrollment.id);
-     await db.from('leads').update({lifecycle_stage:'mql',next_action_at:nextStep>=3?null:nr,updated_at:now.toISOString()}).eq('id',lead.id);
-     await db.from('prospect_diagnostics').update({status:'contacted',first_contact_at:diag.first_contact_at||now.toISOString(),updated_at:now.toISOString()}).eq('id',diag.id);
-     processed++;details.push({leadId:lead.id,step:nextStep,channel,status:'sent'});
-   }catch(error:any){await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:'failed',provider:'highlevel',message_key:'acquisition_step_'+nextStep,metadata:{step:nextStep,error:String(error?.message||error).slice(0,300)}});failed++;details.push({leadId:lead.id,step:nextStep,channel,status:'failed',error:String(error?.message||error).slice(0,180)})}
- }
- return NextResponse.json({ok:true,processed,failed,stopped,details});
+ const secret=process.env.CRON_SECRET;
+ if(!secret||req.headers.get('authorization')!=='Bearer '+secret)return NextResponse.json({error:'Não autorizado.'},{status:401});
+ if(process.env.MEULOCAL_ACQUISITION_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0});
+ try{
+  const db=dbClient();if(!db)return unavailable();
+  const due=await db.from('automation_enrollments').select('id,lead_id,step').eq('track','meulocal_acquisition').eq('status','active').lte('next_run_at',new Date().toISOString()).order('next_run_at',{ascending:true}).limit(1);
+  if(due.error||!Array.isArray(due.data))return unavailable();
+  if(!due.data.length)return NextResponse.json({ok:true,processed:0});
+  const enrollment=due.data[0],step=enrollment.step+1;
+  if(step!==2&&step!==3)return NextResponse.json({ok:false,processed:0,error:'legacy_cadence_reconciliation_required'},{status:409});
+  const lead=await db.from('leads').select('id,email,whatsapp,consent_email,consent_whatsapp,prospect_diagnostic_id').eq('id',enrollment.lead_id).maybeSingle();
+  if(lead.error)return unavailable();
+  if(!lead.data)return NextResponse.json({ok:false,processed:0,error:'acquisition_lead_missing'},{status:409});
+  const l=lead.data,diagnostic=await db.from('prospect_diagnostics').select('id,public_token,business_name').eq('id',l.prospect_diagnostic_id).maybeSingle();
+  if(diagnostic.error)return unavailable();
+  if(!diagnostic.data)return NextResponse.json({ok:false,processed:0,error:'acquisition_diagnostic_missing'},{status:409});
+  const d=diagnostic.data,channel=l.email&&l.consent_email?'email':l.whatsapp&&l.consent_whatsapp?'whatsapp':null;
+  if(!channel)return NextResponse.json({ok:false,processed:0,error:'acquisition_channel_not_authorized'},{status:409});
+  const message=(step===2?'Olá! Passando para lembrar da análise inicial da ':'Olá! Este é nosso último lembrete sobre a análise inicial da ')+d.business_name+':\nhttps://meulocal.ia.br/d/'+d.public_token+'\n\nSe quiser conversar, responda por este canal. Para não receber novos contatos, responda SAIR.';
+  const result=await deliverAcquisitionMessage(db,{leadId:l.id,kind:'cadence',step,channel,message,subject:step===2?'Você viu sua análise inicial?':'Último lembrete sobre sua análise inicial'});
+  return NextResponse.json(result,{status:result.ok?200:409,headers:{'Cache-Control':'private, no-store'}});
+ }catch{return unavailable()}
 }

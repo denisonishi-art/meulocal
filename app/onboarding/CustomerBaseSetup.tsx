@@ -9,7 +9,7 @@ const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 type ImportSummary={importId:string;fileName:string;totalRows:number;validRows:number;invalidRows:number;duplicateRows:number;preview:any[]};
 type Activation={queued:number;firstActivationDate:string;lastActivationDate:string;day1:number;day2:number;steadyLimit:number};
 
-export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>void}){
+export default function CustomerBaseSetup({onReady,onboarding=false}:{onReady?:(ready:boolean)=>void;onboarding?:boolean}){
   const[file,setFile]=useState<File|null>(null);const[summary,setSummary]=useState<ImportSummary|null>(null);
   const[confirmed,setConfirmed]=useState(false);const[activation,setActivation]=useState<Activation|null>(null);
   const[busy,setBusy]=useState(false);const[error,setError]=useState('');const[audienceConfirmed,setAudienceConfirmed]=useState(false);
@@ -25,7 +25,7 @@ export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>v
   }
   async function confirm(){
     if(!summary)return;setBusy(true);setError('');
-    try{const t=await token();if(!t)return;const r=await fetch('/api/customer-base/confirm',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({importId:summary.importId})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha ao confirmar a base');setConfirmed(true)}
+    try{const t=await token();if(!t)return;const r=await fetch('/api/customer-base/confirm',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({importId:summary.importId})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha ao confirmar a base');setConfirmed(true);if(onboarding)onReady?.(true)}
     catch(e:any){setError(e.message)}finally{setBusy(false)}
   }
   async function activate(){
@@ -57,7 +57,8 @@ export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>v
       <button className="primary" type="button" disabled={busy||summary.validRows===0} onClick={confirm}>{busy?'Confirmando...':'Confirmar esta base'} <Check size={17}/></button>
     </div>}
 
-    {summary&&confirmed&&!activation&&<div className="activationRule">
+    {summary&&confirmed&&onboarding&&<p>Base confirmada. Conclua a configuração e revise a ativação no painel.</p>}
+    {summary&&confirmed&&!onboarding&&!activation&&<div className="activationRule">
       <div className="protectionNote"><Workflow/><div><strong>Ativação protegida</strong><span>Dia 1: 30 clientes · Dia 2: 40 · Dia 3 em diante: até 50 por dia útil. Cada contato recebe no máximo 3 tentativas: D0, D+3 e D+7. Opt-out encerra a régua imediatamente.</span></div></div>
       <p>Essa distribuição gradual ajuda a preservar a reputação dos seus canais e evita comportamento de disparo em massa.</p>
       <label className="audienceConfirm"><input type="checkbox" checked={audienceConfirmed} onChange={e=>setAudienceConfirmed(e.target.checked)}/><span>Confirmo que esta base é de clientes da empresa e que tenho autorização/base adequada para contatá-los pelos canais informados.</span></label>

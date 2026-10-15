@@ -64,12 +64,12 @@ export async function processNextReviewDelivery(db:any){
   if(!job)return result({ok:true,processed:0,idle:true});
   if(!job.id||!job.lease||!job.businessId||!job.contact?.id)throw Error('review_job_unverified');
   const [business,location,connection]=await Promise.all([
-   db.from('businesses').select('id,name').eq('id',job.businessId).maybeSingle(),
+   db.from('businesses').select('id,name,google_place_id').eq('id',job.businessId).maybeSingle(),
    db.from('ghl_locations').select('ghl_location_id').eq('business_id',job.businessId).eq('lifecycle_status','active').maybeSingle(),
    db.from('google_business_connections').select('google_review_url,google_place_id').eq('business_id',job.businessId).eq('status','connected').maybeSingle(),
   ]);
   if(business.error||location.error||connection.error||!business.data?.name||!location.data?.ghl_location_id)throw Error('review_infrastructure_unavailable');
-  const reviewUrl=connection.data?.google_review_url||(connection.data?.google_place_id?'https://search.google.com/local/writereview?placeid='+encodeURIComponent(connection.data.google_place_id):null);
+  const reviewUrl=connection.data?.google_review_url||((connection.data?.google_place_id||business.data.google_place_id)?'https://search.google.com/local/writereview?placeid='+encodeURIComponent(connection.data?.google_place_id||business.data.google_place_id):null);
   const destination=reviewUrl?new URL(reviewUrl):null;
   if(!destination||destination.protocol!=='https:'||!(destination.hostname==='google.com'||destination.hostname.endsWith('.google.com')))throw Error('review_destination_unavailable');
   const locationId=location.data.ghl_location_id;

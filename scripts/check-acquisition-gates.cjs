@@ -8,6 +8,8 @@ function fixture(file,{flag,value,authorized=true}={}){
   if(name==='next/server')return {NextResponse:{json:(data,options={})=>Response.json(data,options)}};
   if(name==='@/lib/admin-auth')return {isAdminRequest:async()=>authorized};
   if(name==='@/lib/agents/config')return {agentPolicies:{prospecting:{maxApprovedBatch:5}}};
+  if(name==='@/lib/acquisition/message')return {initialAcquisitionMessage:()=>{throw Error('message_before_authorization')}};
+  if(name==='@/lib/acquisition/delivery')return {deliverAcquisitionMessage:blocked};
   if(name==='@supabase/supabase-js')return {createClient:blocked};
   if(name==='@/lib/ghl-prospecting')return {enqueueGhlProspect:blocked,findBusinessEmail:blocked,sendGhlProspectWhatsApp:blocked};
   if(name==='@/lib/highlevel-operational')return {getLocationAccessToken:blocked,getOperationalConversationMessages:blocked,sendOperationalMessage:blocked,upsertOperationalContact:blocked};

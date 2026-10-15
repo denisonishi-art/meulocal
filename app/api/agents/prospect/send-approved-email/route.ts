@@ -1,32 +1,26 @@
 import {NextResponse} from 'next/server';
+import {createClient} from '@supabase/supabase-js';
 import {z} from 'zod';
 import {isAdminRequest} from '@/lib/admin-auth';
-import {sendOperationalMessage} from '@/lib/highlevel-operational';
-export const runtime='nodejs';
-const schema=z.object({name:z.string().min(2).max(180),email:z.string().email().max(250),message:z.string().min(50).max(1800),confirmed:z.literal(true)}).strict();
+import {deliverAcquisitionMessage} from '@/lib/acquisition/delivery';
+export const maxDuration=60;
+function dbClient(){const url=process.env.NEXT_PUBLIC_SUPABASE_URL||process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;return url&&key?createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(5000)})}}):null}
+const unavailable=()=>NextResponse.json({error:'Não foi possível consultar a operação. Tente novamente.'},{status:503});
+const disabled=()=>NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados.'},{status:423});
+const schema=z.object({leadId:z.string().uuid(),requestId:z.string().uuid(),name:z.string().min(2).max(240),email:z.string().email().max(250),message:z.string().min(50).max(1800),confirmed:z.literal(true)});
 export async function POST(req:Request){
- if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado'},{status:401});
- if(process.env.MEULOCAL_MANUAL_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados. A liberação depende da validação operacional.'},{status:423});
- const parsed=schema.safeParse(await req.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Dados inválidos'},{status:400});
- const {name,email,message}=parsed.data;
- const token=process.env.GHL_API_KEY,locationId=process.env.GHL_LOCATION_ID;
- if(!token||!locationId)return NextResponse.json({error:'HighLevel não configurado'},{status:503});
- const headers={Authorization:'Bearer '+token,Version:'2021-07-28','Content-Type':'application/json'};
- // Never create a contact or guess one by name; accept only an existing exact email match.
- const response=await fetch('https://services.leadconnectorhq.com/contacts/search',{method:'POST',headers,body:JSON.stringify({locationId,query:email,page:1,pageLimit:20}),cache:'no-store',redirect:'error',signal:AbortSignal.timeout(6000)}).catch(()=>null);
- if(!response?.ok)return NextResponse.json({error:'Não foi possível verificar o destinatário no HighLevel'},{status:409});
- const body=await response.json().catch(()=>null);
- if(!Array.isArray(body?.contacts)||body.contacts.length>20)return NextResponse.json({error:'Resposta de contatos inválida'},{status:409});
- const matches=body.contacts.filter((c:any)=>c.locationId===locationId&&String(c.email||'').toLowerCase()===email.toLowerCase());
- if(matches.length!==1)return NextResponse.json({error:'Exige um contato único já cadastrado com e-mail confirmado'},{status:409});
- const contact=matches[0];
- if(contact.dnd===true||contact.dndSettings?.Email?.status==='active'||contact.dndSettings?.email?.status==='active')return NextResponse.json({error:'DND ativo — envio bloqueado'},{status:409});
- // A user selecting an email does not establish that it belongs to the intended business.
- const contactName=String(contact.companyName||contact.name||[contact.firstName,contact.lastName].filter(Boolean).join(' '));
- const norm=(s:string)=>s.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase();
- if(norm(contactName)!==norm(name))return NextResponse.json({error:'Identidade do contato não corresponde à empresa'},{status:409});
- const id=String(contact.id||'');if(!id)return NextResponse.json({error:'ID de contato inválido'},{status:409});
- const sent=await sendOperationalMessage({token,contactId:id,channel:'email',message,subject:'Uma ideia para as avaliações da '+name,email}).catch(()=>null);
- if(!sent?.messageId)return NextResponse.json({error:'HighLevel não confirmou ID da mensagem; verifique a conversa antes de tentar novamente'},{status:502});
- return NextResponse.json({ok:true,status:'accepted_by_highlevel',messageId:sent.messageId,conversationId:sent.conversationId,contactId:id},{headers:{'Cache-Control':'no-store'}});
+ if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+ if(process.env.MEULOCAL_MANUAL_OUTREACH_ENABLED!=='true')return disabled();
+ const parsed=schema.safeParse(await req.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Confira o vínculo, destinatário e confirmação do e-mail.'},{status:400});
+ try{
+  const db=dbClient();if(!db)return unavailable();
+  const lead=await db.from('leads').select('id,name,email').eq('id',parsed.data.leadId).maybeSingle();
+  if(lead.error)return unavailable();
+  const l=lead.data;
+  if(!l||String(l.email||'').trim().toLowerCase()!==parsed.data.email.trim().toLowerCase())return NextResponse.json({error:'O e-mail não corresponde ao lead persistido.'},{status:409});
+  const normalize=(v:string)=>v.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase();
+  if(normalize(l.name||'')!==normalize(parsed.data.name))return NextResponse.json({error:'O nome não corresponde ao lead persistido.'},{status:409});
+  const result=await deliverAcquisitionMessage(db,{leadId:l.id,kind:'manual',step:null,requestId:parsed.data.requestId,channel:'email',message:parsed.data.message,subject:'Uma ideia para '+l.name});
+  return NextResponse.json(result,{status:result.ok&&!('stopped' in result)?200:409,headers:{'Cache-Control':'private, no-store'}});
+ }catch{return unavailable()}
 }

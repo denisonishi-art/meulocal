@@ -1,28 +1,22 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
+import {z} from 'zod';
 import {isAdminRequest} from '@/lib/admin-auth';
-import {getLocationAccessToken,sendOperationalMessage} from '@/lib/highlevel-operational';
-
+import {deliverAcquisitionMessage} from '@/lib/acquisition/delivery';
+export const maxDuration=60;
+function dbClient(){const url=process.env.NEXT_PUBLIC_SUPABASE_URL||process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;return url&&key?createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(5000)})}}):null}
+const unavailable=()=>NextResponse.json({error:'Não foi possível consultar a operação. Tente novamente.'},{status:503});
+const disabled=()=>NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados.'},{status:423});
+const schema=z.object({leadId:z.string().uuid(),requestId:z.string().uuid(),channel:z.enum(['email','whatsapp']),message:z.string().trim().min(1).max(4000),confirmed:z.literal(true)});
 export async function POST(req:Request){
-  if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
- if(process.env.MEULOCAL_MANUAL_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados. A liberação depende da validação operacional.'},{status:423});
-  const body=await req.json().catch(()=>null);const leadId=String(body?.leadId||''),message=String(body?.message||'').trim();
-  if(!leadId||!message)return NextResponse.json({error:'Informe a resposta.'},{status:400});
-  if(message.length>4000)return NextResponse.json({error:'A resposta é longa demais.'},{status:400});
-  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if(!url||!key)return NextResponse.json({error:'Banco não configurado.'},{status:503});
-  const db=createClient(url,key,{auth:{persistSession:false}});
-  const {data:lead}=await db.from('leads').select('id,email,whatsapp,ghl_contact_id,ghl_location_id,lifecycle_stage').eq('id',leadId).maybeSingle();
-  if(!lead?.ghl_contact_id)return NextResponse.json({error:'Contato ainda não está vinculado ao envio.'},{status:409});
-  const channel=body?.channel==='whatsapp'||(!lead.email&&lead.whatsapp)?'whatsapp':'email';
-  if(channel==='email'&&!lead.email)return NextResponse.json({error:'Este lead não tem e-mail.'},{status:400});
-  if(channel==='whatsapp'&&!lead.whatsapp)return NextResponse.json({error:'Este lead não tem WhatsApp.'},{status:400});
-  try{
-    const token=await getLocationAccessToken(lead.ghl_location_id||process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583');
-    const sent=await sendOperationalMessage({token,contactId:lead.ghl_contact_id,channel,message,subject:channel==='email'?'Re: seu diagnóstico MeuLocal':undefined,email:lead.email});
-    const now=new Date().toISOString();
-    await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:'sent',provider:'highlevel',external_id:sent.messageId||null,conversation_id:sent.conversationId||null,message_key:'manual_reply',metadata:{source:'meulocal_admin',manual_reply:true}});
-    await db.from('leads').update({lifecycle_stage:'conversation',next_action_at:null,updated_at:now}).eq('id',lead.id);
-    return NextResponse.json({ok:true,channel});
-  }catch(error:any){return NextResponse.json({error:String(error?.message||error).slice(0,240)},{status:502})}
+ if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+ if(process.env.MEULOCAL_MANUAL_OUTREACH_ENABLED!=='true')return disabled();
+ const parsed=schema.safeParse(await req.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Confira o lead, canal e confirmação da resposta.'},{status:400});
+ try{
+  const db=dbClient();if(!db)return unavailable();
+  const lead=await db.from('leads').select('id').eq('id',parsed.data.leadId).maybeSingle();
+  if(lead.error)return unavailable();if(!lead.data)return NextResponse.json({error:'Lead não encontrado.'},{status:409});
+  const result=await deliverAcquisitionMessage(db,{leadId:lead.data.id,kind:'manual',step:null,requestId:parsed.data.requestId,channel:parsed.data.channel,message:parsed.data.message,subject:'Re: sua análise inicial MeuLocal'});
+  return NextResponse.json({...result,channel:parsed.data.channel},{status:result.ok&&!('stopped' in result)?200:409,headers:{'Cache-Control':'private, no-store'}});
+ }catch{return unavailable()}
 }

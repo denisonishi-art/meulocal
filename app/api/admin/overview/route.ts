@@ -72,7 +72,7 @@ export async function GET(req:Request){
     const failed=event?.event_type==='failed';
     const channel=event?.channel==='whatsapp'?'WhatsApp':event?.channel==='email'?'E-mail':null;
     const reason=failed?(event.metadata?.reason||event.metadata?.error||'Falha ao iniciar a régua'):d.status==='approved'?'E-mail público não encontrado':null;
-    const lead=diagnosticLeads[0]||null;
+    const lead=diagnosticLeads.length===1?diagnosticLeads[0]:null;
     const automation=lead?automationByLead.get(lead.id)||null:null;
     const cadence=lead?.lifecycle_stage==='customer'||d.status==='converted'
       ?'Cliente'

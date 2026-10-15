@@ -3,7 +3,7 @@ const container=process.env.OPENDOTS_TEST_PG_CONTAINER;
 if(!container?.startsWith('meulocal-opendots-recovery-test-platform-'))throw Error('owned_platform_container_required');
 const owner=spawnSync('docker',['inspect','--format','{{index .Config.Labels "codex.owner"}}',container],{encoding:'utf8'});
 if(owner.status||owner.stdout.trim()!=='meulocal-platform-20261015')throw Error('container_owner_mismatch');
-const database='meulocal_payment_test_'+process.pid,root=path.resolve(__dirname,'..');
+const database='meulocal_payment_test_'+process.pid+'_'+require('node:crypto').randomBytes(4).toString('hex'),root=path.resolve(__dirname,'..');
 function sql(input,db=database){const r=spawnSync('docker',['exec','-i',container,'psql','-X','-U','supabase_admin','-d',db,'-v','ON_ERROR_STOP=1','-tA'],{input,encoding:'utf8'});if(r.status)throw Error(r.stderr);return r.stdout.trim()}
 const json=input=>{const value=sql(input);return value?JSON.parse(value):null};
 sql('create database '+database,'postgres');console.log('isolated_database='+database);

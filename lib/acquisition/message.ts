@@ -1,0 +1,1 @@
+export function initialAcquisitionMessage(name:string,token:string){return 'Olá! A análise inicial da '+name+' está disponível aqui:\nhttps://meulocal.ia.br/d/'+token+'\n\nSe quiser conversar sobre os próximos passos, responda por este canal. Para não receber novos contatos, responda SAIR.'}

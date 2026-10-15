@@ -1,6 +1,8 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{spawnSync}=require('node:child_process');
 const container=process.env.OPENDOTS_TEST_PG_CONTAINER;if(!container||!container.startsWith('meulocal-opendots-recovery-test-'))throw Error('owned_test_container_required');
 function sql(input){const r=spawnSync('docker',['exec','-i',container,'psql','-X','-U','supabase_admin','-d',process.env.OPENDOTS_TEST_PG_DATABASE||'meulocal_recovery_test','-v','ON_ERROR_STOP=1','-tA'],{input,encoding:'utf8'});if(r.status)throw Error(r.stderr);return r.stdout.trim()}
+const owner=spawnSync('docker',['inspect','--format','{{index .Config.Labels \"codex.owner\"}}',container],{encoding:'utf8'});if(owner.status||owner.stdout.trim()!=='meulocal-platform-20261015')throw Error('container_owner_mismatch');
+if(!process.env.OPENDOTS_TEST_PG_DATABASE){process.env.OPENDOTS_TEST_PG_DATABASE='meulocal_handoff_test_'+process.pid+'_'+require('node:crypto').randomBytes(4).toString('hex');const created=spawnSync('docker',['exec','-i',container,'psql','-X','-U','supabase_admin','-d','postgres','-v','ON_ERROR_STOP=1','-c','create database '+process.env.OPENDOTS_TEST_PG_DATABASE],{encoding:'utf8'});if(created.status)throw Error(created.stderr)}
 const root=path.resolve(__dirname,'..');
 const core=fs.readFileSync(path.join(root,'supabase/migrations/20260828_001_core.sql'),'utf8');
 const access=fs.readFileSync(path.join(root,'supabase/migrations/20260917_001_customer_access_and_platform.sql'),'utf8');
