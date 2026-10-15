@@ -3,6 +3,7 @@ import {createClient} from '@supabase/supabase-js';
 import {createHash,verify as verifySignature} from 'crypto';
 import {getLocationAccessToken,removeOperationalTags} from '@/lib/highlevel-operational';
 import {forwardInboundToOpenDots} from '@/lib/agents/opendots-commercial-bridge';
+import {CONTROLLED_WORKFLOW_ID,ControlledInboundError,resolveControlledInbound} from '@/lib/ghl-controlled-inbound';
 
 function eventId(body:any){
   const explicit=body?.id||body?.eventId||body?.messageId||body?.message?.id;
@@ -44,17 +45,36 @@ export async function POST(request:Request){
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!key)return NextResponse.json({error:'Supabase não configurado.'},{status:503});
   let body:any=null;try{body=JSON.parse(raw)}catch{}
-  if(!body)return NextResponse.json({error:'Payload inválido.'},{status:400});
+  if(!body||typeof body!=='object'||Array.isArray(body))return NextResponse.json({error:'Payload inválido.'},{status:400});
+  const controlledWorkflow=body?.workflow?.id===CONTROLLED_WORKFLOW_ID;
+  if(controlledWorkflow){
+    try{body=await resolveControlledInbound(body)}catch(error){
+      const code=error instanceof ControlledInboundError?error.message:'message_identity_lookup_failed';
+      console.warn(JSON.stringify({stage:'highlevel_identity',status:code}));
+      return NextResponse.json({ok:false,error:code},{status:error instanceof ControlledInboundError?error.status:503});
+    }
+  }
   const db=createClient(url,key);const row=normalize(body);
   const {error}=await db.from('ghl_events').insert(row);
-  if(error?.code==='23505')return NextResponse.json({ok:true,duplicate:true,eventId:row.external_event_id});
+  if(error?.code==='23505'){
+    if(!controlledWorkflow)return NextResponse.json({ok:true,duplicate:true,eventId:row.external_event_id});
+    const {data:previous,error:readError}=await db.from('ghl_events').select('ghl_location_id,contact_id,message_id,payload_meta').eq('external_event_id',row.external_event_id).single();
+    if(readError)return NextResponse.json({ok:false,error:'event_receipt_read_failed',eventId:row.external_event_id},{status:503});
+    if(previous?.ghl_location_id!==row.ghl_location_id||previous?.contact_id!==row.contact_id||previous?.message_id!==row.message_id)return NextResponse.json({ok:false,error:'event_scope_conflict'},{status:409});
+    const openDots=previous?.payload_meta?.openDots;
+    const saved=openDots?.status==='decision_saved'&&openDots.eventId===row.external_event_id&&openDots.dispatched===0;
+    console.info(JSON.stringify({stage:'highlevel_duplicate',eventId:row.external_event_id,openDots:saved?'decision_saved':'reconciliation_required'}));
+    return NextResponse.json({ok:saved,duplicate:true,eventId:row.external_event_id,openDots:openDots||{status:'reconciliation_required'}},{status:saved?200:503});
+  }
   if(error)return NextResponse.json({error:'Falha ao registrar evento.'},{status:500});
+  if(controlledWorkflow)console.info(JSON.stringify({stage:'highlevel_received',eventId:row.external_event_id,messageId:row.message_id}));
   // Customer review automation events are handled first. GHL remains invisible to the customer.
   if(row.ghl_location_id&&row.contact_id){
     const {data:customerContact}=await db.from('customer_contacts')
       .select('id,business_id,status')
       .eq('ghl_location_id',row.ghl_location_id).eq('ghl_contact_id',row.contact_id).maybeSingle();
     if(customerContact){
+      if(controlledWorkflow)return NextResponse.json({ok:false,error:'controlled_contact_is_customer',eventId:row.external_event_id},{status:409});
       const {data:enrollment}=await db.from('review_request_enrollments')
         .select('id,status').eq('contact_id',customerContact.id)
         .in('status',['queued','active']).order('created_at',{ascending:false}).limit(1).maybeSingle();
@@ -98,25 +118,31 @@ export async function POST(request:Request){
       if(eventType){
         const mappedChannel=/whatsapp/i.test(String(row.channel||''))?'whatsapp':/email/i.test(String(row.channel||''))?'email':'system';
         const {data:lastOutbound}=await db.from('outreach_events').select('message_key').eq('lead_id',lead.id).in('event_type',['sent','delivered']).order('created_at',{ascending:false}).limit(1).maybeSingle();
-        await db.from('outreach_events').insert({lead_id:lead.id,channel:mappedChannel,event_type:eventType,provider:'highlevel',external_id:row.message_id,conversation_id:row.conversation_id,message_key:lastOutbound?.message_key||null,metadata:{source:'highlevel_webhook',raw_event_type:row.event_type,preview:row.payload_meta.preview}});
+        const {error:outreachError}=await db.from('outreach_events').insert({lead_id:lead.id,channel:mappedChannel,event_type:eventType,provider:'highlevel',external_id:row.message_id,conversation_id:row.conversation_id,message_key:lastOutbound?.message_key||null,metadata:{source:'highlevel_webhook',raw_event_type:row.event_type,preview:row.payload_meta.preview}});
+        if(controlledWorkflow&&outreachError)return NextResponse.json({ok:false,error:'outreach_event_persistence_failed',eventId:row.external_event_id},{status:503});
         const now=new Date().toISOString();
         if(eventType==='unsubscribed'){
           await db.from('leads').update({lifecycle_stage:'lost',opt_out_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id);
           await db.from('automation_enrollments').update({status:'cancelled',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
           await db.from('businesses').update({status:'lost',updated_at:now}).eq('id',lead.business_id);
         }else if(eventType==='replied'){
-          await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id);
-          await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
-          await db.from('businesses').update({status:'engaged',updated_at:now}).eq('id',lead.business_id);
+          const {error:leadError}=await db.from('leads').update({lifecycle_stage:'conversation',last_reply_at:now,next_action_at:null,updated_at:now}).eq('id',lead.id);
+          const {error:automationError}=await db.from('automation_enrollments').update({status:'completed',next_run_at:null,completed_at:now}).eq('lead_id',lead.id).eq('track','meulocal_acquisition').eq('status','active');
+          const {error:businessError}=await db.from('businesses').update({status:'engaged',updated_at:now}).eq('id',lead.business_id);
+          if(controlledWorkflow&&(leadError||automationError||businessError))return NextResponse.json({ok:false,error:'inbound_processing_failed',eventId:row.external_event_id},{status:503});
           try{const token=await getLocationAccessToken(row.ghl_location_id);await removeOperationalTags({token,contactId:row.contact_id,tags:['meulocal:prospectar','follow-up']})}catch{}
           // Offer this inbound event to OpenDots after the existing stop-on-reply logic.
           // The bridge is disabled without explicit runtime configuration; no message is sent.
-          await forwardInboundToOpenDots({eventId:row.external_event_id,leadId:lead.id,contactId:row.contact_id,locationId:row.ghl_location_id,conversationId:row.conversation_id,messageId:row.message_id,message:String(body?.body||body?.message?.body||'').slice(0,2000),channel:row.channel}).catch(()=>undefined);
+          const openDots=await forwardInboundToOpenDots({eventId:row.external_event_id,leadId:lead.id,contactId:row.contact_id,locationId:row.ghl_location_id,conversationId:row.conversation_id,messageId:row.message_id,message:String(body?.body||body?.message?.body||'').slice(0,2000),channel:row.channel}).catch(()=>({status:'unavailable'} as const));
+          const {error:receiptError}=await db.from('ghl_events').update({payload_meta:{...row.payload_meta,openDots}}).eq('external_event_id',row.external_event_id).eq('ghl_location_id',row.ghl_location_id).eq('contact_id',row.contact_id).select('id').single();
+          console.info(JSON.stringify({stage:'highlevel_opendots',eventId:row.external_event_id,messageId:row.message_id,openDots:openDots.status,receiptSaved:!receiptError}));
+          if(controlledWorkflow)return NextResponse.json({ok:!receiptError&&openDots.status==='decision_saved',eventId:row.external_event_id,messageId:row.message_id,acquisitionFlow:true,openDots,...(receiptError?{error:'event_receipt_persistence_failed'}:{})},{status:!receiptError&&openDots.status==='decision_saved'?200:503});
         }
       }
       return NextResponse.json({ok:true,duplicate:false,eventId:row.external_event_id,acquisitionFlow:true});
     }
   }
+  if(controlledWorkflow)return NextResponse.json({ok:false,error:'controlled_lead_not_linked',eventId:row.external_event_id},{status:409});
   // Keep an activation-safe local record for contacts created or messaged in GHL.
   // Only the verified Asaas payment webhook can turn this into an active account.
   const contact=body?.contact||{};
