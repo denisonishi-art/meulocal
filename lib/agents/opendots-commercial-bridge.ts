@@ -15,6 +15,10 @@ export async function forwardInboundToOpenDots(input:{eventId:string;leadId:stri
  const signature=createHmac('sha256',secret).update(body).digest('hex');
  try{
   const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-MeuLocal-Signature':'sha256='+signature,'X-MeuLocal-Event-Id':input.eventId},body,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});
-  return {status:res.ok?'accepted':'rejected',httpStatus:res.status} as const;
+  if(!res.ok)return {status:'rejected',httpStatus:res.status} as const;
+  const receipt=await res.json().catch(()=>null);
+  if(receipt?.status!=='decision_saved'||receipt.eventId!==input.eventId||receipt.dispatched!==0||
+   !['answer','follow_up','handoff','stop'].includes(receipt.action))return {status:'receipt_unverified',httpStatus:res.status} as const;
+  return {status:'decision_saved',eventId:input.eventId,action:String(receipt.action),dispatched:0,httpStatus:res.status} as const;
  }catch{return {status:'unavailable'} as const}
 }
