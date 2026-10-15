@@ -1,12 +1,14 @@
 'use client';
-import {FormEvent,useEffect,useMemo,useRef,useState} from 'react';
+import {FormEvent,useEffect,useMemo,useState} from 'react';
 import {
   Activity,ArrowUpRight,Bot,Building2,Check,ClipboardCheck,
   Gauge,LogOut,MapPin,RefreshCw,Search,Send,ShieldCheck,Sparkles,Users,Workflow
 } from 'lucide-react';
 
+import OpenDotsSupervision from './OpenDotsSupervision';
+
 type Candidate={id:string;name:string;address:string;rating:number|null;reviews:number;website:string|null;phone:string|null;score:number;priority:string;competitorAverageReviews?:number|null;competitionMode?:'local_radius'|'city_region'|'search_market';competitionLabel?:string|null;searchIntent?:string|null};
-type View='overview'|'prospecting'|'leads'|'diagnostics'|'customers'|'automations'|'agents';
+type View='overview'|'prospecting'|'leads'|'diagnostics'|'customers'|'automations'|'agents'|'supervision';
 type Overview={
   kpis:{leads:number;conversations:number;customers:number;onboardingPending:number;automationsActive:number;diagnosticsOpen:number;diagnosticConversions:number;paidCheckouts:number};
   leads:any[];diagnostics:any[];customers:any[];automations:any[];activity:any[];agents:any[];
@@ -15,7 +17,7 @@ type Overview={
 
 const labels:Record<View,string>={
   overview:'Visão geral',prospecting:'Prospecção',leads:'Leads',diagnostics:'Diagnósticos',
-  customers:'Clientes',automations:'Automações',agents:'Agentes'
+  customers:'Clientes',automations:'Automações',agents:'Agentes',supervision:'Supervisão'
 };
 
 function fmtDate(v?:string|null){if(!v)return '—';return new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(v))}
@@ -30,7 +32,7 @@ export default function AdminClient(){
  const[prepared,setPrepared]=useState<Array<{name:string;message:string}>>([]);
  const[dispatchPreview,setDispatchPreview]=useState<Array<{name:string;status:string;reasons:string[]}>>([]);
  const[contactCheck,setContactCheck]=useState<Array<{name:string;channel:string;email?:string|null;phoneFound?:boolean;phone?:string|null;reason:string;ghlStatus?:string;eligibilityStatus?:string;eligibilityReasons?:string[];identifierStatus?:string;existingContact?:boolean;dnd?:boolean}>>([]);
- const[view,setView]=useState<View>('overview');const recoveredApproved=useRef(false);
+ const[view,setView]=useState<View>('overview');
  const[data,setData]=useState<Overview|null>(null);const[loadingData,setLoadingData]=useState(true);const[dataError,setDataError]=useState('');
  const[niche,setNiche]=useState('');const[region,setRegion]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');const[diagMsg,setDiagMsg]=useState('');const[deliveryPeriod,setDeliveryPeriod]=useState<'all'|'week'|'month'>('all');const[replyingTo,setReplyingTo]=useState<string|null>(null);const[replyText,setReplyText]=useState('');
 
@@ -79,10 +81,6 @@ export default function AdminClient(){
    try{const r=await fetch('/api/agents/prospect/reply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leadId:d.leadId,message:replyText,channel:d.reply?.channel})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Não foi possível enviar a resposta.');setReplyingTo(null);setReplyText('');setDiagMsg(`Resposta enviada por ${j.channel==='whatsapp'?'WhatsApp':'e-mail'}.`);await loadOverview()}catch(e:any){setDiagMsg(e.message)}finally{setBusy(false)}
  }
 
- useEffect(()=>{
-   const pending=(data?.diagnostics||[]).filter((d:any)=>d.status==='approved');
-   if(!recoveredApproved.current&&pending.length){recoveredApproved.current=true;void dispatchApproved(pending)}
- },[data]);
 
  async function logout(){await fetch('/api/admin/session',{method:'DELETE'});window.location.href='/admin-login'}
 
@@ -93,7 +91,7 @@ export default function AdminClient(){
      <a className="adminBrand" href="/admin"><span><MapPin size={18}/></span>MeuLocal <b>Admin</b></a>
      <nav>
        {nav('overview',Gauge)}{nav('prospecting',Search)}{nav('leads',Users)}{nav('diagnostics',ClipboardCheck)}
-       {nav('customers',Building2)}{nav('automations',Workflow)}{nav('agents',Bot)}
+       {nav('supervision',ShieldCheck)}{nav('customers',Building2)}{nav('automations',Workflow)}{nav('agents',Bot)}
        <a href="/admin/aprendizado"><Sparkles/>Aprendizado</a>
      </nav>
      <div className="adminSafety"><ShieldCheck/><div><strong>Operação protegida</strong><small>Admin separado da área do cliente. GHL e integrações ficam nos bastidores.</small></div></div>
@@ -103,13 +101,16 @@ export default function AdminClient(){
    <section className="adminMain">
      <header>
        <div><span>CENTRO DE COMANDO</span><h1>{labels[view]}</h1><p>{view==='overview'?'A operação do MeuLocal em uma única tela.':view==='prospecting'?'Encontre e aprove oportunidades para abordagem.':'Dados reais da operação, sem precisar entrar no GHL.'}</p></div>
-       <div className="headerActions"><button className="refreshBtn" onClick={loadOverview} disabled={loadingData}><RefreshCw/>Atualizar</button><div className={attention?'agentOnline attention':'agentOnline'}><i/> {attention?attention+' ponto(s) de atenção':'Operação normal'}</div></div>
+       <div className="headerActions"><button className="refreshBtn" onClick={loadOverview} disabled={loadingData}><RefreshCw/>Atualizar</button><div className={attention?'agentOnline attention':'agentOnline'}><i/> {dataError?'Consulta indisponível':loadingData?'Consultando operação':!data?'Operação não verificada':attention?attention+' ponto(s) de atenção':'Sem alertas na amostra consultada'}</div></div>
      </header>
 
      {dataError&&<div className="adminMessage error">{dataError}</div>}
      {loadingData&&!data&&<div className="adminLoading">Carregando operação...</div>}
 
+     {view==='supervision'&&<OpenDotsSupervision/>}
+
      {view==='overview'&&data&&<>
+       <p>Indicadores calculados sobre os registros recentes consultados; não representam totais históricos.</p>
        <div className="opsKpis">
          <article onClick={()=>setView('leads')}><span>Leads</span><strong>{data.kpis.leads}</strong><small>{data.kpis.conversations} em conversa</small></article>
          <article onClick={()=>setView('diagnostics')}><span>Diagnósticos abertos</span><strong>{data.kpis.diagnosticsOpen}</strong><small>{data.kpis.diagnosticConversions} convertidos</small></article>

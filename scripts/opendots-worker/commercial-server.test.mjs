@@ -16,3 +16,13 @@ test('STOP returns saved stop receipt with no model calls, including duplicate',
 test('supervised lifecycle saves deterministic guidance, links existing UI and calls no model',()=>fixture(async f=>{const send=await f.start();const e={kind:'meulocal.customer.lifecycle',eventId:'synthetic-paid-123',accountId:'account',businessId:'business',transition:'payment.confirmed',paymentStatus:'active',onboardingStatus:'pending',nextPath:'/onboarding',permissions:event.permissions};assert.equal((await (await send(e)).json()).status,'decision_saved');const saved=JSON.parse(fs.readFileSync(path.join(f.dir,fs.readdirSync(f.dir)[0])));assert.equal(saved.decision.requiresHumanReview,true);assert.equal(saved.decision.nextPath,'/onboarding');assert.equal(saved.decision.channel,'none');assert.equal(f.calls(),0);assert.equal((await send({...e,eventId:'synthetic-paid-invalid',permissions:{autoReply:true}})).status,422);assert.equal((await send({...e,eventId:'synthetic-paid-pending',paymentStatus:'pending'})).status,422)}));
 
 test('valid 4000-character UTF-8 message fits the receiver envelope; oversized body is refused',()=>fixture(async f=>{const send=await f.start();assert.equal((await send({...event,message:'測'.repeat(4000)})).status,200);assert.equal((await send({...event,eventId:'synthetic-oversized',padding:'x'.repeat(40000)})).status,413)}));
+
+test('receipt exposes exactly the persisted human guidance, including after restart',()=>fixture(async f=>{
+ const send=await f.start();const e={kind:'meulocal.customer.lifecycle',eventId:'synthetic-guidance',accountId:'account',businessId:'business',transition:'onboarding.completed',paymentStatus:'active',onboardingStatus:'completed',nextPath:'/dashboard',permissions:event.permissions};
+ const first=await (await send(e)).json();assert.equal(first.guidance.requiresHumanReview,true);assert.equal(first.guidance.nextPath,'/dashboard');
+ const saved=JSON.parse(fs.readFileSync(path.join(f.dir,fs.readdirSync(f.dir)[0])));assert.equal(first.guidance.message,saved.decision.message);assert.equal(first.guidance.rationale,saved.decision.rationale);assert.equal(first.guidance.accountId,undefined);assert.equal(first.guidance.businessId,undefined);
+ const restarted=await f.start({receipts:createReceiptStore(f.dir,secret)});assert.deepEqual(await (await restarted(e)).json(),first);assert.equal(f.calls(),0);
+}));
+test('receipt store refuses a corrupted persisted guidance destination',()=>fixture(async f=>{
+ const send=await f.start();await send();const file=path.join(f.dir,fs.readdirSync(f.dir)[0]),record=JSON.parse(fs.readFileSync(file));record.decision.nextPath='https://evil.invalid';fs.writeFileSync(file,JSON.stringify(record));assert.throws(()=>f.receipts.read(event),/saved_guidance_invalid/);
+}));

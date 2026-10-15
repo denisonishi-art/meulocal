@@ -10,7 +10,11 @@ export function createReceiptStore(directory,secret){
   let saved;try{saved=JSON.parse(fs.readFileSync(fileFor(event),'utf8'))}catch(error){if(error.code==='ENOENT')return null;throw error}
   if(saved.eventId!==event.eventId||saved.fingerprint!==fingerprint(event))throw Error('saved_event_payload_conflict');
   if(saved.decision?.eventId!==event.eventId||saved.decision?.requiresHumanReview!==true||!['answer','follow_up','handoff','stop'].includes(saved.decision?.action)||saved.decision?.status!=='suggestion_only')throw Error('saved_receipt_invalid');
-  return {status:'decision_saved',eventId:saved.eventId,action:saved.decision.action,dispatched:0};
+  const d=saved.decision;
+  if(typeof d.message!=='string'||d.message.length>1800||typeof d.rationale!=='string'||d.rationale.length>1000||
+   (d.nextPath!==undefined&&(event.kind!=='meulocal.customer.lifecycle'||!['/onboarding','/dashboard'].includes(d.nextPath)||d.nextPath!==event.nextPath)))throw Error('saved_guidance_invalid');
+  const guidance={message:d.message,rationale:d.rationale,requiresHumanReview:true,...(d.nextPath?{nextPath:d.nextPath}:{})};
+  return {status:'decision_saved',eventId:saved.eventId,action:d.action,dispatched:0,guidance};
  };
  const save=(decision,event)=>{
   const target=fileFor(event),temporary=target+'.'+randomUUID()+'.tmp';

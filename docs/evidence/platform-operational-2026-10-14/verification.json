@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T13:21:01.380Z",
+  "at": "2026-10-15T13:42:19.049129+00:00",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
@@ -8,9 +8,10 @@
       "failed": 0
     },
     "controlledHandler": {
-      "tests": 29,
-      "passed": 29,
-      "failed": 0
+      "tests": 30,
+      "passed": 30,
+      "failed": 0,
+      "scope": "actual_handler_and_bridge_isolated_provider"
     },
     "reconciliation": {
       "tests": 12,
@@ -23,9 +24,10 @@
       "failed": 0
     },
     "runtimeHTTP": {
-      "tests": 7,
-      "passed": 7,
-      "failed": 0
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "scope": "local_real_http_persisted_receipts"
     },
     "supervisedRecovery": {
       "tests": 10,
@@ -62,8 +64,8 @@
       "scope": "actual_route_isolated_real_postgresql"
     },
     "openDotsOutbox": {
-      "tests": 2,
-      "passed": 2,
+      "tests": 3,
+      "passed": 3,
       "failed": 0,
       "scope": "actual_outbox_isolated_real_postgresql"
     },
@@ -121,6 +123,12 @@
       "passed": 4,
       "failed": 0,
       "scope": "actual_route_auth_flags_isolated_processor"
+    },
+    "adminSupervision": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "scope": "actual_sdk_routes_and_react_handlers_isolated_provider"
     }
   },
   "typescript": "pass_exit_0",
@@ -134,5 +142,6 @@
   "remoteBaseDDL": "openapi_fields_observed_full_constraints_not_verified",
   "reviewDelivery": "local_verified_cron_recovery_webhook_integrated_default_disabled_not_published",
   "realReviewTransport": "not_executed",
-  "realReviewInbound": "not_verified_customer_scope"
+  "realReviewInbound": "not_verified_customer_scope",
+  "adminSupervisionPublication": "NOT_PUBLISHED"
 }
