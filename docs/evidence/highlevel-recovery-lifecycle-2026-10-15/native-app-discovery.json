@@ -1,0 +1,22 @@
+{
+  "readOnly": true,
+  "locationId": "uNh3KsM7WFuLeTN8Q583",
+  "installedApps": [
+    "Official WhatsApp Integration",
+    "LC GPT Connector"
+  ],
+  "privateIntegrations": [
+    "GHL_API_KEY",
+    "Resultado com ia - MeuLocal",
+    "MeuLocal auditoria"
+  ],
+  "nativeSubscriptionAdministrableInObservedUI": false,
+  "globalAbsenceProven": false,
+  "workflowMessagePicker": [
+    "Message Body",
+    "Message Subject",
+    "Message Attachments"
+  ],
+  "productionChanged": false,
+  "nextReceiver": "https://meulocal.ia.br/api/webhooks/highlevel?controlled_native=1"
+}

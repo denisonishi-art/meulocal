@@ -42,3 +42,13 @@ Migração remota, atualização da VPS, deploy e publicação do novo workflow:
 ## Última conferência do adaptador nativo
 
 Re-review independente não encontrou novo finding em autenticação, filtro por query, tag atual e âncora. O adaptador não constitui prova de assinatura nativa disponível nem de entrega real de WhatsApp por esse evento. O Chrome retornou erro -600 (aplicativo não executando) ao terminar a inspeção; não foi contornado. Três integrações privadas observadas: GHL_API_KEY, Resultado com ia - MeuLocal, MeuLocal auditoria. Não foi alterada nenhuma delas.
+
+## Conferência final do Marketplace e CI
+
+O Chrome foi reaberto e a inspeção da location foi concluída. Installed Apps exibiu Official WhatsApp Integration e LC GPT Connector. Nenhuma configuração administrável de assinatura InboundMessage para MeuLocal foi exibida. Isto não prova ausência global de app ou de configuração no portal do desenvolvedor. Nenhum app foi criado, instalado, removido ou reconfigurado. O bloqueio final é falta de assinatura nativa administrável e de recebimento real com âncora, não mais disponibilidade do Chrome.
+
+Menor passo externo: no app HighLevel apropriado, configurar assinatura InboundMessage para `https://meulocal.ia.br/api/webhooks/highlevel?controlled_native=1`; verificar suporte e entrega real de WhatsApp com ID/dateAdded. Aplicar a migration aditiva e o receptor na ordem documentada, publicar o handler somente com esse contrato disponível e repetir o teste exclusivo Teste22 2 rastreando o mesmo ID em HighLevel, Vercel, Supabase e OpenDots. O workflow legado continua preservado até o contrato substituto estar validado. Não usar uma variável de merge inventada nem relaxar a exigência de identidade para ocultar o bloqueio.
+
+PR de rascunho: https://github.com/denisonishi-art/meulocal/pull/6 . Commit de implementação e49e31e. GitHub build run 38667995622 aprovado; Vercel preview aprovado, sem publicação de produção. Os checks de CI não substituem os 41 testes locais nem a prova externa pendente. Nenhum comentário automático de finding foi retornado na última consulta; isso não é evidência de revisão automática concluída.
+
+O container PostgreSQL descartável 70b670775e528a1a6d619984e2063851b9b8e701cabc6e5a996b22acaac5296e foi removido após conferir o rótulo codex.owner=meulocal-recovery-20261015. Os containers de outros projetos não foram alterados. Worktree, snapshots, fixtures e evidências anteriores foram preservados.

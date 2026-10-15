@@ -19,6 +19,18 @@
   "externalMessagesSent": 0,
   "onboardingMode": "supervised",
   "cadence": "existing_daily_cron_or_authorized_on_demand",
-  "nativeSubscriptionVerification": "blocked_chrome_closed",
-  "nativeAdapter": "signed_test22_controlled_tag_only"
+  "nativeSubscriptionVerification": "no_administrable_native_subscription_proven_in_installed_apps",
+  "nativeAdapter": "signed_test22_controlled_tag_only",
+  "chromeInspection": "reopened_and_completed",
+  "installedAppsObserved": [
+    "Official WhatsApp Integration",
+    "LC GPT Connector"
+  ],
+  "pullRequest": 6,
+  "githubBuild": {
+    "runId": 38667995622,
+    "status": "passed"
+  },
+  "vercelPreview": "passed",
+  "ownedPostgresContainerCleanup": "verified_removed"
 }

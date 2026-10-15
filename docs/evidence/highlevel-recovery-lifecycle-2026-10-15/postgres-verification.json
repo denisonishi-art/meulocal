@@ -1,0 +1,18 @@
+{
+  "engine": "PostgreSQL 17.6.1 isolated Docker database",
+  "passed": 9,
+  "failed": 0,
+  "tests": [
+    "transaction rollback on injected local failure",
+    "lease resumption without reapplying CRM changes",
+    "receipt write failure leaves recoverable lease",
+    "saved model receipt with tag cleanup pending",
+    "terminal opt-out duplicate",
+    "identity scope conflict",
+    "persisted payment and onboarding triggers",
+    "anon and authenticated permission denial",
+    "ambiguous lead refuses writes"
+  ],
+  "remoteSupabaseChanged": false,
+  "containerOwnedAndRemoved": true
+}
