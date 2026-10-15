@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T13:42:19.049129+00:00",
+  "at": "2026-10-15T13:49:55.885505+00:00",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
@@ -129,6 +129,12 @@
       "passed": 9,
       "failed": 0,
       "scope": "actual_sdk_routes_and_react_handlers_isolated_provider"
+    },
+    "acquisitionDefaultOffGates": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "scope": "actual_handlers_no_database_or_provider_access"
     }
   },
   "typescript": "pass_exit_0",
@@ -143,5 +149,6 @@
   "reviewDelivery": "local_verified_cron_recovery_webhook_integrated_default_disabled_not_published",
   "realReviewTransport": "not_executed",
   "realReviewInbound": "not_verified_customer_scope",
-  "adminSupervisionPublication": "NOT_PUBLISHED"
+  "adminSupervisionPublication": "NOT_PUBLISHED",
+  "acquisitionEnabledTransport": "NOT_READY_LEGACY_DURABILITY_PENDING"
 }

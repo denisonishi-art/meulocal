@@ -6,6 +6,7 @@ export const runtime='nodejs';
 const schema=z.object({name:z.string().min(2).max(180),email:z.string().email().max(250),message:z.string().min(50).max(1800),confirmed:z.literal(true)}).strict();
 export async function POST(req:Request){
  if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado'},{status:401});
+ if(process.env.MEULOCAL_MANUAL_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados. A liberação depende da validação operacional.'},{status:423});
  const parsed=schema.safeParse(await req.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Dados inválidos'},{status:400});
  const {name,email,message}=parsed.data;
  const token=process.env.GHL_API_KEY,locationId=process.env.GHL_LOCATION_ID;

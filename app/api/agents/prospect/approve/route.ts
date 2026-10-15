@@ -30,6 +30,7 @@ async function trackInitialDispatch(db:any,d:any,source:ApprovedProspect,result:
 
 export async function POST(req:Request){
   if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+ if(process.env.MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados. A liberação depende da validação operacional.'},{status:423});
   try{
     const body=await req.json();
     // `prospects` is sent by the admin screen; keep `approved` for API compatibility.

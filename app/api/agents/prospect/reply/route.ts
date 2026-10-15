@@ -5,6 +5,7 @@ import {getLocationAccessToken,sendOperationalMessage} from '@/lib/highlevel-ope
 
 export async function POST(req:Request){
   if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+ if(process.env.MEULOCAL_MANUAL_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados. A liberação depende da validação operacional.'},{status:423});
   const body=await req.json().catch(()=>null);const leadId=String(body?.leadId||''),message=String(body?.message||'').trim();
   if(!leadId||!message)return NextResponse.json({error:'Informe a resposta.'},{status:400});
   if(message.length>4000)return NextResponse.json({error:'A resposta é longa demais.'},{status:400});

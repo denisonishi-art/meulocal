@@ -26,6 +26,7 @@ export async function GET(req:Request){return run(req)}
 export async function POST(req:Request){return run(req)}
 async function run(req:Request){
  if(!authorized(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+ if(process.env.MEULOCAL_ACQUISITION_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados. A liberação depende da validação operacional.'},{status:200});
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)return NextResponse.json({error:'Banco não configurado.'},{status:503});
  const db=createClient(url,key,{auth:{persistSession:false}});
