@@ -7,7 +7,7 @@
 | Pagamento e acesso | LOCAL_VERIFIED parcial / BLOCKED_EXTERNAL na prova de pagamento | Handler 29, checkout/rota 15, base SQL 13, Auth 8 e vínculo 12 testes aprovados. API Asaas de produção acessível; webhook existente sem eventos CHECKOUT_*. Usuário confirmou ausência de pagamento anterior; não houve nova cobrança. Prova externa depende de sandbox autorizado ou pagamento genuíno futuro. |
 | Onboarding | LOCAL_VERIFIED parcial | 9 regressões e TypeScript; publicação/navegador ainda pendentes. |
 | Google OAuth | DEFERRED_BY_USER | Usuário pediu seguir sem configurar; deve ficar opcional e desconectado. Não é prova de sync. |
-| Base/avaliações | LOCAL_VERIFIED parcial / NOT_PUBLISHED | Importação/confirmação: 14 casos, concorrência e 10.000 linhas. Ativação: 10 casos, serialização, recibo humano e capacidade de agenda. Cron, cota diária de envios, retomada e inbound de avaliações pendentes. |
+| Base/avaliações | LOCAL_VERIFIED parcial / NOT_PUBLISHED | Importação/confirmação: 14 casos, concorrência e 10.000 linhas. Ativação: 10 casos, serialização, recibo humano e capacidade de agenda. Journal SQL de entrega: 18 casos de cota/lease/recibo/parada. Integração do cron/webhook, transporte e prova externa ainda pendentes. |
 | Painel/admin | LOCAL_VERIFIED parcial / NOT_PUBLISHED | Painel: 6 regressões da API e 7 de React, incluindo escopo antes do limite e confirmação preservada. Admin supervisionado e navegador ainda pendentes. |
 | Operação/rollback | IN_PROGRESS | Recuperação restrita: endpoint 9 testes, worker 4, receptor HTTP 7 e fila 2. Retomada por disponibilidade e falha isolada corrigidas. Configuração anterior Asaas preservada; publicação, cadência real e rollback ainda pendentes. |
 
