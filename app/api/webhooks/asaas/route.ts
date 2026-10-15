@@ -2,19 +2,11 @@ import {timingSafeEqual} from 'crypto';
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {getAsaasCustomerEmail} from '@/lib/payments/asaas';
+import {ensureCustomerUser} from '@/lib/payments/customer-user';
 
 function safeEqual(a:string,b:string){
   const aa=Buffer.from(a); const bb=Buffer.from(b);
   return aa.length===bb.length && timingSafeEqual(aa,bb);
-}
-
-async function ensureCustomerUser(admin:any,email:string,redirectTo:string){
-  const invited=await admin.auth.admin.inviteUserByEmail(email,{redirectTo});
-  if(!invited.error&&invited.data?.user)return {user:invited.data.user,status:'invited' as const};
-  const listed=await admin.auth.admin.listUsers({page:1,perPage:1000});
-  const existing=listed.data?.users?.find((u:any)=>String(u.email||'').toLowerCase()===email.toLowerCase());
-  if(existing)return {user:existing,status:'linked' as const};
-  throw invited.error||new Error('CUSTOMER_USER_CREATION_FAILED');
 }
 
 export async function POST(req:Request){

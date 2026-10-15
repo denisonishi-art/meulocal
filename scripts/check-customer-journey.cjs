@@ -1,13 +1,13 @@
 // Runs the actual page handlers. Only browser hooks and external Auth/HTTP are isolated.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),ts=require('typescript');
 const root=path.resolve(__dirname,'..');
-function fixture({step=2,status=503,networkFailure=false,initial=false,canStart=true}={}){
+function fixture({step=2,status=503,networkFailure=false,initial=false,canStart=true,onboardingStatus='pending'}={}){
  const states=[],effects=[],calls=[];let cursor=0;
  const react=require('react');
  const hooks={...react,useState(value){const i=cursor++;if(!(i in states))states[i]=i===0?step:i===2?true:i===8?initial:value;return [states[i],next=>{states[i]=typeof next==='function'?next(states[i]):next}]},useEffect(fn){if(initial&&effects.length===0)effects.push(fn)}};
  const source=ts.transpileModule(fs.readFileSync(path.join(root,'app/onboarding/page.tsx'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
  const module={exports:{}};const window={location:{href:'https://synthetic.invalid/onboarding',search:''}};
- const fetcher=async(url,options)=>{calls.push({url,options});if(networkFailure)throw Error('synthetic_network_failure');return Response.json(url==='/api/onboarding/status'&&options?.method!=='POST'?{canStartOnboarding:canStart,onboarding_status:'pending'}:{error:'Falha sintética de persistência'},{status})};
+ const fetcher=async(url,options)=>{calls.push({url,options});if(networkFailure)throw Error('synthetic_network_failure');return Response.json(url==='/api/onboarding/status'&&options?.method!=='POST'?{canStartOnboarding:canStart,onboarding_status:onboardingStatus}:{error:'Falha sintética de persistência'},{status})};
  const req=n=>{if(n==='react')return hooks;if(n==='react/jsx-runtime')return require(n);if(n==='lucide-react')return new Proxy({},{get:()=>()=>null});if(n==='@supabase/supabase-js')return {createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:'SYNTHETIC-token'}}})}})};if(n==='./CustomerBaseSetup')return {default:()=>null};throw Error('unexpected_import:'+n)};
  vm.runInNewContext('(function(require,module,exports,process,fetch,window){'+source+'\n})',{URLSearchParams,console})(req,module,module.exports,{env:{NEXT_PUBLIC_SUPABASE_URL:'https://synthetic.invalid',NEXT_PUBLIC_SUPABASE_ANON_KEY:'SYNTHETIC-anon'}},fetcher,window);
  function render(){cursor=0;return module.exports.default()}
@@ -39,4 +39,7 @@ test('Google can be deferred without claiming a connection',async()=>{
 });
 test('completion without OAuth does not claim Google or automation active',async()=>{
  const f=fixture({status:200});await f.button('Concluir configuração')();const text=f.text(f.render());assert.ok(!text.includes('Seu Google está conectado'));assert.ok(!text.includes('sua automação está configurada'));assert.ok(text.includes('Configuração concluída.'));
+});
+test('reloading completed onboarding does not infer a disconnected Google from initial UI state',async()=>{
+ const f=fixture({initial:true,step:0,status:200,onboardingStatus:'completed'});const text=f.text(await f.mount());assert.ok(text.includes('Configuração concluída.'));assert.ok(!text.includes('novas avaliações não serão sincronizadas'));assert.ok(!text.includes('A primeira sincronização do Google foi concluída.'));
 });

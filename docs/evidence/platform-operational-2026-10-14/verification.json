@@ -1,10 +1,10 @@
 {
-  "at": "2026-10-15T03:03:56.504Z",
+  "at": "2026-10-15T03:18:17.068Z",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
-      "tests": 8,
-      "passed": 8,
+      "tests": 9,
+      "passed": 9,
       "failed": 0
     },
     "controlledHandler": {
@@ -36,10 +36,16 @@
       "tests": 4,
       "pass": 4,
       "fail": 0
+    },
+    "paymentUser": {
+      "tests": 8,
+      "passed": 8,
+      "failed": 0
     }
   },
   "typescript": "pass_exit_0",
   "lint": "not_configured_yet",
   "productionRelease": "not_executed",
-  "newNativeAppCreated": false
+  "newNativeAppCreated": false,
+  "paymentRecovery": "incomplete_not_released"
 }
