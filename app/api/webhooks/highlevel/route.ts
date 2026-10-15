@@ -76,46 +76,28 @@ export async function POST(request:Request){
   }
   const db=createClient(url,key);const row=normalize(body);
   if(controlledWorkflow){const result=await processControlledInbound(db,row,body);return NextResponse.json(result,{status:result.httpStatus,headers:result.ok?{}:{'Retry-After':'60'}});}
-  const {error}=await db.from('ghl_events').insert(row);
-  if(error?.code==='23505'){
-    return NextResponse.json({ok:true,duplicate:true,eventId:row.external_event_id});
-  }
-  if(error)return NextResponse.json({error:'Falha ao registrar evento.'},{status:500});
-  // Customer review automation events are handled first. GHL remains invisible to the customer.
+  // Resolve the customer branch BEFORE the legacy journal/duplicate fast path.
   if(row.ghl_location_id&&row.contact_id){
-    const {data:customerContact}=await db.from('customer_contacts')
-      .select('id,business_id,status')
-      .eq('ghl_location_id',row.ghl_location_id).eq('ghl_contact_id',row.contact_id).maybeSingle();
-    if(customerContact){
-      const {data:enrollment}=await db.from('review_request_enrollments')
-        .select('id,status').eq('contact_id',customerContact.id)
-        .in('status',['queued','active']).order('created_at',{ascending:false}).limit(1).maybeSingle();
-      if(enrollment){
-        let eventType:string|null=null;
-        if(row.opted_out)eventType='opted_out';
-        else if(row.direction==='inbound')eventType='replied';
-        else if(row.normalized_status==='delivered')eventType='delivered';
-        else if(row.normalized_status==='failed'||row.normalized_status==='undelivered')eventType='failed';
-        else if(row.normalized_status==='sent')eventType='sent';
-        if(eventType){
-          const mappedChannel=/whatsapp/i.test(String(row.channel||''))?'whatsapp':/email/i.test(String(row.channel||''))?'email':'system';
-          await db.from('review_request_events').insert({
-            business_id:customerContact.business_id,enrollment_id:enrollment.id,contact_id:customerContact.id,
-            channel:mappedChannel,event_type:eventType,provider:'highlevel',external_id:row.message_id,
-            metadata:{source:'highlevel_webhook',conversation_id:row.conversation_id,raw_event_type:row.event_type}
-          });
-          if(eventType==='opted_out'){
-            await db.from('customer_contacts').update({status:'opted_out',opt_out_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',customerContact.id);
-            await db.from('review_request_enrollments').update({status:'opted_out',next_run_at:null,completed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',enrollment.id);
-          }else if(eventType==='replied'){
-            await db.from('customer_contacts').update({status:'completed',updated_at:new Date().toISOString()}).eq('id',customerContact.id);
-            await db.from('review_request_enrollments').update({status:'completed',next_run_at:null,completed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',enrollment.id);
-          }
-        }
+    const found=await db.from('customer_contacts').select('id,business_id').eq('ghl_location_id',row.ghl_location_id).eq('ghl_contact_id',row.contact_id).maybeSingle();
+    if(found.error)return NextResponse.json({ok:false,error:'customer_contact_lookup_failed'},{status:503});
+    if(found.data){
+      const explicit=body?.id||body?.eventId||body?.messageId||body?.message?.id;
+      if(typeof explicit!=='string'||!explicit.trim()||explicit.length>200)return NextResponse.json({ok:false,error:'review_event_identity_required'},{status:400});
+      // Status transitions share the immutable message ID; status is part of that receipt key.
+      const receiptId=row.direction!=='inbound'&&!row.opted_out&&row.normalized_status?
+        'review-status:'+createHash('sha256').update(JSON.stringify([row.ghl_location_id,row.contact_id,explicit,row.event_type,row.normalized_status])).digest('hex'):row.external_event_id;
+      const customerRow={...row,external_event_id:receiptId,payload_meta:{...row.payload_meta,eventIdentity:'provider',providerEventId:explicit,contentHash:createHash('sha256').update(String(body?.body||body?.message?.body||body?.message||'').trim()).digest('hex')}};
+      const saved=await db.rpc('ingest_customer_review_event',{p_contact_id:found.data.id,p_row:customerRow});
+      if(saved.error||saved.data?.ok!==true){
+        const conflict=String(saved.error?.message||'').includes('review_event_payload_conflict')||String(saved.error?.message||'').includes('review_event_scope_conflict');
+        return NextResponse.json({ok:false,error:conflict?'review_event_conflict':'customer_review_save_failed'},{status:conflict?409:503});
       }
-      return NextResponse.json({ok:true,duplicate:false,eventId:row.external_event_id,customerFlow:true});
+      return NextResponse.json(saved.data);
     }
   }
+  const {error}=await db.from('ghl_events').insert(row);
+  if(error?.code==='23505')return NextResponse.json({ok:true,duplicate:true,eventId:row.external_event_id});
+  if(error)return NextResponse.json({error:'Falha ao registrar evento.'},{status:500});
 
   // Acquisition cadence events: keep prospect status synchronized and stop follow-ups on replies/opt-out.
   if(row.ghl_location_id&&row.contact_id){
