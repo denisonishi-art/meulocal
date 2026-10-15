@@ -3,6 +3,7 @@ import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {reconcileControlledInbox} from '@/lib/ghl-controlled-reconciliation';
 import {drainOpenDotsOutbox} from '@/lib/agents/opendots-outbox';
+import {recoverAsaasEvents} from '@/lib/payments/asaas-processing';
 
 export const maxDuration=60;
 const DOMAIN='POST\n/api/internal/opendots/recover\n';
@@ -23,11 +24,14 @@ export async function POST(request:Request){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)return NextResponse.json({error:'server_not_configured'},{status:503});
  const db=createClient(url,key,{auth:{persistSession:false}});
- // Provider failure must not prevent delivery of already committed jobs.
- let inbox:any,queue:any;
- try{inbox=await reconcileControlledInbox(db)}catch{inbox={ok:false,error:'inbox_recovery_failed'}}
- try{queue=await drainOpenDotsOutbox(db)}catch{queue={ok:false,error:'queue_recovery_failed'}}
- const ok=inbox.ok===true&&queue.ok===true;
- console.info(JSON.stringify({stage:'supervised_recovery',ok,ingested:inbox.ingested||0,completed:queue.completed||0,pending:queue.pending||0,error:inbox.error||queue.error||null}));
- return NextResponse.json({ok,inbox,queue},{status:ok?200:503});
+ // Independent stages share durable leases, not a volatile queue. One provider cannot starve the others.
+ const safely=async(run:()=>Promise<any>,error:string)=>{try{return await run()}catch{return {ok:false,error}}};
+ const [inbox,payments,queue]=await Promise.all([
+  safely(()=>reconcileControlledInbox(db),'inbox_recovery_failed'),
+  safely(()=>recoverAsaasEvents(db),'payment_recovery_failed'),
+  safely(()=>drainOpenDotsOutbox(db),'queue_recovery_failed'),
+ ]);
+ const ok=inbox.ok===true&&payments.ok===true&&queue.ok===true;
+ console.info(JSON.stringify({stage:'supervised_recovery',ok,ingested:inbox.ingested||0,completed:queue.completed||0,pending:queue.pending||0,paymentCompleted:payments.completed||0,paymentPending:payments.pending||0,error:inbox.error||payments.error||queue.error||null}));
+ return NextResponse.json({ok,inbox,payments,queue},{status:ok?200:503});
 }

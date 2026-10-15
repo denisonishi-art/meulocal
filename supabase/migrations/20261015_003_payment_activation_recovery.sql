@@ -47,7 +47,8 @@ begin
  if e.external_reference is null and e.external_checkout_id is null and e.external_subscription_id is null then
   if nullif(p_shared_link_id,'') is null or e.payload->>'paymentLink' is distinct from p_shared_link_id
    or nullif(e.external_payment_id,'') is null or c.billing_type is distinct from 'SHARED_PAYMENT_LINK'
-   or nullif(e.payload->>'payerEmail','') is null or lower(e.payload->>'payerEmail') is distinct from lower(c.customer_email::text)
+   or nullif(coalesce(e.payload->>'payerEmail',to_jsonb(e)->>'resolved_customer_email'),'') is null
+   or lower(coalesce(e.payload->>'payerEmail',to_jsonb(e)->>'resolved_customer_email')) is distinct from lower(c.customer_email::text)
   then raise exception 'payment_checkout_anchor_required'; end if;
  end if;
  if e.activation_state='completed' then return jsonb_build_object('state','completed','accountId',a.id,'checkoutId',c.id); end if;
@@ -97,12 +98,13 @@ begin
  if e.activation_state<>'processing' or e.activation_lease is distinct from p_lease or l.lease is distinct from p_lease
   or l.event_id is distinct from e.id or l.leased_until is null or l.leased_until<=now() then raise exception 'payment_activation_lease_expired'; end if;
  if a.business_id is distinct from c.business_id or (a.user_id is not null and a.user_id<>p_user_id)
+  or exists(select 1 from customer_accounts where user_id=p_user_id and id<>a.id)
   or not exists(select 1 from auth.users u where u.id=p_user_id and (a.user_id=p_user_id or lower(u.email)=lower(c.customer_email::text)))
  then raise exception 'payment_user_scope_conflict'; end if;
  update payment_checkouts set status='paid',paid_at=coalesce(paid_at,now()),activation_status=p_activation_status,activation_error=null,
   external_subscription_id=coalesce(external_subscription_id,e.external_subscription_id),updated_at=now() where id=c.id;
  update customer_accounts set user_id=p_user_id,payment_status='active',payment_provider='asaas',paid_at=coalesce(paid_at,now()),
-  external_subscription_id=coalesce(external_subscription_id,e.external_subscription_id),updated_at=now() where id=a.id;
+  external_subscription_id=coalesce(c.external_subscription_id,e.external_subscription_id,external_subscription_id),updated_at=now() where id=a.id;
  update payment_events set activation_state='completed',activation_user_id=p_user_id,activation_error=null,processed_at=now() where id=e.id;
  delete from payment_activation_leases where account_id=a.id and event_id=e.id and lease=p_lease;
  return true;

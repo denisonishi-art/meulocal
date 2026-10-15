@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T03:43:00.420Z",
+  "at": "2026-10-15T04:33:56.830Z",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
@@ -28,9 +28,9 @@
       "failed": 0
     },
     "supervisedRecovery": {
-      "tests": 8,
-      "pass": 8,
-      "fail": 0
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
     },
     "recoveryWorker": {
       "tests": 4,
@@ -48,11 +48,30 @@
       "failed": 0,
       "engine": "PostgreSQL 17.6",
       "scope": "synthetic_isolated_real_database"
+    },
+    "paymentLifecycle": {
+      "tests": 29,
+      "passed": 29,
+      "failed": 0,
+      "scope": "actual_handler_isolated_real_postgresql"
+    },
+    "checkoutReservation": {
+      "tests": 15,
+      "passed": 15,
+      "failed": 0,
+      "scope": "actual_route_isolated_real_postgresql"
+    },
+    "openDotsOutbox": {
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "scope": "actual_outbox_isolated_real_postgresql"
     }
   },
   "typescript": "pass_exit_0",
   "lint": "not_configured_yet",
   "productionRelease": "not_executed",
   "newNativeAppCreated": false,
-  "paymentRecovery": "transactional_foundation_tested_handler_integration_pending"
+  "paymentRecovery": "local_verified_handler_checkout_recovery_not_published",
+  "asaasConfiguration": "authenticated_read_only_existing_webhook_missing_checkout_events_token_not_returned_by_get"
 }

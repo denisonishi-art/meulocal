@@ -18,10 +18,10 @@ export async function deliverOpenDotsJob(db:any,eventId:string){
  return {ok:receipt.status==='decision_saved'&&cleanupDone,openDots:receipt,...(!cleanupDone?{error:'operational_tag_cleanup_pending'}:{})};
 }
 export async function drainOpenDotsOutbox(db:any){
- const {data:jobs,error}=await db.from('opendots_handoffs').select('event_id').in('state',['pending','processing']).lte('available_at',new Date().toISOString()).order('created_at').limit(2);
+ const {data:jobs,error}=await db.from('opendots_handoffs').select('event_id').in('state',['pending','processing']).lte('available_at',new Date().toISOString()).order('available_at').order('created_at').limit(2);
  if(error)return {ok:false,error:'handoff_queue_read_failed'};
  let completed=0,pending=0;
- for(const job of jobs||[]){const result=await deliverOpenDotsJob(db,job.event_id);if(result.ok)completed++;else pending++;}
+ for(const job of jobs||[]){try{const result=await deliverOpenDotsJob(db,job.event_id);if(result.ok)completed++;else pending++;}catch{pending++;}}
  return {ok:pending===0,completed,pending};
 }
 export async function processControlledInbound(db:any,row:any,body:any){
