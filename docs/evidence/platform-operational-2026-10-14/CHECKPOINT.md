@@ -1,3 +1,22 @@
+# Estado atual — fechamento local de 15/10/2026
+
+Este resumo prevalece sobre as seções históricas abaixo. Código: `9fc9301`, branch `codex/highlevel-recovery-lifecycle`, checkout `/Users/denisonishi/.codex/worktrees/highlevel-opendots-inbound/meulocal`. Não tocar no checkout original de Documents. Pacote LOCAL_VERIFIED_REVIEWED, publicação não executada. Não marcar o objetivo global como concluído.
+
+- Cadência: o antigo 5/6 era contaminação entre fixtures vencidas; corrigida seleção sintética e preservado teste negativo de identidade. A revisão final também encontrou starvation real no cron limit1: uma inscrição bloqueada continuava a mais antiga para sempre. Agora slot/backoff de 5min persistido e serializado antes da preparação permite o próximo candidato, sem resetar agenda, consentimento ou journal. Teste red contra 7654fd0 e green com dois contatos; paralelismo e fechamento antigo recusado. Pendência consultável no admin.
+- Manual/admin: texto completo aprovado pelo humano, UUID durável antes do HTTP e reaproveitado após reload/retry, receipt obrigatório; sem receipt/timeout continua incerto. Supervisão de outbox, pagamentos, avaliações, aquisição e cadência, com próximos passos e falha de consulta visível. Nunca converter falha de leitura em zero.
+- Onboarding/ativação: pagamento, configuração e serviço ativo distintos. Negócio/conclusão exigem confirmação salva do usuário; Google pode ser adiado. Ativação exige canal ativo, destino público de avaliação e base/audiência confirmada; pagamento/navegação não ativam. O runtime só orienta e conserva revisão humana, sem conceder permissões ou responder automaticamente.
+- 348/348 testes na regressão consolidada, 0 skips; TypeScript e build exit0. Lint configurado sem erros; 2 avisos de hooks e avisos CSS no build permanecem. Jornada repetida no build final: 8 cenários Chrome + handlers/SQL/HTTP receipts reais, Auth/HighLevel/modelo isolados, 0 requisições externas. Fonte financeira é fixture isolada, NÃO sandbox Asaas.
+- Revisão independente do delta d3f45e2..7654fd0 e re-review 7654fd0..9fc9301: P2 de starvation encerrado, sem novos P1/P2 nas adjacências examinadas. Não é auditoria irrestrita de toda a plataforma.
+- Rollback ensaiado localmente na versão segura: gates off/on preservaram snapshots de pagamento, opt-out, recibos e tentativas incertas; zero novo envio. Reinício do receptor reaproveitou decisão salva. Rollback para binário legado não aprovado.
+
+Manifesto SHA-256/ordem em `release-manifest.json`; publicação e compatibilidade em `PUBLICATION.md`; ensaio/restrições em `ROLLBACK.md`; matriz em `ACCEPTANCE.md`; evidências finais em `release-*.log/json` e screenshots. 13 migrations candidatas dependem do ledger/DDL remoto, 4 arquivos de runtime alterados; não repetir migration nem publicar componente cujo hash já coincide. Prefixos históricos iguais exigem versões únicas no bundle de release após preflight, sem db push cego.
+
+Pendências externas distintas: (a) conferir DDL/ledger remoto e boot/proxy/permissões do runtime real antes de autorizar publicação; (b) publicar app/runtime/workflow controlado de modo coordenado e comprovar novo evento; (c) comprovar ingresso/STOP de clientes fora do contato controlado antes de escala; (d) prova financeira de pagamento legítimo, pois não há anterior ou sandbox. Não há falha local conhecida remanescente no escopo revisado. Nada externo foi alterado neste bloco.
+
+---
+
+# Histórico preservado
+
 # Execução do plano aprovado
 
 Goal ativo. Estado: IN_PROGRESS, sem liberação ampla.

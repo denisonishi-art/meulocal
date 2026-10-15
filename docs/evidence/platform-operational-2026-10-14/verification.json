@@ -1,6 +1,6 @@
 {
-  "at": "2026-10-15T14:04:26.761972+00:00",
-  "scope": "local_checkpoint_not_production_release",
+  "at": "2026-10-15T20:22:41.112121+00:00",
+  "scope": "LOCAL_COMPLETION_BLOCK_PUBLICATION_NOT_EXECUTED",
   "tests": {
     "onboarding": {
       "tests": 9,
@@ -107,10 +107,9 @@
       "scope": "real_postgresql_synthetic_clock_no_transport"
     },
     "reviewDeliveryProcessor": {
-      "tests": 14,
-      "passed": 14,
-      "failed": 0,
-      "scope": "actual_processor_actual_http_adapter_isolated_transport_real_postgresql"
+      "tests": 15,
+      "passed": 15,
+      "failed": 0
     },
     "reviewWebhook": {
       "tests": 9,
@@ -125,10 +124,9 @@
       "scope": "actual_route_auth_flags_isolated_processor"
     },
     "adminSupervision": {
-      "tests": 11,
-      "passed": 11,
-      "failed": 0,
-      "scope": "actual_sdk_routes_and_react_handlers_isolated_provider"
+      "tests": 18,
+      "passed": 18,
+      "failed": 0
     },
     "acquisitionDefaultOffGates": {
       "tests": 8,
@@ -141,10 +139,40 @@
       "passed": 14,
       "failed": 0,
       "scope": "actual_route_and_real_postgresql_concurrent_sessions_no_provider"
+    },
+    "acquisitionJournal": {
+      "tests": 20,
+      "passed": 20,
+      "failed": 0
+    },
+    "acquisitionDelivery": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    "acquisitionRoutes": {
+      "tests": 8,
+      "passed": 8,
+      "failed": 0
+    },
+    "manualIntent": {
+      "tests": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "onboardingTransactionAndRoute": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    "rollbackRehearsal": {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0
     }
   },
   "typescript": "pass_exit_0",
-  "lint": "not_configured_yet",
+  "lint": "pass_no_errors_two_hook_warnings",
   "productionRelease": "not_executed",
   "newNativeAppCreated": false,
   "paymentRecovery": "local_verified_handler_checkout_recovery_not_published",
@@ -156,5 +184,40 @@
   "realReviewTransport": "not_executed",
   "realReviewInbound": "not_verified_customer_scope",
   "adminSupervisionPublication": "NOT_PUBLISHED",
-  "acquisitionEnabledTransport": "NOT_READY_LEGACY_DURABILITY_PENDING"
+  "acquisitionEnabledTransport": "LOCAL_VERIFIED_DURABLE_NOT_PUBLISHED_DEFAULT_DISABLED",
+  "sourceRevision": "9fc9301cef5f32da7956a380387828d4c4a9c5ba",
+  "regression": {
+    "tests": 348,
+    "passed": 348,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "release-regression.log",
+    "files": "exact_file_list_at_start_of_log"
+  },
+  "browser": {
+    "scenarios": 8,
+    "passed": 8,
+    "evidence": "release-browser.json",
+    "scope": "LOCAL_BROWSER_ACTUAL_HANDLERS_SQL_HTTP_RECEIPTS_ISOLATED_AUTH_PROVIDER_MODEL",
+    "externalRequests": []
+  },
+  "build": "pass_exit_0_with_css_and_existing_hook_warnings",
+  "review": {
+    "reviewer": "independent_existing_review_recovery_lifecycle",
+    "firstDelta": "d3f45e2..7654fd0",
+    "finding": {
+      "priority": "P2",
+      "cause": "oldest blocked cadence enrollment starves every later lead",
+      "fixedIn": "9fc9301",
+      "status": "closed"
+    },
+    "reReviewDelta": "7654fd0..9fc9301",
+    "remainingP1P2": 0,
+    "scope": "read_only_finding_and_adjacent_contracts_not_production_or_legacy_binary_rollback"
+  },
+  "rollback": "safe_version_flags_disable_restore_snapshots_preserved_no_new_sends_not_legacy_binary_rollback",
+  "publication": "PREPARED_WITH_EXTERNAL_PREFLIGHT_HOLD",
+  "financialProof": "NOT_VERIFIED_NO_PRIOR_PAYMENT_OR_ASAAS_SANDBOX_NO_PRODUCTION_PAYMENT_FABRICATED",
+  "remoteDDL": "full_schema_constraints_and_migration_ledger_preflight_pending",
+  "runtimeRealBoot": "not_executed_in_this_local_block"
 }

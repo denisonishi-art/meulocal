@@ -1,22 +1,17 @@
-# Rollback — preparação, ainda não ensaiada
+# Rollback — ensaio local concluído, produção não executada
 
-Reusar o [baseline preservado do bridge](../highlevel-opendots-bridge-2026-10-14/ROLLBACK.md) e a [reversão do lifecycle](../highlevel-recovery-lifecycle-2026-10-15/ROLLBACK.md). IDs de deployment nesses arquivos são históricos: conferir o deployment realmente servido antes de usar qualquer comando. Este documento não comprova ensaio ou execução de rollback.
+Estratégia aprovada tecnicamente: desligar transporte e recuperação na versão segura deste pacote, preservando todos os dados. Não retornar automaticamente ao deployment histórico: handlers legados têm falhas conhecidas e podem ignorar flags.
 
-Antes da publicação, preservar de forma privada: deployment/commit servidos pela equipe denisonishi-8130s-projects e projeto prj_tTEcf7eWDIAPt7Q1vZ3Qmawu8QSp; configuração completa do workflow; arquivos/identidade/mounts/dados da VPS; configuração do webhook Asaas e segredos separadamente; configurações da régua por negócio e recibos/leases pendentes. Não incluir segredos em evidências públicas.
+1. Preservar snapshot privado de configuração/versão realmente servida, workflow, webhook financeiro, VPS e filas/recibos. Conferir alvo e propriedade. Pausar o recovery existente removendo somente `MEULOCAL_RECOVERY_URL`; manter ingressos financeiros legítimos na versão segura.
+2. Manter os quatro gates de outreach `false`. Conferir que nenhum transporte novo acontece. Tentativas dispatching/ambiguous continuam pendentes, sem liberar cota ou autorizar reenvio por expiração de lease.
+3. Reverter somente arquivo/configuração defeituosos para uma versão segura comprovadamente compatível. Não restaurar banco, apagar journals, eventos, pagamentos, opt-out, onboarding ou recibos. Preservar o segredo do receipt store e o diretório commercial-decisions. Não recriar runtime/CRM/checkout.
+4. Se o workflow estiver afetado, preservar sua configuração e despublicar/pausar a ação pelo editor autorizado durante a correção; não redirecionar para handler legado inseguro. Não afirmar remoção de enrollment HighLevel a partir de tag, leitura ou HTTP 200.
+5. Conferir pagamento, opt-out, contagens e recibos antes/depois. Só restaurar recovery com app/RPCs/runtime compatíveis e permissões conferidas. Envio segue sujeito à nova autorização e recibo; nunca usar botão comercial para testar rollback.
 
-## Avaliações
+## Ensaio executado
 
-1. Na versão nova, manter MEULOCAL_REVIEW_OUTREACH_ENABLED ausente/false. Isso bloqueia cron e recuperação antes de qualquer transporte; não altera o estado financeiro nem apaga a fila.
-2. Se voltar a uma versão anterior que ignora essa flag, primeiro pausar as réguas afetadas, por IDs conferidos no snapshot, e conferir que nenhuma nova reserva/solicitação é emitida. O cron antigo ignora o novo journal; apenas desligar a flag não o protege.
-3. Uma tentativa dispatching/ambiguous precisa de conferência do provedor. Expiração de lease não prova cancelamento. Não reenviar, liberar cota como se nada tivesse acontecido ou marcar como enviada sem ID/recibo verificáveis.
-4. Restaurar somente aplicação/configuração/arquivos necessários, preservando as tabelas, eventos, orientações e recibos novos. Migrations são aditivas; não fazer DROP de journal/fila ou reset para voltar o aplicativo.
-5. Antes de retomar, conferir código realmente servido, permissões, flags, pausas e pendências por negócio. Mudança de estado exige recibo e alvo exato; não editar pagamentos para produzir uma aparência de acesso válido.
+`scripts/check-platform-rollback.cjs`: envia somente ao transporte sintético, grava recibo, registra tentativa ambígua e STOP, mantém fixture de pagamento ativo e checkout pago; desliga/restaura os gates na mesma versão segura e compara snapshots integrais. Zero novo envio, pagamento/opt-out/recibos/journal preservados. A jornada do navegador reinicia o receptor real HTTP e reconcilia um recibo já salvo após falha parcial sem repetir inferência.
 
-## Gates ainda obrigatórios
+Evidências: `/private/tmp/meulocal-platform-rollback-verified.log` (19 testes journal +1 ensaio naquele checkpoint), `/private/tmp/meulocal-platform-browser-proof-verified.log`, e regressão consolidada final. Os bancos, tentativas red e recibos permanecem preservados no container proprietário `meulocal-opendots-recovery-test-platform-20261015` (label codex.owner=meulocal-platform-20261015), sem porta pública.
 
-Ensaiar com fixtures a reversão de configuração e a compatibilidade com a versão anterior, incluindo retenção de recibos e ausência de novo transporte. Conferir também o ingresso Asaas na reversão: não voltar a um handler financeiro antigo com falhas conhecidas enquanto continuar recebendo pagamentos. A estratégia concreta precisa ser validada no gate de publicação, preservando eventos genuínos e a política de retentativa do provedor. Nenhuma alteração externa de rollback foi executada neste checkpoint.
-
-
-## Preparação administrativa
-
-Migration 011 somente acrescenta a transação de preparação; não remover diagnósticos, leads, empresas ou tokens criados por ela para reverter o código. A versão antiga de approve pode enviar contatos e ignora o novo contrato de preparação. Antes de qualquer retorno a código anterior, manter a rota de aprovação/disparo indisponível por versão validada; flags só protegem versões que as implementam. Não usar o botão antigo para verificar rollback. O ensaio continua pendente e nenhum recurso remoto foi alterado nesta etapa.
+Limites: ensaio local com Auth/provedor/modelo isolados. Não comprova reversão do binário legado, proxy/VPS real, migração do schema real ou entrega financeira. Essas combinações não são fallback autorizado. Baselines anteriores continuam preservados em Git e nos diretórios históricos de evidência.

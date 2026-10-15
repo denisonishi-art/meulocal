@@ -1,0 +1,13 @@
+{
+  "reviewer": "independent_existing_review_recovery_lifecycle",
+  "firstDelta": "d3f45e2..7654fd0",
+  "finding": {
+    "priority": "P2",
+    "cause": "oldest blocked cadence enrollment starves every later lead",
+    "fixedIn": "9fc9301",
+    "status": "closed"
+  },
+  "reReviewDelta": "7654fd0..9fc9301",
+  "remainingP1P2": 0,
+  "scope": "read_only_finding_and_adjacent_contracts_not_production_or_legacy_binary_rollback"
+}
