@@ -1,0 +1,366 @@
+{
+  "at": "2026-10-15T11:21:27.235Z",
+  "readOnly": true,
+  "project": "vznecxfmnthyxvsxwpzi",
+  "tables": {
+    "customer_imports": {
+      "required": [
+        "id",
+        "business_id",
+        "status",
+        "total_rows",
+        "valid_rows",
+        "invalid_rows",
+        "duplicate_rows",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "gen_random_uuid()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "business_id": {
+          "description": "Note:\nThis is a Foreign Key to `businesses.id`.<fk table='businesses' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "user_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "file_name": {
+          "format": "text",
+          "type": "string"
+        },
+        "status": {
+          "default": "processing",
+          "format": "text",
+          "type": "string"
+        },
+        "total_rows": {
+          "default": 0,
+          "format": "integer",
+          "type": "integer"
+        },
+        "valid_rows": {
+          "default": 0,
+          "format": "integer",
+          "type": "integer"
+        },
+        "invalid_rows": {
+          "default": 0,
+          "format": "integer",
+          "type": "integer"
+        },
+        "duplicate_rows": {
+          "default": 0,
+          "format": "integer",
+          "type": "integer"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "confirmed_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "customer_contacts": {
+      "required": [
+        "id",
+        "business_id",
+        "contact_key",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "gen_random_uuid()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "business_id": {
+          "description": "Note:\nThis is a Foreign Key to `businesses.id`.<fk table='businesses' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "import_id": {
+          "description": "Note:\nThis is a Foreign Key to `customer_imports.id`.<fk table='customer_imports' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "format": "text",
+          "type": "string"
+        },
+        "email": {
+          "format": "text",
+          "type": "string"
+        },
+        "whatsapp": {
+          "format": "text",
+          "type": "string"
+        },
+        "last_purchase_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "contact_key": {
+          "format": "text",
+          "type": "string"
+        },
+        "status": {
+          "default": "imported",
+          "format": "text",
+          "type": "string"
+        },
+        "opt_out_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "updated_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "ghl_contact_id": {
+          "format": "text",
+          "type": "string"
+        },
+        "ghl_location_id": {
+          "format": "text",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "review_request_settings": {
+      "required": [
+        "business_id",
+        "status",
+        "day1_limit",
+        "day2_limit",
+        "steady_limit",
+        "weekdays_only",
+        "max_attempts",
+        "reminder_day_offsets",
+        "timezone",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "business_id": {
+          "description": "Note:\nThis is a Primary Key.<pk/>\nThis is a Foreign Key to `businesses.id`.<fk table='businesses' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "status": {
+          "default": "draft",
+          "format": "text",
+          "type": "string"
+        },
+        "day1_limit": {
+          "default": 30,
+          "format": "integer",
+          "type": "integer"
+        },
+        "day2_limit": {
+          "default": 40,
+          "format": "integer",
+          "type": "integer"
+        },
+        "steady_limit": {
+          "default": 50,
+          "format": "integer",
+          "type": "integer"
+        },
+        "weekdays_only": {
+          "default": true,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "max_attempts": {
+          "default": 3,
+          "format": "integer",
+          "type": "integer"
+        },
+        "reminder_day_offsets": {
+          "format": "integer[]",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "timezone": {
+          "default": "America/Sao_Paulo",
+          "format": "text",
+          "type": "string"
+        },
+        "activated_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "paused_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "updated_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "review_request_enrollments": {
+      "required": [
+        "id",
+        "business_id",
+        "contact_id",
+        "status",
+        "current_step",
+        "attempts",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "gen_random_uuid()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "business_id": {
+          "description": "Note:\nThis is a Foreign Key to `businesses.id`.<fk table='businesses' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "contact_id": {
+          "description": "Note:\nThis is a Foreign Key to `customer_contacts.id`.<fk table='customer_contacts' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "status": {
+          "default": "queued",
+          "format": "text",
+          "type": "string"
+        },
+        "activation_date": {
+          "format": "date",
+          "type": "string"
+        },
+        "current_step": {
+          "default": 0,
+          "format": "integer",
+          "type": "integer"
+        },
+        "attempts": {
+          "default": 0,
+          "format": "integer",
+          "type": "integer"
+        },
+        "next_run_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "last_sent_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "completed_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "updated_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "review_request_events": {
+      "required": [
+        "id",
+        "business_id",
+        "enrollment_id",
+        "contact_id",
+        "channel",
+        "event_type",
+        "metadata",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "gen_random_uuid()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "business_id": {
+          "description": "Note:\nThis is a Foreign Key to `businesses.id`.<fk table='businesses' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "enrollment_id": {
+          "description": "Note:\nThis is a Foreign Key to `review_request_enrollments.id`.<fk table='review_request_enrollments' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "contact_id": {
+          "description": "Note:\nThis is a Foreign Key to `customer_contacts.id`.<fk table='customer_contacts' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "channel": {
+          "format": "text",
+          "type": "string"
+        },
+        "event_type": {
+          "format": "text",
+          "type": "string"
+        },
+        "provider": {
+          "format": "text",
+          "type": "string"
+        },
+        "external_id": {
+          "format": "text",
+          "type": "string"
+        },
+        "metadata": {
+          "format": "jsonb"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

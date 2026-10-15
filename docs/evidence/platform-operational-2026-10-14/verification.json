@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T04:43:49.002Z",
+  "at": "2026-10-15T12:26:46.476Z",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
@@ -74,10 +74,22 @@
       "scope": "actual_route_isolated_auth_real_postgresql"
     },
     "customerDashboard": {
-      "tests": 5,
-      "passed": 5,
+      "tests": 7,
+      "passed": 7,
       "failed": 0,
       "scope": "actual_react_handlers_isolated_provider"
+    },
+    "customerDashboardAPI": {
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "scope": "actual_handler_installed_sdk_isolated_postgrest_transport"
+    },
+    "customerImportConfirmation": {
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "scope": "actual_handlers_xlsx_real_postgresql_synthetic_fixture"
     }
   },
   "typescript": "pass_exit_0",
@@ -86,5 +98,7 @@
   "newNativeAppCreated": false,
   "paymentRecovery": "local_verified_handler_checkout_recovery_not_published",
   "asaasConfiguration": "authenticated_read_only_existing_webhook_missing_checkout_events_token_not_returned_by_get",
-  "realPaymentEvidence": "blocked_no_prior_payment_user_confirmed_no_new_charge"
+  "realPaymentEvidence": "blocked_no_prior_payment_user_confirmed_no_new_charge",
+  "customerBase": "local_verified_import_confirmation_activation_and_cron_pending",
+  "remoteBaseDDL": "openapi_fields_observed_full_constraints_not_verified"
 }

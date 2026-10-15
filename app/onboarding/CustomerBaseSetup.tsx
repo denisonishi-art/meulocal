@@ -16,7 +16,9 @@ export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>v
 
   async function token(){if(!url||!key)return null;const sb=createClient(url,key);return (await sb.auth.getSession()).data.session?.access_token||null}
   async function upload(){
-    if(!file)return;setBusy(true);setError('');
+    if(!file)return;
+    if(file.size>4*1024*1024){setError('Envie até 4 MB por arquivo. Divida uma base maior em arquivos menores.');return}
+    setBusy(true);setError('');
     try{const t=await token();if(!t){window.location.href='/login';return}const form=new FormData();form.append('file',file);
       const r=await fetch('/api/customer-base/import',{method:'POST',headers:{Authorization:'Bearer '+t},body:form});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na importação');setSummary(j);setConfirmed(false);setActivation(null);onReady?.(false);
     }catch(e:any){setError(e.message)}finally{setBusy(false)}
@@ -44,7 +46,7 @@ export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>v
 
     {!summary&&<div className="baseUpload">
       <FileSpreadsheet size={28}/><strong>Envie sua base de clientes</strong>
-      <p>CSV, XLSX ou XLS. Use colunas como Nome, E-mail, Telefone/WhatsApp e, se tiver, Data da última compra.</p>
+      <p>CSV, XLSX ou XLS, até 4 MB e 10.000 contatos por arquivo. Use colunas como Nome, E-mail, Telefone/WhatsApp e, se tiver, Data da última compra.</p>
       <label className="filePicker"><Upload size={17}/><span>{file?.name||'Selecionar planilha'}</span><input type="file" accept=".csv,.xlsx,.xls" onChange={e=>setFile(e.target.files?.[0]||null)}/></label>
       <button className="primary" type="button" disabled={!file||busy} onClick={upload}>{busy?'Processando...':'Validar minha base'}</button>
     </div>}
