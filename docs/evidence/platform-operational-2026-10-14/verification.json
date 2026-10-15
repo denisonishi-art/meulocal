@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T03:18:17.068Z",
+  "at": "2026-10-15T03:43:00.420Z",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
@@ -41,11 +41,18 @@
       "tests": 8,
       "passed": 8,
       "failed": 0
+    },
+    "paymentDatabase": {
+      "tests": 13,
+      "passed": 13,
+      "failed": 0,
+      "engine": "PostgreSQL 17.6",
+      "scope": "synthetic_isolated_real_database"
     }
   },
   "typescript": "pass_exit_0",
   "lint": "not_configured_yet",
   "productionRelease": "not_executed",
   "newNativeAppCreated": false,
-  "paymentRecovery": "incomplete_not_released"
+  "paymentRecovery": "transactional_foundation_tested_handler_integration_pending"
 }
