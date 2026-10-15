@@ -171,3 +171,25 @@ begin
 end $$;
 revoke all on function public.stop_acquisition_delivery(uuid,uuid,text,text,text,timestamptz,timestamptz) from public,anon,authenticated;
 grant execute on function public.stop_acquisition_delivery(uuid,uuid,text,text,text,timestamptz,timestamptz) to service_role;
+
+-- One durable five-minute preparation slot; a blocked oldest contact cannot starve others.
+alter table public.automation_enrollments add column acquisition_retry_at timestamptz not null default '-infinity',add column acquisition_issue text;
+create function public.claim_acquisition_cadence(p_at timestamptz default now()) returns jsonb
+language plpgsql security definer set search_path=public,pg_temp set lock_timeout='3s' as $$
+declare e public.automation_enrollments;
+begin
+ if p_at is null then return null;end if;
+ select * into e from automation_enrollments where track='meulocal_acquisition' and status='active' and next_run_at<=p_at and acquisition_retry_at<=p_at order by acquisition_retry_at,next_run_at,id for update skip locked limit 1;
+ if not found then return null;end if;
+ update automation_enrollments set acquisition_retry_at=p_at+interval '5 minutes',acquisition_issue='cadence_verification_pending' where id=e.id returning * into e;
+ return jsonb_build_object('id',e.id,'lead_id',e.lead_id,'step',e.step,'retryAt',e.acquisition_retry_at);
+end $$;
+create function public.finish_acquisition_cadence(p_enrollment_id uuid,p_retry_at timestamptz,p_issue text default null) returns jsonb
+language plpgsql security definer set search_path=public,pg_temp set lock_timeout='3s' as $$
+begin
+ if p_issue is not null and p_issue not in ('legacy_cadence_reconciliation_required','acquisition_lead_missing','acquisition_diagnostic_missing','acquisition_channel_not_authorized','acquisition_reconciliation_required','acquisition_not_eligible_or_busy','acquisition_preparation_unavailable','acquisition_stopped') then raise exception 'cadence_issue_invalid';end if;
+ update automation_enrollments set acquisition_issue=p_issue where id=p_enrollment_id and acquisition_retry_at=p_retry_at;
+ return jsonb_build_object('ok',found);
+end $$;
+revoke all on function public.claim_acquisition_cadence(timestamptz),public.finish_acquisition_cadence(uuid,timestamptz,text) from public,anon,authenticated;
+grant execute on function public.claim_acquisition_cadence(timestamptz),public.finish_acquisition_cadence(uuid,timestamptz,text) to service_role;

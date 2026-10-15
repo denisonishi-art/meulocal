@@ -12,21 +12,26 @@ async function run(req:Request){
  if(process.env.MEULOCAL_ACQUISITION_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0});
  try{
   const db=dbClient();if(!db)return unavailable();
-  const due=await db.from('automation_enrollments').select('id,lead_id,step').eq('track','meulocal_acquisition').eq('status','active').lte('next_run_at',new Date().toISOString()).order('next_run_at',{ascending:true}).limit(1);
-  if(due.error||!Array.isArray(due.data))return unavailable();
-  if(!due.data.length)return NextResponse.json({ok:true,processed:0});
-  const enrollment=due.data[0],step=enrollment.step+1;
-  if(step!==2&&step!==3)return NextResponse.json({ok:false,processed:0,error:'legacy_cadence_reconciliation_required'},{status:409});
+  const due=await db.rpc('claim_acquisition_cadence');
+  if(due.error)return unavailable();
+  if(!due.data)return NextResponse.json({ok:true,processed:0});
+  const enrollment=due.data,step=enrollment.step+1;
+  const finish=async(result:{ok:boolean;error?:string;[key:string]:unknown})=>{
+   const saved=await db.rpc('finish_acquisition_cadence',{p_enrollment_id:enrollment.id,p_retry_at:enrollment.retryAt,p_issue:result.ok?null:result.error||'acquisition_preparation_unavailable'});
+   if(saved.error||saved.data?.ok!==true)return unavailable();
+   return NextResponse.json(result,{status:result.ok?200:409,headers:{'Cache-Control':'private, no-store'}});
+  };
+  if(step!==2&&step!==3)return finish({ok:false,processed:0,error:'legacy_cadence_reconciliation_required'});
   const lead=await db.from('leads').select('id,email,whatsapp,consent_email,consent_whatsapp,prospect_diagnostic_id').eq('id',enrollment.lead_id).maybeSingle();
   if(lead.error)return unavailable();
-  if(!lead.data)return NextResponse.json({ok:false,processed:0,error:'acquisition_lead_missing'},{status:409});
+  if(!lead.data)return finish({ok:false,processed:0,error:'acquisition_lead_missing'});
   const l=lead.data,diagnostic=await db.from('prospect_diagnostics').select('id,public_token,business_name').eq('id',l.prospect_diagnostic_id).maybeSingle();
   if(diagnostic.error)return unavailable();
-  if(!diagnostic.data)return NextResponse.json({ok:false,processed:0,error:'acquisition_diagnostic_missing'},{status:409});
+  if(!diagnostic.data)return finish({ok:false,processed:0,error:'acquisition_diagnostic_missing'});
   const d=diagnostic.data,channel=l.email&&l.consent_email?'email':l.whatsapp&&l.consent_whatsapp?'whatsapp':null;
-  if(!channel)return NextResponse.json({ok:false,processed:0,error:'acquisition_channel_not_authorized'},{status:409});
+  if(!channel)return finish({ok:false,processed:0,error:'acquisition_channel_not_authorized'});
   const message=(step===2?'Olá! Passando para lembrar da análise inicial da ':'Olá! Este é nosso último lembrete sobre a análise inicial da ')+d.business_name+':\nhttps://meulocal.ia.br/d/'+d.public_token+'\n\nSe quiser conversar, responda por este canal. Para não receber novos contatos, responda SAIR.';
   const result=await deliverAcquisitionMessage(db,{leadId:l.id,kind:'cadence',step,channel,message,subject:step===2?'Você viu sua análise inicial?':'Último lembrete sobre sua análise inicial'});
-  return NextResponse.json(result,{status:result.ok?200:409,headers:{'Cache-Control':'private, no-store'}});
+  return finish(result);
  }catch{return unavailable()}
 }
