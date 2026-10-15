@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-15T03:03:56.504Z",
+  "scope": "local_checkpoint_not_production_release",
+  "tests": {
+    "onboarding": {
+      "tests": 8,
+      "passed": 8,
+      "failed": 0
+    },
+    "controlledHandler": {
+      "tests": 29,
+      "passed": 29,
+      "failed": 0
+    },
+    "reconciliation": {
+      "tests": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    "postgresInbox": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    "runtimeHTTP": {
+      "tests": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    "supervisedRecovery": {
+      "tests": 8,
+      "pass": 8,
+      "fail": 0
+    },
+    "recoveryWorker": {
+      "tests": 4,
+      "pass": 4,
+      "fail": 0
+    }
+  },
+  "typescript": "pass_exit_0",
+  "lint": "not_configured_yet",
+  "productionRelease": "not_executed",
+  "newNativeAppCreated": false
+}

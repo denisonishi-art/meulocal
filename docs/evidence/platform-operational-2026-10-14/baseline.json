@@ -1,0 +1,120 @@
+{
+  "at": "2026-10-15T02:13:09.967Z",
+  "readOnly": true,
+  "supabaseProject": "vznecxfmnthyxvsxwpzi",
+  "tables": {
+    "ghl_events": {
+      "status": 200,
+      "count": "2"
+    },
+    "opendots_handoffs": {
+      "status": 404,
+      "count": null
+    },
+    "payment_events": {
+      "status": 200,
+      "count": "0"
+    },
+    "payment_checkouts": {
+      "status": 200,
+      "count": "0"
+    },
+    "customer_accounts": {
+      "status": 200,
+      "count": "1"
+    },
+    "google_business_connections": {
+      "status": 200,
+      "count": "0"
+    },
+    "customer_contacts": {
+      "status": 200,
+      "count": "0"
+    },
+    "review_request_settings": {
+      "status": 400,
+      "count": null
+    },
+    "review_request_enrollments": {
+      "status": 200,
+      "count": "0"
+    },
+    "review_request_events": {
+      "status": 200,
+      "count": "0"
+    },
+    "ghl_locations": {
+      "status": 200,
+      "count": "1"
+    }
+  },
+  "configuration": {
+    "GHL_WEBHOOK_SECRET": {
+      "exportContains": false,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "OPENDOTS_COMMERCIAL_URL": {
+      "exportContains": true,
+      "exportValueAvailable": true,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "OPENDOTS_COMMERCIAL_SECRET": {
+      "exportContains": true,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "CRON_SECRET": {
+      "exportContains": true,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "ASAAS_API_KEY": {
+      "exportContains": true,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "ASAAS_WEBHOOK_TOKEN": {
+      "exportContains": true,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "GOOGLE_BUSINESS_CLIENT_ID": {
+      "exportContains": false,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "GOOGLE_BUSINESS_CLIENT_SECRET": {
+      "exportContains": false,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "GOOGLE_TOKEN_ENCRYPTION_KEY": {
+      "exportContains": false,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "GHL_AGENCY_ACCESS_TOKEN": {
+      "exportContains": false,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    },
+    "GHL_COMPANY_ID": {
+      "exportContains": false,
+      "exportValueAvailable": false,
+      "note": "Sensitive export omission is not proof of absent production value"
+    }
+  },
+  "controlledLead": {
+    "status": 200,
+    "rows": [
+      {
+        "id": "6bb0ebc1-6f42-4f25-b112-8d982d7522c7",
+        "business_id": "82ff4ec3-7428-429c-bdfe-3f8ac354ef96",
+        "last_reply_at": "2026-10-15T00:32:33.8+00:00",
+        "opt_out_at": null,
+        "ghl_contact_id": "SdJ2oWZqsReI1TTq4cAd"
+      }
+    ]
+  }
+}

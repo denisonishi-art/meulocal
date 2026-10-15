@@ -113,3 +113,15 @@ export async function getOperationalContact(args:{token:string;contactId:string}
  const res=await fetch(API+'/contacts/'+encodeURIComponent(args.contactId),{headers:{Authorization:'Bearer '+args.token,Accept:'application/json',Version:'2021-07-28'},cache:'no-store',signal:AbortSignal.timeout(10000)});
  const data=await parse(res);return data.contact;
 }
+
+/** Page metadata is required to reconcile every unseen provider ID to a durable cursor. */
+export async function getOperationalConversationHistoryPage(args:{token:string;conversationId:string;lastMessageId?:string;timeoutMs?:number}){
+ const query=new URLSearchParams({limit:'50',...(args.lastMessageId?{lastMessageId:args.lastMessageId}:{})});
+ const res=await fetch(API+'/conversations/'+encodeURIComponent(args.conversationId)+'/messages?'+query,{
+  headers:{Authorization:'Bearer '+args.token,Accept:'application/json',Version:'v3'},
+  cache:'no-store',signal:AbortSignal.timeout(args.timeoutMs||10000)
+ });
+ const data=await parse(res),batch=data?.messages;
+ if(!Array.isArray(batch?.messages))throw new Error('HighLevel history page invalid');
+ return {messages:batch.messages,hasNext:Boolean(batch.nextPage),lastMessageId:typeof batch.lastMessageId==='string'?batch.lastMessageId:null};
+}

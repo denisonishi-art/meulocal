@@ -1,4 +1,5 @@
-import {processControlledInbound} from '@/lib/agents/opendots-outbox';
+import {processControlledInbound,drainOpenDotsOutbox} from '@/lib/agents/opendots-outbox';
+import {isControlledInboxWakeup,reconcileControlledInbox} from '@/lib/ghl-controlled-reconciliation';
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {createHash,verify as verifySignature} from 'crypto';
@@ -40,6 +41,8 @@ function validWebhook(request:Request,raw:string){
   return Boolean(secret&&(request.headers.get('x-meulocal-webhook-token')===secret||request.headers.get('x-bridge-secret')===secret));
 }
 
+export const maxDuration=60;
+
 export async function POST(request:Request){
   const raw=await request.text();
   if(!validWebhook(request,raw))return NextResponse.json({error:'Não autorizado.'},{status:401});
@@ -47,6 +50,18 @@ export async function POST(request:Request){
   if(!url||!key)return NextResponse.json({error:'Supabase não configurado.'},{status:503});
   let body:any=null;try{body=JSON.parse(raw)}catch{}
   if(!body||typeof body!=='object'||Array.isArray(body))return NextResponse.json({error:'Payload inválido.'},{status:400});
+  // Explicit mode: the legacy workflow is only a wakeup. Never correlate its body.
+  const params=new URL(request.url).searchParams;
+  if(params.get('controlled_reconcile')==='1'){
+    if(params.get('controlled_native')==='1'||!isControlledInboxWakeup(body))return NextResponse.json({ok:false,error:'controlled_wakeup_scope_refused'},{status:403});
+    const db=createClient(url,key);
+    const result=await reconcileControlledInbox(db);
+    if(!result.ok)return NextResponse.json(result,{status:503,headers:{'Retry-After':'60'}});
+    if('busy' in result&&result.busy)return NextResponse.json({...result,ingestion:'leased_by_another_request'},{status:202});
+    const deliveryAttempt=await drainOpenDotsOutbox(db);
+    console.info(JSON.stringify({stage:'controlled_inbox_ingested',...result,deliveryAttempt}));
+    return NextResponse.json({...result,ingestion:'saved',deliveryAttempt},{status:deliveryAttempt.ok?200:503});
+  }
   // Native provider events keep immutable message identity. Only this supervised contact
   // enters the durable controlled flow; require the verified signature and live tag.
   const nativeControlled=Boolean(request.headers.get('x-ghl-signature'))&&body.type==='InboundMessage'&&body.locationId===CONTROLLED_LOCATION_ID&&body.contactId===CONTROLLED_CONTACT_ID&&body.direction==='inbound'&&/^(WhatsApp|TYPE_WHATSAPP)$/i.test(String(body.messageType||body.messageTypeString||''));

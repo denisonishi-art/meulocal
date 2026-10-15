@@ -5,6 +5,7 @@ import {createHmac,timingSafeEqual,randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {createReceiptStore} from './commercial-receipts.mjs';
+import {startSupervisedRecovery,validateSupervisedRecovery} from './commercial-recovery.mjs';
 const require=createRequire(import.meta.url);
 const {decideCommercialEvent,validateEvent}=require('./commercial-engine.cjs');
 const ROOT=path.resolve(import.meta.dirname,'../..');
@@ -45,6 +46,7 @@ async function start(){
  const {bootstrapWorkspace}=await import('./workspace-bootstrap.mjs');
  const identity=JSON.parse(fs.readFileSync(new URL('./dot-identity.json',import.meta.url),'utf8'));
  const secret=process.env.OPENDOTS_COMMERCIAL_SECRET;
+ validateSupervisedRecovery({url:process.env.MEULOCAL_RECOVERY_URL,secret});
  const official=path.resolve(process.env.OPENDOTS_ROOT||path.join(ROOT,'.opendots/upstream'));
  const dataDir=path.resolve(process.env.OPENDOTS_DATA_DIR||path.join(ROOT,'.opendots/data'));
  const intelligenceKey=process.env.CPK_INTELLIGENCE_API_KEY,apiKey=process.env.OPENAI_API_KEY;
@@ -81,7 +83,8 @@ async function start(){
  const port=Number(process.env.OPENDOTS_COMMERCIAL_PORT||8787);
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'0.0.0.0',resolve)});
  console.log(JSON.stringify({status:'READY',port,service:'opendots_commercial',dispatch:false}));
- const close=async()=>{server.close();runtime.closeAllConnections?.();await new Promise(resolve=>runtime.close(resolve));await platform.stop();workspace.close();store.close()};
+ const recovery=startSupervisedRecovery({url:process.env.MEULOCAL_RECOVERY_URL,secret});
+ const close=async()=>{recovery.stop();server.close();runtime.closeAllConnections?.();await new Promise(resolve=>runtime.close(resolve));await platform.stop();workspace.close();store.close()};
  process.once('SIGTERM',()=>{void close()});process.once('SIGINT',()=>{void close()});
 }
 export {createReceiver,sameSignature};

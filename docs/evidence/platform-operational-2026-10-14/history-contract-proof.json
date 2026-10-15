@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-15T02:51:24.669Z",
+  "readOnly": true,
+  "existingCredential": true,
+  "providerStatus": "history_read_verified",
+  "conversationId": "cmQBF7jMIBjARXweCzKh",
+  "hasNext": false,
+  "lastMessageId": "VhvihAlJSRI7gGtccZG3",
+  "messages": [
+    {
+      "id": "4aRCOWsYXSS5CWw4ZELm",
+      "contactId": "SdJ2oWZqsReI1TTq4cAd",
+      "conversationId": "cmQBF7jMIBjARXweCzKh",
+      "direction": "inbound",
+      "messageType": "TYPE_WHATSAPP",
+      "dateAdded": "2026-10-15T00:32:28.473Z"
+    },
+    {
+      "id": "VhvihAlJSRI7gGtccZG3",
+      "contactId": "SdJ2oWZqsReI1TTq4cAd",
+      "conversationId": "cmQBF7jMIBjARXweCzKh",
+      "direction": "inbound",
+      "messageType": "TYPE_WHATSAPP",
+      "dateAdded": "2026-10-14T22:15:45.981Z"
+    }
+  ],
+  "savedAnchor": {
+    "found": true,
+    "eventId": "4aRCOWsYXSS5CWw4ZELm",
+    "messageId": "4aRCOWsYXSS5CWw4ZELm",
+    "locationId": "uNh3KsM7WFuLeTN8Q583",
+    "contactId": "SdJ2oWZqsReI1TTq4cAd",
+    "conversationId": "cmQBF7jMIBjARXweCzKh",
+    "receipt": {
+      "action": "handoff",
+      "status": "decision_saved",
+      "eventId": "4aRCOWsYXSS5CWw4ZELm",
+      "dispatched": 0,
+      "httpStatus": 200
+    }
+  },
+  "newAppCreated": false
+}
