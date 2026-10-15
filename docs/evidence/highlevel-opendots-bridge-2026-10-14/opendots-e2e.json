@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-15T00:34:37.491Z",
+  "record": {
+    "file": "ad29fedd4f0601af894b58aa65875351fdf7d4860f14962da9ddeca41a2a6bc2.json",
+    "eventId": "4aRCOWsYXSS5CWw4ZELm",
+    "contactId": "SdJ2oWZqsReI1TTq4cAd",
+    "createdAt": "2026-10-15T00:32:38.645Z",
+    "action": "handoff",
+    "status": "suggestion_only",
+    "requiresHumanReview": true
+  },
+  "permissions": {
+    "initialSend": false,
+    "autoReply": false,
+    "crmWrite": false
+  },
+  "counts": {
+    "conversations": "table_absent",
+    "messages": "table_absent",
+    "tasks": 0,
+    "runs": 0,
+    "calls": 0,
+    "mcp_connections": 0,
+    "computer_permissions": 0
+  },
+  "dispatchCredentialNames": []
+}

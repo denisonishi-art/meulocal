@@ -1,0 +1,24 @@
+{
+  "workflowId": "957c3d55-c64c-4b84-88a6-1808c587f450",
+  "contactId": "SdJ2oWZqsReI1TTq4cAd",
+  "messageId": "4aRCOWsYXSS5CWw4ZELm",
+  "conversationId": "cmQBF7jMIBjARXweCzKh",
+  "direction": "inbound",
+  "messageType": "TYPE_WHATSAPP",
+  "receivedAt": "2026-10-15T00:32:28.473Z",
+  "executionStatus": "Success",
+  "executedAtLocal": "2026-10-14 21:32:39 GMT-03",
+  "webhookResponse": {
+    "ok": true,
+    "eventId": "4aRCOWsYXSS5CWw4ZELm",
+    "messageId": "4aRCOWsYXSS5CWw4ZELm",
+    "acquisitionFlow": true,
+    "openDots": {
+      "status": "decision_saved",
+      "eventId": "4aRCOWsYXSS5CWw4ZELm",
+      "action": "handoff",
+      "dispatched": 0,
+      "httpStatus": 200
+    }
+  }
+}

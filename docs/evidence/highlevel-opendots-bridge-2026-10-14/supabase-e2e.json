@@ -1,0 +1,54 @@
+{
+  "project": "vznecxfmnthyxvsxwpzi",
+  "event": {
+    "id": "6e686d00-4608-4f5a-9a55-5166c1df592f",
+    "external_event_id": "4aRCOWsYXSS5CWw4ZELm",
+    "message_id": "4aRCOWsYXSS5CWw4ZELm",
+    "event_type": "InboundMessage",
+    "direction": "inbound",
+    "ghl_location_id": "uNh3KsM7WFuLeTN8Q583",
+    "contact_id": "SdJ2oWZqsReI1TTq4cAd",
+    "conversation_id": "cmQBF7jMIBjARXweCzKh",
+    "payload_meta": {
+      "source": "highlevel_webhook",
+      "preview": "[texto do teste preservado em evidencia privada]",
+      "openDots": {
+        "action": "handoff",
+        "status": "decision_saved",
+        "eventId": "4aRCOWsYXSS5CWw4ZELm",
+        "dispatched": 0,
+        "httpStatus": 200
+      },
+      "hasContact": true,
+      "hasMessage": true
+    },
+    "created_at": "2026-10-15T00:32:32.352179+00:00"
+  },
+  "lead": {
+    "id": "6bb0ebc1-6f42-4f25-b112-8d982d7522c7",
+    "business_id": "82ff4ec3-7428-429c-bdfe-3f8ac354ef96",
+    "ghl_location_id": "uNh3KsM7WFuLeTN8Q583",
+    "ghl_contact_id": "SdJ2oWZqsReI1TTq4cAd",
+    "lifecycle_stage": "conversation",
+    "last_reply_at": "2026-10-15T00:32:33.8+00:00",
+    "opt_out_at": null,
+    "next_action_at": null
+  },
+  "business": [
+    {
+      "id": "82ff4ec3-7428-429c-bdfe-3f8ac354ef96",
+      "status": "engaged"
+    }
+  ],
+  "enrollments": [],
+  "outreach": [
+    {
+      "id": "c238c366-beda-4d2f-9184-90f816425615",
+      "event_type": "replied",
+      "external_id": "4aRCOWsYXSS5CWw4ZELm",
+      "provider": "highlevel",
+      "conversation_id": "cmQBF7jMIBjARXweCzKh",
+      "created_at": "2026-10-15T00:32:33.714292+00:00"
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "observedAt": "2026-10-14T23:19:25.712Z",
+  "vercel": {
+    "team": "denisonishi-8130s-projects",
+    "projectId": "prj_tTEcf7eWDIAPt7Q1vZ3Qmawu8QSp",
+    "deploymentId": "dpl_2M9Xdr3uJmGe3wHYyuQLyAt9PqZS",
+    "commit": "730aaa0d86481ebfdc0899c74319a24e2532ef14",
+    "branch": "main",
+    "state": "READY"
+  },
+  "configuration": [
+    {
+      "key": "GHL_WEBHOOK_SECRET",
+      "present": false,
+      "type": null,
+      "valuePrinted": false,
+      "effectiveRuntimeValueVerified": false
+    },
+    {
+      "key": "OPENDOTS_COMMERCIAL_URL",
+      "present": true,
+      "type": "plain",
+      "valuePrinted": false,
+      "effectiveRuntimeValueVerified": false
+    },
+    {
+      "key": "OPENDOTS_COMMERCIAL_SECRET",
+      "present": true,
+      "type": "sensitive",
+      "valuePrinted": false,
+      "effectiveRuntimeValueVerified": false
+    }
+  ],
+  "supabase": {
+    "project": "vznecxfmnthyxvsxwpzi",
+    "leads": {
+      "http": 200,
+      "body": [
+        {
+          "id": "6bb0ebc1-6f42-4f25-b112-8d982d7522c7",
+          "business_id": "82ff4ec3-7428-429c-bdfe-3f8ac354ef96",
+          "ghl_location_id": "uNh3KsM7WFuLeTN8Q583",
+          "ghl_contact_id": "SdJ2oWZqsReI1TTq4cAd",
+          "lifecycle_stage": "lead",
+          "last_reply_at": null,
+          "opt_out_at": null,
+          "next_action_at": null
+        }
+      ]
+    },
+    "events": {
+      "http": 200,
+      "body": []
+    },
+    "customerContacts": {
+      "http": 200,
+      "body": []
+    }
+  },
+  "highlevel": {
+    "contact": {
+      "http": 200,
+      "exists": true,
+      "locationCorrect": true,
+      "tags": [
+        "test-opendots",
+        "controlled-contact"
+      ]
+    },
+    "workflow": {
+      "http": 200,
+      "workflow": [
+        {
+          "id": "957c3d55-c64c-4b84-88a6-1808c587f450",
+          "name": "RCIA — Controlled Inbound Bridge",
+          "status": "published",
+          "version": 4,
+          "updatedAt": "2026-09-25T15:26:12.131Z"
+        }
+      ]
+    },
+    "actionsAndLogsVerified": false
+  },
+  "openDots": {
+    "endpointValidation": {
+      "https": true,
+      "allowedHost": true
+    },
+    "getStatus": 403,
+    "server": "nginx/1.30.6",
+    "postAuthenticatedTestExecuted": false,
+    "recordsVerified": false,
+    "permissionsVerified": false
+  },
+  "externalWrites": 0,
+  "messagesSent": 0,
+  "workflowChanged": false,
+  "deploymentChanged": false,
+  "status": "BLOCKED_EXTERNAL / NOT_READY"
+}
