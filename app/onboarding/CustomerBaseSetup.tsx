@@ -30,7 +30,7 @@ export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>v
   }
   async function activate(){
     setBusy(true);setError('');
-    try{const t=await token();if(!t)return;const r=await fetch('/api/customer-base/activate',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({confirmed:true,audienceConfirmed})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha ao ativar');setActivation(j);onReady?.(true)}
+    try{const t=await token();if(!t){window.location.href='/login';return}const r=await fetch('/api/customer-base/activate',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({confirmed:true,audienceConfirmed})});const j=await r.json();if(!r.ok||j.ok!==true||!Number.isInteger(j.queued))throw new Error(j.error||'Falha ao preparar a fila');setActivation(j);onReady?.(true)}
     catch(e:any){setError(e.message)}finally{setBusy(false)}
   }
 
@@ -64,7 +64,7 @@ export default function CustomerBaseSetup({onReady}:{onReady?:(ready:boolean)=>v
       <button className="primary" type="button" disabled={busy||!audienceConfirmed} onClick={activate}>{busy?'Ativando...':'Ativar automação de avaliações'}</button>
     </div>}
 
-    {activation&&<div className="activationDone"><Check size={24}/><div><strong>Automação ativada.</strong><span>{activation.queued} clientes foram organizados na fila protegida. A ativação começa em {new Date(activation.firstActivationDate+'T12:00:00').toLocaleDateString('pt-BR')} e a base atual está prevista até {new Date(activation.lastActivationDate+'T12:00:00').toLocaleDateString('pt-BR')}.</span></div></div>}
+    {activation&&<div className="activationDone"><Check size={24}/><div><strong>Fila preparada.</strong><span>{activation.queued} novos clientes foram organizados na fila protegida, entre {new Date(activation.firstActivationDate+'T12:00:00').toLocaleDateString('pt-BR')} e {new Date(activation.lastActivationDate+'T12:00:00').toLocaleDateString('pt-BR')}. O envio depende dos canais conectados e da liberação operacional.</span></div></div>}
     {error&&<div className="loginError">{error}</div>}
   </div>;
 }

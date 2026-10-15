@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T12:26:46.476Z",
+  "at": "2026-10-15T12:35:11.205Z",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
@@ -90,6 +90,12 @@
       "passed": 14,
       "failed": 0,
       "scope": "actual_handlers_xlsx_real_postgresql_synthetic_fixture"
+    },
+    "customerBaseActivation": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "scope": "actual_route_real_postgresql_synthetic_fixture_no_transport"
     }
   },
   "typescript": "pass_exit_0",
@@ -99,6 +105,6 @@
   "paymentRecovery": "local_verified_handler_checkout_recovery_not_published",
   "asaasConfiguration": "authenticated_read_only_existing_webhook_missing_checkout_events_token_not_returned_by_get",
   "realPaymentEvidence": "blocked_no_prior_payment_user_confirmed_no_new_charge",
-  "customerBase": "local_verified_import_confirmation_activation_and_cron_pending",
+  "customerBase": "local_verified_import_confirmation_activation_cron_and_daily_delivery_quota_pending",
   "remoteBaseDDL": "openapi_fields_observed_full_constraints_not_verified"
 }
