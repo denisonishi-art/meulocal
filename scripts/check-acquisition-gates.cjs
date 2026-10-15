@@ -1,7 +1,7 @@
 // Actual handlers; every DB/provider operation is trapped. No production access.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),ts=require('typescript');
 const root=path.resolve(__dirname,'..');
-const routes=[['app/api/agents/prospect/approve/route.ts',['POST'],'MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED'],['app/api/agents/prospect/dispatch-pending/route.ts',['POST','GET'],'MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED'],['app/api/cron/acquisition-outreach/route.ts',['POST','GET'],'MEULOCAL_ACQUISITION_OUTREACH_ENABLED'],['app/api/agents/prospect/send-approved-email/route.ts',['POST'],'MEULOCAL_MANUAL_OUTREACH_ENABLED'],['app/api/agents/prospect/reply/route.ts',['POST'],'MEULOCAL_MANUAL_OUTREACH_ENABLED']];
+const routes=[['app/api/agents/prospect/dispatch-pending/route.ts',['POST','GET'],'MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED'],['app/api/cron/acquisition-outreach/route.ts',['POST','GET'],'MEULOCAL_ACQUISITION_OUTREACH_ENABLED'],['app/api/agents/prospect/send-approved-email/route.ts',['POST'],'MEULOCAL_MANUAL_OUTREACH_ENABLED'],['app/api/agents/prospect/reply/route.ts',['POST'],'MEULOCAL_MANUAL_OUTREACH_ENABLED']];
 function fixture(file,{flag,value,authorized=true}={}){
  const calls=[];const blocked=()=>{calls.push('forbidden_side_effect');throw Error('side_effect_before_permission')};
  const req=name=>{

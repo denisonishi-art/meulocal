@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T13:49:55.885505+00:00",
+  "at": "2026-10-15T14:04:26.761972+00:00",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
@@ -125,16 +125,22 @@
       "scope": "actual_route_auth_flags_isolated_processor"
     },
     "adminSupervision": {
-      "tests": 9,
-      "passed": 9,
+      "tests": 11,
+      "passed": 11,
       "failed": 0,
       "scope": "actual_sdk_routes_and_react_handlers_isolated_provider"
     },
     "acquisitionDefaultOffGates": {
-      "tests": 10,
-      "passed": 10,
+      "tests": 8,
+      "passed": 8,
       "failed": 0,
-      "scope": "actual_handlers_no_database_or_provider_access"
+      "scope": "transport_handlers_no_database_or_provider_access_approve_is_preparation_only"
+    },
+    "prospectPreparation": {
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "scope": "actual_route_and_real_postgresql_concurrent_sessions_no_provider"
     }
   },
   "typescript": "pass_exit_0",

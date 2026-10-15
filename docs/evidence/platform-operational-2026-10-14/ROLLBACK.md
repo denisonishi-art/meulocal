@@ -15,3 +15,8 @@ Antes da publicação, preservar de forma privada: deployment/commit servidos pe
 ## Gates ainda obrigatórios
 
 Ensaiar com fixtures a reversão de configuração e a compatibilidade com a versão anterior, incluindo retenção de recibos e ausência de novo transporte. Conferir também o ingresso Asaas na reversão: não voltar a um handler financeiro antigo com falhas conhecidas enquanto continuar recebendo pagamentos. A estratégia concreta precisa ser validada no gate de publicação, preservando eventos genuínos e a política de retentativa do provedor. Nenhuma alteração externa de rollback foi executada neste checkpoint.
+
+
+## Preparação administrativa
+
+Migration 011 somente acrescenta a transação de preparação; não remover diagnósticos, leads, empresas ou tokens criados por ela para reverter o código. A versão antiga de approve pode enviar contatos e ignora o novo contrato de preparação. Antes de qualquer retorno a código anterior, manter a rota de aprovação/disparo indisponível por versão validada; flags só protegem versões que as implementam. Não usar o botão antigo para verificar rollback. O ensaio continua pendente e nenhum recurso remoto foi alterado nesta etapa.

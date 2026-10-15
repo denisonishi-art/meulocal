@@ -1,74 +1,31 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
+import {z} from 'zod';
 import {agentPolicies} from '@/lib/agents/config';
 import {isAdminRequest} from '@/lib/admin-auth';
-import {enqueueGhlProspect,findBusinessEmail,sendGhlProspectWhatsApp} from '@/lib/ghl-prospecting';
-
-type ApprovedProspect={id:string;name:string;address?:string;rating?:number|null;reviews?:number;score:number;website?:string|null;phone?:string|null;competitorAverageReviews?:number|null;niche?:string;region?:string;competitionMode?:'local_radius'|'city_region'|'search_market';competitionLabel?:string|null;searchIntent?:string|null};
-
-function addDaysIso(base:string|Date,days:number){const d=new Date(base);d.setUTCDate(d.getUTCDate()+days);d.setUTCHours(13,0,0,0);return d.toISOString()}
-
-async function trackInitialDispatch(db:any,d:any,source:ApprovedProspect,result:any,channel:'email'|'whatsapp',email:string|null){
-  let business=(await db.from('businesses').select('id').eq('google_place_id',d.place_id).maybeSingle()).data;
-  if(!business){const created=await db.from('businesses').insert({google_place_id:d.place_id,name:d.business_name,phone:source.phone||null,website:source.website||null,source:'outbound',status:'contacted',ghl_contact_id:result.contactId||null,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583'}).select('id').single();business=created.data;}
-  if(!business?.id)return;
-  let lead=(await db.from('leads').select('id,next_action_at').eq('prospect_diagnostic_id',d.id).maybeSingle()).data;
-  if(!lead){const created=await db.from('leads').insert({business_id:business.id,name:d.business_name,email,whatsapp:source.phone||null,consent_email:channel==='email',consent_whatsapp:channel==='whatsapp',origin:'outbound',lifecycle_stage:'mql',automation_track:'meulocal_acquisition',prospect_diagnostic_id:d.id,ghl_contact_id:result.contactId||null,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583'}).select('id,next_action_at').single();lead=created.data;}
-  if(!lead?.id)return;
-  const now=new Date().toISOString();
-  const nextRunAt=addDaysIso(now,3);
-  const eventType=channel==='whatsapp'?'sent':'queued';
-  await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:eventType,provider:'highlevel',external_id:result.messageId||null,conversation_id:result.conversationId||null,message_key:'diagnostic_initial',metadata:{source:'prospect_approval',cadence_step:0}});
-  const existing=await db.from('automation_enrollments').select('id,status,step').eq('lead_id',lead.id).eq('track','meulocal_acquisition').maybeSingle();
-  if(existing.data?.id){
-    await db.from('automation_enrollments').update({status:'active',step:Math.max(Number(existing.data.step||0),1),next_run_at:nextRunAt,completed_at:null}).eq('id',existing.data.id);
-  }else{
-    await db.from('automation_enrollments').insert({lead_id:lead.id,track:'meulocal_acquisition',status:'active',step:1,next_run_at:nextRunAt});
-  }
-  await db.from('leads').update({next_action_at:nextRunAt,updated_at:now}).eq('id',lead.id);
-}
-
+const optionalText=(limit:number)=>z.string().max(limit).nullish();
+const prospectSchema=z.object({
+ id:z.string().trim().min(1).max(300),name:z.string().trim().min(1).max(240),score:z.number().int().min(0).max(100),
+ address:optionalText(1000),rating:z.number().min(0).max(5).nullish(),reviews:z.number().int().min(0).max(100000000).optional(),
+ website:optionalText(2000),phone:optionalText(100),competitorAverageReviews:z.number().min(0).max(100000000).nullish(),
+ niche:optionalText(200),region:optionalText(200),competitionMode:z.enum(['local_radius','city_region','search_market']).optional(),competitionLabel:optionalText(500),searchIntent:optionalText(1000)
+});
+const bodySchema=z.object({approved:z.array(prospectSchema).optional(),prospects:z.array(prospectSchema).optional(),niche:optionalText(200),location:optionalText(200),competitionMode:z.enum(['local_radius','city_region','search_market']).optional(),competitionLabel:optionalText(500),searchIntent:optionalText(1000)});
 export async function POST(req:Request){
-  if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
- if(process.env.MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED!=='true')return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados. A liberação depende da validação operacional.'},{status:423});
-  try{
-    const body=await req.json();
-    // `prospects` is sent by the admin screen; keep `approved` for API compatibility.
-    const approved:ApprovedProspect[]=Array.isArray(body.prospects)
-      ?body.prospects
-      :Array.isArray(body.approved)?body.approved:[];
-    const approvedIds:string[]=Array.isArray(body.approvedIds)?body.approvedIds:[];
-    const count=approved.length||approvedIds.length;
-    if(count===0)return NextResponse.json({error:'Selecione pelo menos um prospect.'},{status:400});
-    if(count>agentPolicies.prospecting.maxApprovedBatch)return NextResponse.json({error:`Aprovação limitada a ${agentPolicies.prospecting.maxApprovedBatch} prospects por lote.`},{status:400});
-    if(approved.length===0)return NextResponse.json({ok:true,approvedIds,status:'approved_for_enrichment',contactStarted:false,next:'send_full_approved_objects_to_generate_diagnostics'});
-
-    const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const appUrl=process.env.NEXT_PUBLIC_APP_URL||new URL(req.url).origin;
-    if(!supabaseUrl||!serviceKey)return NextResponse.json({error:'Banco ainda não configurado para diagnósticos.'},{status:503});
-    const admin=createClient(supabaseUrl,serviceKey);
-    const ids=approved.map(p=>p.id);
-    // An earlier approval without a GHL dispatch is retryable. Only block a
-    // prospect after it has actually entered the outreach flow or converted.
-    const {data:existing}=await admin.from('prospect_diagnostics').select('place_id,status').in('place_id',ids).in('status',['contacted','converted']);
-    const blocked=new Set((existing||[]).map((x:any)=>x.place_id));
-    const fresh=approved.filter(p=>!blocked.has(p.id));
-    if(fresh.length===0)return NextResponse.json({ok:true,status:'deduped',contactStarted:false,diagnostics:[],skippedDuplicatePlaceIds:ids});
-
-    const rows=fresh.map(p=>({
-      place_id:p.id,business_name:p.name,address:p.address||null,rating:p.rating??null,review_count:p.reviews||0,score:p.score,
-      competitor_avg_reviews:p.competitorAverageReviews==null?null:Math.round(p.competitorAverageReviews),
-      review_gap:p.competitorAverageReviews==null?null:Math.max(0,Math.round(p.competitorAverageReviews-(p.reviews||0))),
-      niche:p.niche||body.niche||null,region:p.region||body.location||null,status:'approved',
-      competition_mode:p.competitionMode||body.competitionMode||'city_region',
-      competition_label:p.competitionLabel||body.competitionLabel||null,
-      search_intent:p.searchIntent||body.searchIntent||null
-    }));
-    const {data,error}=await admin.from('prospect_diagnostics').insert(rows).select('id,public_token,place_id,business_name,score,review_count,competitor_avg_reviews,review_gap,competition_mode,competition_label,search_intent');
-    if(error)return NextResponse.json({error:'Não foi possível gerar os diagnósticos.',detail:error.message},{status:500});
-    const diagnostics=(data||[]).map(d=>({...d,url:`${appUrl}/d/${d.public_token}`}));
-    const dispatched=await Promise.all(diagnostics.map(async(d:any)=>{const source=fresh.find(p=>p.id===d.place_id);const email=await findBusinessEmail(source?.website);const channel=email?'email':'whatsapp';const result=email?await enqueueGhlProspect({businessName:d.business_name,email,phone:source?.phone,website:source?.website,diagnosticUrl:d.url}):source?.phone?await sendGhlProspectWhatsApp({businessName:d.business_name,phone:source.phone,diagnosticUrl:d.url}):{ok:false,reason:'E-mail e WhatsApp não encontrados'};if(result.ok){await admin.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);if(source)await trackInitialDispatch(admin,d,source,result,channel,email)}return {id:d.id,email:email||null,channel,...result}}));
-    return NextResponse.json({ok:true,status:'approved',contactStarted:dispatched.some(x=>x.ok),diagnostics,dispatched,skippedDuplicatePlaceIds:[...blocked]});
-  }catch{return NextResponse.json({error:'Não foi possível aprovar a lista agora.'},{status:500})}
+ if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+ const body=bodySchema.safeParse(await req.json().catch(()=>null));
+ if(!body.success)return NextResponse.json({error:'Dados inválidos para preparar os diagnósticos.'},{status:400});
+ const items=body.data.prospects||body.data.approved||[];
+ if(!items.length||items.length>agentPolicies.prospecting.maxApprovedBatch||new Set(items.map(p=>p.id)).size!==items.length)return NextResponse.json({error:'Selecione de 1 a '+agentPolicies.prospecting.maxApprovedBatch+' empresas distintas.'},{status:400});
+ const url=process.env.NEXT_PUBLIC_SUPABASE_URL||process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+ if(!url||!key)return NextResponse.json({error:'Banco não configurado.',contactStarted:0},{status:503});
+ try{
+  const db=createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(10000)})}});
+  const {data,error}=await db.rpc('prepare_prospect_diagnostics',{p_items:items.map(p=>({...p,niche:p.niche||body.data.niche,region:p.region||body.data.location,competitionMode:p.competitionMode||body.data.competitionMode,competitionLabel:p.competitionLabel||body.data.competitionLabel,searchIntent:p.searchIntent||body.data.searchIntent}))});
+  if(error||!Array.isArray(data?.diagnostics)){
+   const conflict=['prospect_diagnostic_ambiguous','prospect_lead_ambiguous','prospect_lead_scope_conflict'].includes(error?.message||'');
+   return NextResponse.json({error:conflict?'Há vínculos anteriores que exigem conferência antes de preparar o diagnóstico.':'Não foi possível salvar os diagnósticos. Tente novamente.',contactStarted:0},{status:conflict?409:503});
+  }
+  return NextResponse.json({ok:true,status:'prepared_for_review',contactStarted:0,dispatched:[],diagnostics:data.diagnostics.map((d:any)=>({...d,url:'/d/'+d.public_token}))},{headers:{'Cache-Control':'private, no-store'}});
+ }catch{return NextResponse.json({error:'Não foi possível salvar os diagnósticos. Tente novamente.',contactStarted:0},{status:503})}
 }
