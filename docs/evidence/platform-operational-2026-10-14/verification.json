@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T13:02:47.488Z",
+  "at": "2026-10-15T13:21:01.380Z",
   "scope": "local_checkpoint_not_production_release",
   "tests": {
     "onboarding": {
@@ -28,14 +28,14 @@
       "failed": 0
     },
     "supervisedRecovery": {
-      "tests": 9,
-      "passed": 9,
+      "tests": 10,
+      "passed": 10,
       "failed": 0
     },
     "recoveryWorker": {
-      "tests": 4,
-      "pass": 4,
-      "fail": 0
+      "tests": 5,
+      "passed": 5,
+      "failed": 0
     },
     "paymentUser": {
       "tests": 8,
@@ -99,10 +99,28 @@
       "scope": "actual_route_real_postgresql_synthetic_fixture_no_transport"
     },
     "reviewDeliveryDatabase": {
-      "tests": 18,
-      "passed": 18,
+      "tests": 19,
+      "passed": 19,
       "failed": 0,
-      "scope": "real_postgresql_synthetic_clock_no_transport_not_integrated"
+      "scope": "real_postgresql_synthetic_clock_no_transport"
+    },
+    "reviewDeliveryProcessor": {
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "scope": "actual_processor_actual_http_adapter_isolated_transport_real_postgresql"
+    },
+    "reviewWebhook": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "scope": "actual_handler_real_postgresql_isolated_provider"
+    },
+    "reviewCronRoute": {
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "scope": "actual_route_auth_flags_isolated_processor"
     }
   },
   "typescript": "pass_exit_0",
@@ -112,7 +130,9 @@
   "paymentRecovery": "local_verified_handler_checkout_recovery_not_published",
   "asaasConfiguration": "authenticated_read_only_existing_webhook_missing_checkout_events_token_not_returned_by_get",
   "realPaymentEvidence": "blocked_no_prior_payment_user_confirmed_no_new_charge",
-  "customerBase": "local_verified_import_confirmation_activation_delivery_sql_cron_and_inbound_integration_pending",
+  "customerBase": "local_verified_import_confirmation_activation_delivery_inbound_external_proof_pending",
   "remoteBaseDDL": "openapi_fields_observed_full_constraints_not_verified",
-  "reviewDelivery": "local_verified_sql_only_cron_webhook_and_transport_not_integrated"
+  "reviewDelivery": "local_verified_cron_recovery_webhook_integrated_default_disabled_not_published",
+  "realReviewTransport": "not_executed",
+  "realReviewInbound": "not_verified_customer_scope"
 }

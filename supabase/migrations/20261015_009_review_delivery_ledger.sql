@@ -1,4 +1,6 @@
 -- Durable authority for review messages. No transport is executed by these functions.
+alter table public.review_request_settings add column delivery_checked_at timestamptz not null default now();
+create index review_settings_delivery_rotation on public.review_request_settings(delivery_checked_at,business_id) where status='active';
 create table public.review_message_deliveries(
  id uuid primary key default gen_random_uuid(),business_id uuid not null references public.businesses(id),
  enrollment_id uuid not null references public.review_request_enrollments(id),contact_id uuid not null references public.customer_contacts(id),
@@ -25,7 +27,9 @@ begin
  if not found or a.payment_status<>'active' then return null;end if;
  select * into s from review_request_settings where business_id=p_business_id for update;
  if not found or s.status<>'active' or s.activated_at is null then return null;end if;
+ update review_request_settings set delivery_checked_at=p_at where business_id=p_business_id;
  today=(p_at at time zone 'America/Sao_Paulo')::date;
+ if (p_at at time zone 'America/Sao_Paulo')::time<time '09:00' then return null;end if;
  if s.weekdays_only and extract(isodow from today)>5 then return null;end if;
  update review_message_deliveries set state='ambiguous',error_code='dispatch_lease_expired',updated_at=p_at
   where business_id=p_business_id and state='dispatching' and lease_until<=p_at;
@@ -75,6 +79,7 @@ begin
  select * into c from customer_contacts where id=d.contact_id and business_id=d.business_id for update;
  if a.id is null or s.business_id is null or a.payment_status<>'active' or s.status<>'active' or e.id is null or c.id is null or e.contact_id<>c.id
   or d.quota_date<>(p_at at time zone 'America/Sao_Paulo')::date or (s.weekdays_only and extract(isodow from p_at at time zone 'America/Sao_Paulo')>5)
+  or (p_at at time zone 'America/Sao_Paulo')::time<time '09:00'
   or e.status not in ('queued','active') or e.attempts+1<>d.attempt or e.attempts>=least(s.max_attempts,3)
   or c.status not in ('queued','active') or c.opt_out_at is not null
   or p_channel is null or p_channel not in ('whatsapp','email') or p_content_hash is null or p_content_hash !~ '^[0-9a-f]{64}$'
@@ -82,6 +87,7 @@ begin
   or (c.ghl_contact_id is not null and c.ghl_contact_id<>p_contact_id) or (c.ghl_location_id is not null and c.ghl_location_id<>p_location_id)
   or not exists(select 1 from ghl_locations where business_id=d.business_id and ghl_location_id=p_location_id and lifecycle_status='active')
   or exists(select 1 from review_request_events where enrollment_id=e.id and event_type in ('replied','opted_out','review_observed'))
+  or exists(select 1 from ghl_events where ghl_location_id=p_location_id and contact_id=p_contact_id and created_at>=s.activated_at and (direction='inbound' or opted_out))
  then return null;end if;
  update customer_contacts set ghl_contact_id=p_contact_id,ghl_location_id=p_location_id,updated_at=p_at where id=c.id;
  update review_message_deliveries set state='dispatching',channel=p_channel,content_hash=p_content_hash,ghl_contact_id=p_contact_id,
@@ -164,3 +170,23 @@ end $$;
 
 revoke all on function public.claim_review_delivery(uuid,timestamptz),public.begin_review_delivery(uuid,uuid,text,text,text,text,timestamptz),public.settle_review_delivery(uuid,uuid,text,text,timestamptz),public.fail_review_delivery(uuid,uuid,text,timestamptz),public.stop_review_contact(uuid,uuid,text,text,text,timestamptz) from public,anon,authenticated;
 grant execute on function public.claim_review_delivery(uuid,timestamptz),public.begin_review_delivery(uuid,uuid,text,text,text,text,timestamptz),public.settle_review_delivery(uuid,uuid,text,text,timestamptz),public.fail_review_delivery(uuid,uuid,text,timestamptz),public.stop_review_contact(uuid,uuid,text,text,text,timestamptz) to service_role;
+
+create function public.claim_next_review_delivery(p_at timestamptz default now())
+returns jsonb language plpgsql security definer set search_path=public,pg_temp set lock_timeout='3s' as $$
+declare bid uuid;job jsonb;
+begin
+ if p_at is null then return null;end if;
+ -- Lock order stays account -> settings inside claim_review_delivery.
+ for bid in select s.business_id from review_request_settings s join customer_accounts a on a.business_id=s.business_id
+  where s.status='active' and a.payment_status='active' order by s.delivery_checked_at,s.business_id limit 10 loop
+  job=claim_review_delivery(bid,p_at);if job is not null then return job;end if;
+ end loop;
+ return null;
+end $$;
+create function public.review_delivery_health(p_at timestamptz default now())
+returns jsonb language sql security definer set search_path=public,pg_temp as $$
+ select jsonb_build_object('pending',count(*) filter(where state in ('reserved','dispatching','ambiguous')),
+  'blocked',count(*) filter(where state='ambiguous' or (state='dispatching' and lease_until<=p_at))) from review_message_deliveries
+$$;
+revoke all on function public.claim_next_review_delivery(timestamptz),public.review_delivery_health(timestamptz) from public,anon,authenticated;
+grant execute on function public.claim_next_review_delivery(timestamptz),public.review_delivery_health(timestamptz) to service_role;

@@ -23,8 +23,8 @@ export function startSupervisedRecovery({url,secret,fetchImpl=fetch,schedule=set
    const signature='sha256='+createHmac('sha256',secret).update('POST\n'+PATH+'\n'+body).digest('hex');
    const response=await fetchImpl(target.href,{method:'POST',body,headers:{'Content-Type':'application/json','X-MeuLocal-Recovery-Signature':signature},redirect:'error',signal:controller.signal});
    const data=await response.json();
-   const verified=response.ok&&data?.ok===true&&data.inbox?.ok===true&&data.payments?.ok===true&&data.queue?.ok===true;
-   result={status:verified?'recovery_finished':'recovery_pending',httpStatus:response.status,ingested:Number(data?.inbox?.ingested)||0,completed:Number(data?.queue?.completed)||0,pending:Number(data?.queue?.pending)||0};
+   const verified=response.ok&&data?.ok===true&&data.inbox?.ok===true&&data.payments?.ok===true&&data.queue?.ok===true&&data.reviews?.ok===true;
+   result={status:verified?'recovery_finished':'recovery_pending',httpStatus:response.status,ingested:Number(data?.inbox?.ingested)||0,completed:Number(data?.queue?.completed)||0,pending:Number(data?.queue?.pending)||0,reviewProcessed:Number(data?.reviews?.processed)||0,reviewPending:Number(data?.reviews?.pending)||0,reviewBlocked:Number(data?.reviews?.blocked)||0};
   }catch{/* Provider errors are private; the next tick retries durable work. */}
   finally{clearTimeout(deadline);controller=undefined;log({service:'opendots_supervised_recovery',...result});if(!stopped)timer=schedule(tick,60000)}
  };
