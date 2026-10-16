@@ -2,7 +2,7 @@ const API='https://services.leadconnectorhq.com';
 
 async function parse(res:Response){
   const body=await res.json().catch(()=>({}));
-  if(!res.ok)throw new Error(body?.message||body?.error||('HighLevel HTTP '+res.status));
+  if(!res.ok)throw new Error('highlevel_http_'+res.status);
   return body;
 }
 
