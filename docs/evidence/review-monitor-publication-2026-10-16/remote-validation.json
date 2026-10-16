@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-16T17:29:52.105Z",
+  "authentication": [
+    {
+      "authorization": "absent",
+      "status": 401,
+      "elapsedMs": 1173
+    },
+    {
+      "authorization": "invalid",
+      "status": 401,
+      "elapsedMs": 376
+    },
+    {
+      "authorization": "dedicated_secret",
+      "status": 200,
+      "elapsedMs": 326,
+      "enabled": false,
+      "processed": 0
+    },
+    {
+      "path": "/api/admin/review-monitor",
+      "authorization": "absent",
+      "status": 401
+    },
+    {
+      "path": "/api/review-monitor",
+      "authorization": "absent",
+      "status": 401
+    }
+  ],
+  "timer": {
+    "installed": true,
+    "enabled": true,
+    "unit": "meulocal-review-monitor.timer",
+    "nextExecution": "Fri 2026-10-16 18:00:00 UTC",
+    "lastTrigger": ""
+  },
+  "execution": {
+    "result": "success",
+    "exitStatus": 0,
+    "started": "Fri 2026-10-16 17:29:51 UTC",
+    "ended": "Fri 2026-10-16 17:29:51 UTC",
+    "action": "disabled_no_op"
+  },
+  "commercialEnvChanged": false,
+  "realProviderCalls": 0,
+  "realSends": 0
+}

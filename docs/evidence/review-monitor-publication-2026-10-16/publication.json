@@ -1,0 +1,98 @@
+{
+  "at": "2026-10-16T17:38:27.124465+00:00",
+  "status": "PUBLISHED_DISABLED_PILOT_BLOCKED",
+  "deployment": {
+    "at": "2026-10-16T17:33:15.588Z",
+    "id": "dpl_21uTNPoP3PGmH7ofMofzVTJKdWoJ",
+    "state": "READY",
+    "url": "https://meulocal.ia.br",
+    "deploymentUrl": "https://meulocal-omnw83nrs-denisonishi-8130s-projects.vercel.app",
+    "commit": "821e29e0b1b4191c1ede3b4478da3cfc6b705473",
+    "branch": "main",
+    "productionAliasConfirmed": true
+  },
+  "migration": {
+    "at": "2026-10-16T17:15:14.693Z",
+    "project": "vznecxfmnthyxvsxwpzi",
+    "version": "20261016155756",
+    "name": "review_monitoring_alerts",
+    "sha256": "54ee6ae5a662e6ba378acd3d708fdf62525d140a4155a8344436fef6329ed2dc",
+    "appliedOnce": true,
+    "transaction": "committed",
+    "historicalVersionsUnchanged": 47,
+    "versionsAfter": 48
+  },
+  "scheduler": {
+    "at": "2026-10-16T17:29:52.105Z",
+    "authentication": [
+      {
+        "authorization": "absent",
+        "status": 401,
+        "elapsedMs": 1173
+      },
+      {
+        "authorization": "invalid",
+        "status": 401,
+        "elapsedMs": 376
+      },
+      {
+        "authorization": "dedicated_secret",
+        "status": 200,
+        "elapsedMs": 326,
+        "enabled": false,
+        "processed": 0
+      },
+      {
+        "path": "/api/admin/review-monitor",
+        "authorization": "absent",
+        "status": 401
+      },
+      {
+        "path": "/api/review-monitor",
+        "authorization": "absent",
+        "status": 401
+      }
+    ],
+    "timer": {
+      "installed": true,
+      "enabled": true,
+      "unit": "meulocal-review-monitor.timer",
+      "nextExecution": "Fri 2026-10-16 18:00:00 UTC",
+      "lastTrigger": ""
+    },
+    "execution": {
+      "result": "success",
+      "exitStatus": 0,
+      "started": "Fri 2026-10-16 17:29:51 UTC",
+      "ended": "Fri 2026-10-16 17:29:51 UTC",
+      "action": "disabled_no_op"
+    },
+    "commercialEnvChanged": false,
+    "realProviderCalls": 0,
+    "realSends": 0
+  },
+  "checks": {
+    "focused": 45,
+    "adjacent": 28,
+    "postgresFullPublicSchemaCases": 11,
+    "pglite": "PASS",
+    "typescript": "PASS",
+    "lint": "PASS_with_two_existing_hook_warnings",
+    "build": "PASS",
+    "browserLocal": "PASS_synthetic_UI",
+    "browserProduction": "PASS_public_readonly",
+    "ci": "PASS",
+    "secretScan": "PASS"
+  },
+  "pilotStages": {
+    "googleDetection": "NOT_VERIFIED",
+    "realModelClassification": "NOT_VERIFIED",
+    "realAlertPersistence": "NOT_VERIFIED",
+    "ghlAcceptance": "NOT_VERIFIED",
+    "emailDelivery": "NOT_VERIFIED",
+    "postingToNotificationWithin3h": "NOT_VERIFIED"
+  },
+  "operationalActivation": "NO_GO",
+  "commercialSends": 0,
+  "originalPendingEntriesPreserved": 78
+}

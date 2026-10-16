@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-16T17:30:38.484Z",
+  "status": "PASS",
+  "url": "https://meulocal.ia.br",
+  "checks": [
+    "public_copy_validation",
+    "three_hours_from_posting_requirement",
+    "no_operational_compliance_claim"
+  ],
+  "writes": 0,
+  "blocked": []
+}

@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-16T17:33:15.588Z",
+  "id": "dpl_21uTNPoP3PGmH7ofMofzVTJKdWoJ",
+  "state": "READY",
+  "url": "https://meulocal.ia.br",
+  "deploymentUrl": "https://meulocal-omnw83nrs-denisonishi-8130s-projects.vercel.app",
+  "commit": "821e29e0b1b4191c1ede3b4478da3cfc6b705473",
+  "branch": "main",
+  "productionAliasConfirmed": true
+}
