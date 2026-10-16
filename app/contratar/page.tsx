@@ -1,11 +1,18 @@
 'use client';
 
 import {FormEvent,useEffect,useState} from 'react';
+import {getPaymentPlan,PaymentPlanId} from '@/lib/payments/plans';
 import { ArrowLeft, ArrowRight, Check, MapPin, Star, TrendingUp } from 'lucide-react';
 
 type CheckoutContext={businessId:string|null;leadId:string|null;name:string;email:string;phone:string;businessName?:string};
 
 export default function ContratarPage(){
+  const [planId,setPlanId]=useState<PaymentPlanId>('essencial');
+  const [planValid,setPlanValid]=useState(true);
+  const [availablePlans,setAvailablePlans]=useState<string[]>([]);
+  const [availabilityError,setAvailabilityError]=useState(false);
+  const plan=getPaymentPlan(planId)!;
+  const checkoutEnabled=planValid&&availablePlans.includes(planId);
   const [name,setName]=useState('');
   const [email,setEmail]=useState('');
   const [phone,setPhone]=useState('');
@@ -19,19 +26,24 @@ export default function ContratarPage(){
 
   useEffect(()=>{
     const params=new URLSearchParams(window.location.search);setPaymentState(params.get('payment'));
+    const chosen=params.get('plan');if(chosen){const selected=getPaymentPlan(chosen);if(selected)setPlanId(selected.id);else setPlanValid(false)}
+    let disposed=false;
+    fetch('/api/payments/plans',{cache:'no-store'}).then(async r=>{if(!r.ok)throw Error();const data=await r.json();if(!Array.isArray(data.plans))throw Error();if(!disposed)setAvailablePlans(data.plans.filter((p:any)=>p.checkoutEnabled===true).map((p:any)=>p.id))}).catch(()=>{if(!disposed)setAvailabilityError(true)});
     try{
       const raw=sessionStorage.getItem('meulocal_checkout_context');
       if(raw){const c=JSON.parse(raw) as CheckoutContext;setName(c.name||'');setEmail(c.email||'');setPhone(c.phone||'');setBusinessId(c.businessId||null);setLeadId(c.leadId||null);setBusinessName(c.businessName||'');}
     }catch{}
     setReady(true);
+    return ()=>{disposed=true};
   },[]);
 
   async function startCheckout(e:FormEvent){
     e.preventDefault(); setError('');
+    if(!checkoutEnabled){setError('A contratação deste plano ainda não está liberada.');return}
     if(!businessId||!leadId){setError('Faça o diagnóstico gratuito antes de iniciar a assinatura.');return}
     setLoading(true);
     try{
-      const res=await fetch('/api/payments/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,phone,businessId,leadId})});
+      const res=await fetch('/api/payments/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,phone,businessId,leadId,planId})});
       const data=await res.json();
       if(!res.ok)throw new Error(data.error||'Não foi possível iniciar o pagamento.');
       window.location.href=data.checkoutUrl;
@@ -51,7 +63,7 @@ export default function ContratarPage(){
       <p>{businessName?<>Você está ativando o MeuLocal para <strong>{businessName}</strong>.</>:<>Ative o MeuLocal e comece a transformar sua presença no Google em mais confiança e mais oportunidades de venda.</>}</p>
       {paymentState==='processing'&&<div className="loginSuccess">Pagamento enviado. A ativação será liberada somente após a confirmação do Asaas.</div>}
       {paymentState==='canceled'&&<div className="loginError">Pagamento cancelado. Você pode tentar novamente quando quiser.</div>}
-      {paymentState==='expired'&&<div className="loginError">Este checkout expirou. Gere uma nova cobrança para continuar.</div>}
+      {paymentState==='expired'&&<div className="loginError">Este checkout expirou. Confira a solicitação existente antes de tentar novamente.</div>}
 
       <div className="checkoutCard">
         <div className="checkoutBenefits">
@@ -60,15 +72,21 @@ export default function ContratarPage(){
         </div>
 
         <form className="checkoutAction" onSubmit={startCheckout}>
-          <span>Plano MeuLocal</span>
-          <h2>R$ 397/mês</h2>
+          <label>Plano<select style={{width:'100%',padding:12,borderRadius:8,border:'1px solid #dce3db',background:'#fff'}} value={planId} onChange={e=>{setPlanId(e.target.value as PaymentPlanId);setPlanValid(true);setError('')}} disabled={loading}>
+            <option value="essencial">Essencial</option><option value="inteligencia">Inteligência</option>
+          </select></label>
+          <span>MeuLocal {plan.name}</span>
+          <h2>{(plan.amountCents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}/mês</h2>
+          <p>{planId==='essencial'?'Automatize os pedidos de avaliação e acompanhe sua reputação.':'Tudo do Essencial, mais análise de temas e resumo semanal com prioridades. Camada de inteligência em desenvolvimento.'}</p>
+          {!planValid&&<div className="loginError" role="alert">O plano informado não é válido. Escolha um dos planos abaixo.</div>}
+          {!checkoutEnabled&&<p role="status">{availabilityError?'Não foi possível conferir a disponibilidade. Tente novamente mais tarde.':'Plano em preparação. Contratação ainda não liberada.'}</p>}
           <p>Sem reunião. Sem complicação. Cancele quando quiser.</p>
           <label>Nome<input value={name} onChange={e=>setName(e.target.value)} required autoComplete="name"/></label>
           <label>E-mail<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email" readOnly={Boolean(leadId)}/></label>
           <label>WhatsApp<input value={phone} onChange={e=>setPhone(e.target.value)} autoComplete="tel" placeholder="(11) 99999-9999"/></label>
           {!businessId||!leadId?<div className="loginError">Para ativar, comece pelo diagnóstico gratuito para vincular corretamente sua empresa.</div>:null}
           {error&&<small role="alert">{error}</small>}
-          <button className="primary checkoutButton" type="submit" disabled={loading||!businessId||!leadId}>{loading?'Abrindo pagamento...':<>Ativar MeuLocal <ArrowRight size={18}/></>}</button>
+          <button className="primary checkoutButton" type="submit" disabled={loading||!checkoutEnabled||!businessId||!leadId}>{loading?'Abrindo pagamento...':!checkoutEnabled?'Contratação em preparação':<>Assinar {plan.name} <ArrowRight size={18}/></>}</button>
           {!businessId||!leadId?<a className="linkButton" href="/diagnostico">Fazer diagnóstico grátis</a>:<small>Pagamento seguro processado pelo Asaas. A ativação ocorre após confirmação do pagamento.</small>}
         </form>
       </div>
