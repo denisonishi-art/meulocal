@@ -25,6 +25,10 @@ jobs:
         run: |
           node --test scripts/check-review-monitor.cjs scripts/check-review-monitor-routes.cjs scripts/check-review-monitor-release.cjs scripts/check-customer-dashboard.cjs
           node scripts/check-review-monitor-database.cjs
+      - name: Payment plan contracts
+        run: |
+          node --test scripts/check-payment-plans.cjs
+          node scripts/check-payment-plans-database.cjs
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Build

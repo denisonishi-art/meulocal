@@ -53,7 +53,7 @@ export async function createRecurringCheckout(input: CreateRecurringCheckoutInpu
       'User-Agent': 'MeuLocal/1.0',
     },
     body: JSON.stringify({
-      billingTypes: ['CREDIT_CARD', 'PIX'],
+      billingTypes: ['CREDIT_CARD'],
       chargeTypes: ['RECURRENT'],
       minutesToExpire: 60,
       externalReference: input.externalReference,

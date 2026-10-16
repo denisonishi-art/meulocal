@@ -1,15 +1,17 @@
 export const meulocalBusinessRules = {
   commercial: {
-    officialMonthlyPriceBRL: 397,
-    founderMonthlyPriceBRL: 297,
-    founderPriceIsException: true,
-    publicOfferName: 'MeuLocal',
+    officialMonthlyPriceBRL: 189,
+    founderMonthlyPriceBRL: null,
+    founderPriceIsException: false,
+    publicOfferName: 'MeuLocal Essencial',
+    plans: {essencial:{monthlyPriceBRL:189,status:'preparation'},inteligencia:{monthlyPriceBRL:289,status:'development'}},
+    legacyMonthlyPriceBRL:397,
     promise: 'Mais avaliações. Mais presença no Google. Mais clientes locais.',
     products: {
       reputation: {
-        name: 'MeuLocal',
-        status: 'active',
-        monthlyPriceBRL: 397,
+        name: 'MeuLocal Essencial',
+        status: 'preparation',
+        monthlyPriceBRL: 189,
         objective: 'Reputação no Google, crescimento de avaliações e inteligência local.',
       },
       seo: {
@@ -36,8 +38,8 @@ export const meulocalBusinessRules = {
   payments: {
     primaryProviderBR: 'asaas',
     useProviderAbstraction: true,
-    monthlyPriceBRL: 397,
-    acceptedCheckoutMethods: ['CREDIT_CARD','PIX'] as const,
+    monthlyPriceBRL: 189,
+    acceptedCheckoutMethods: ['CREDIT_CARD'] as const,
     billingCycle: 'MONTHLY',
     webhookIsSourceOfTruth: true,
     successRedirectNeverConfirmsPayment: true,

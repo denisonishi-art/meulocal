@@ -1,12 +1,12 @@
 import {getAsaasCustomerEmail} from './asaas';
+import {sharedLinkForEvent} from './plans';
 import {ensureCustomerUser,findCustomerUser} from './customer-user';
 import {paidAsaasEvents,supportedAsaasEvents,normalizePayerEmail} from './asaas-event';
 
-const knownErrors=['payment_event_payload_conflict','legacy_payment_reconciliation_required','payment_checkout_not_matched','payment_payer_email_required','payment_payer_email_conflict','payment_payer_business_ambiguous','payment_checkout_ambiguous','payment_checkout_scope_conflict','payment_subscription_superseded','payment_amount_unverified','payment_status_unverified','payment_checkout_anchor_required','payment_provider_binding_conflict','payment_user_scope_conflict','payment_activation_lease_expired','customer_user_lookup_failed','customer_user_pagination_unverified','customer_user_creation_unverified','customer_invitation_reconciliation_required'];
+const knownErrors=['payment_existing_contract','payment_event_payload_conflict','legacy_payment_reconciliation_required','payment_checkout_not_matched','payment_payer_email_required','payment_payer_email_conflict','payment_payer_business_ambiguous','payment_checkout_ambiguous','payment_checkout_scope_conflict','payment_subscription_superseded','payment_checkout_plan_conflict','payment_amount_unverified','payment_status_unverified','payment_checkout_anchor_required','payment_provider_binding_conflict','payment_user_scope_conflict','payment_activation_lease_expired','customer_user_lookup_failed','customer_user_pagination_unverified','customer_user_creation_unverified','customer_invitation_reconciliation_required'];
 const operationalErrors=['payment_database_unavailable','payment_receipt_save_failed','customer_user_lookup_budget_exhausted','customer_email_invalid'];
 function code(error:any,fallback:string){const message=String(error?.message||error);return [...knownErrors,...operationalErrors].find(value=>message.includes(value))||fallback}
 async function rpc(db:any,name:string,args:any){const result=await db.rpc(name,args);if(result.error)throw Error(code(result.error,'payment_database_unavailable'));return result.data}
-const sharedLink=()=>process.env.ASAAS_SHARED_PAYMENT_LINK_ID||'lay9mi0r83n79lzn';
 function completed(record:any){return {ok:true,stored:true,eventId:record.external_event_id,processing:'completed',duplicate:record.duplicate===true,...(record.activation_outcome==='ignored'?{ignored:true}:{}) ,httpStatus:200}}
 
 /** A recovery caller may link verified users, but cannot issue a new invitation by default. */
@@ -25,12 +25,12 @@ export async function processStoredAsaasEvent(db:any,record:any,{allowInvite=fal
    if(event.eventType==='CHECKOUT_CREATED')return completed(record);
   }
   let resolved:any;
-  try{resolved=await rpc(db,'resolve_payment_checkout',{p_event_id:record.id,p_shared_link_id:sharedLink(),p_payer_email:record.resolved_customer_email||event.payerEmail})}
+  try{resolved=await rpc(db,'resolve_payment_checkout',{p_event_id:record.id,p_shared_link_id:sharedLinkForEvent(event.paymentLink),p_payer_email:record.resolved_customer_email||event.payerEmail})}
   catch(error){
    if(code(error,'')!=='payment_payer_email_required'||!event.customerId)throw error;
    const email=normalizePayerEmail(await getAsaasCustomerEmail(event.customerId));
    if(!email)throw Error('payment_payer_email_required');
-   resolved=await rpc(db,'resolve_payment_checkout',{p_event_id:record.id,p_shared_link_id:sharedLink(),p_payer_email:email});
+   resolved=await rpc(db,'resolve_payment_checkout',{p_event_id:record.id,p_shared_link_id:sharedLinkForEvent(event.paymentLink),p_payer_email:email});
   }
   if(resolved?.ignored){
    if(!await rpc(db,'ignore_payment_event',{p_event_id:record.id,p_reason:resolved.reason}))throw Error('payment_receipt_save_failed');
@@ -42,7 +42,7 @@ export async function processStoredAsaasEvent(db:any,record:any,{allowInvite=fal
    if(!saved)return {ok:false,stored:true,processing:'leased',httpStatus:202};
    return completed(record);
   }
-  const job=await rpc(db,'claim_payment_activation',{p_event_id:record.id,p_checkout_id:resolved.checkoutId,p_shared_link_id:sharedLink()});
+  const job=await rpc(db,'claim_payment_activation',{p_event_id:record.id,p_checkout_id:resolved.checkoutId,p_shared_link_id:sharedLinkForEvent(event.paymentLink)});
   if(!job)return {ok:false,stored:true,processing:'leased_or_backoff',httpStatus:202};
   if(job.state==='completed')return completed({...record,duplicate:true});
   if(!job.lease||job.account?.business_id!==job.checkout?.business_id||job.account?.id!==job.checkout?.customer_account_id)throw Error('payment_checkout_scope_conflict');
@@ -64,7 +64,7 @@ export async function processStoredAsaasEvent(db:any,record:any,{allowInvite=fal
  }catch(error){
   const reason=code(error,'payment_processing_unavailable');
   try{if(lease)await rpc(db,'release_payment_activation',{p_event_id:record.id,p_lease:lease,p_error:reason});else await rpc(db,'defer_payment_event',{p_event_id:record.id,p_error:reason})}catch{/* The journal and an expiring lease still survive an unavailable database. */}
-  const conflict=['payment_event_payload_conflict','legacy_payment_reconciliation_required','payment_amount_unverified','payment_status_unverified','payment_checkout_scope_conflict','payment_subscription_superseded','payment_provider_binding_conflict'].includes(reason);
+  const conflict=['payment_existing_contract','payment_event_payload_conflict','legacy_payment_reconciliation_required','payment_checkout_plan_conflict','payment_amount_unverified','payment_status_unverified','payment_checkout_scope_conflict','payment_subscription_superseded','payment_provider_binding_conflict'].includes(reason);
   return {ok:false,stored:true,eventId:record.external_event_id,error:reason,httpStatus:conflict?409:503};
  }
 }
