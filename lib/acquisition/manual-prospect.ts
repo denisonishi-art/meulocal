@@ -45,6 +45,7 @@ export async function manualRecipientReadiness(db:any,target:ProspectRecipient){
   const token=await getLocationAccessToken(MANUAL_LOCATION,7000),contact=await findExactRecipient(token,target);
   if(contact){
    if(contact.tags?.includes('meulocal:opt-out'))return blocked('Destinatário solicitou não receber contatos.');
+   if(contact.tags?.some((tag:string)=>['meulocal:prospectar','follow-up'].includes(tag)))return blocked('Contato já vinculado a uma régua no HighLevel; confira antes de enviar.');
    const stop=await providerGate({locationId:MANUAL_LOCATION,contactId:contact.id,channel:target.channel,recipient:target.channel==='email'?target.recipient:target.recipient.replace(/\D/g,'')},token,true,budget);
    if(stop)return blocked('Destinatário com restrição de contato no HighLevel.');
   }
