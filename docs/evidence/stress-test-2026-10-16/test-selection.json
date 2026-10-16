@@ -1,0 +1,46 @@
+{
+  "run": [
+    "scripts/check-controlled-inbound.cjs",
+    "scripts/check-customer-dashboard.cjs",
+    "scripts/check-payment-user.cjs",
+    "scripts/check-review-delivery-route.cjs",
+    "scripts/check-manual-intent.cjs",
+    "scripts/check-review-monitor.cjs",
+    "scripts/check-supervised-recovery.cjs",
+    "scripts/check-customer-journey.cjs",
+    "scripts/check-acquisition-gates.cjs",
+    "scripts/check-customer-dashboard-api.cjs",
+    "scripts/check-review-monitor-release.cjs",
+    "scripts/check-admin-supervision.cjs",
+    "scripts/check-controlled-reconciliation.cjs",
+    "scripts/check-review-monitor-routes.cjs"
+  ],
+  "notRun": [
+    "scripts/check-opendots-outbox.cjs",
+    "scripts/check-onboarding-status.cjs",
+    "scripts/check-payment-database.cjs",
+    "scripts/check-prospect-preparation.cjs",
+    "scripts/check-review-delivery-database.cjs",
+    "scripts/check-acquisition-journal.cjs",
+    "scripts/check-acquisition-delivery.cjs",
+    "scripts/check-checkout-reservation.cjs",
+    "scripts/check-payment-lifecycle.cjs",
+    "scripts/check-platform-rollback.cjs",
+    "scripts/check-review-monitor-full-schema.cjs",
+    "scripts/check-review-webhook.cjs",
+    "scripts/check-operational-gates.cjs",
+    "scripts/check-platform-browser.cjs",
+    "scripts/check-customer-activation.cjs",
+    "scripts/check-opendots-database.cjs",
+    "scripts/check-acquisition-routes.cjs",
+    "scripts/check-review-delivery.cjs",
+    "scripts/check-customer-access.cjs",
+    "scripts/check-controlled-inbox-database.cjs"
+  ],
+  "separateRun": [
+    "scripts/check-review-monitor-database.cjs",
+    "scripts/check-stress-boundaries.cjs",
+    "scripts/stress-platform.cjs"
+  ],
+  "selectionNote": "Existing scripts requiring the owned Docker/PostgreSQL platform or browser were not bypassed. PGlite tests ran separately."
+}

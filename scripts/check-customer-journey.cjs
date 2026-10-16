@@ -34,8 +34,8 @@ test('network failure during completion is visible and never completes',async()=
 test('confirmed pending payment remains blocked in the existing access gate',async()=>{
  const f=fixture({initial:true,step:0,status:200,canStart:false});const page=await f.mount();assert.ok(f.text(page).includes('Aguardando confirmação do pagamento'));assert.ok(!f.text(page).includes('Pagamento confirmado'));
 });
-test('Google can be deferred without claiming a connection',async()=>{
- const f=fixture({step:1,status:200});await f.button('Fazer isso depois')();assert.equal(f.states[0],2);assert.equal(f.states[4],false);
+test('mandatory Google cannot be deferred or claimed connected without OAuth',async()=>{
+ const f=fixture({step:1,status:200});assert.throws(()=>f.button('Fazer isso depois'),/button_not_found/);assert.equal(f.states[0],1);assert.equal(f.states[4],false);assert.equal(f.calls.length,0);
 });
 test('completion without OAuth does not claim Google or automation active',async()=>{
  const f=fixture({status:200});await f.button('Concluir configuração')();const text=f.text(f.render());assert.ok(!text.includes('Seu Google está conectado'));assert.ok(!text.includes('sua automação está configurada'));assert.ok(text.includes('Configuração concluída.'));
