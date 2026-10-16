@@ -57,5 +57,22 @@ export async function manualRecipientReadiness(db:any,target:ProspectRecipient){
   }
   if(process.env.MEULOCAL_MANUAL_OUTREACH_ENABLED!=='true')return blocked('Canal identificado; envio manual ainda desativado.');
   return {canSend:true,reason:target.channel==='email'?'E-mail e domínio verificados. Envio somente com sua confirmação.':'WhatsApp confirmado com conversa recente. Envio somente com sua confirmação.',sendToken:signRecipient(target),recipient:target.recipient,channel:target.channel};
- }catch{return blocked('Não foi possível concluir a verificação do canal. Tente novamente.');}
+ }catch(error){
+  const code=error instanceof Error?error.message:'';
+  const reasons:Record<string,string>={
+   conversation_scope_incomplete:'Histórico HighLevel incompleto. Envio indisponível até concluir a verificação.',
+   acquisition_identity_unverified:'Identidade ou configuração de bloqueio do contato não confirmada no HighLevel.',
+   acquisition_dnd_unverified:'Configuração de bloqueio do canal não confirmada no HighLevel.',
+   acquisition_history_unverified:'Histórico do contato não confirmado no HighLevel.',
+   'HighLevel history page invalid':'Resposta de histórico HighLevel inválida.',
+   'HighLevel history pagination unverified':'Paginação do histórico HighLevel não confirmada.',
+   highlevel_http_401:'Credencial HighLevel recusada. Envio indisponível.',
+   highlevel_http_403:'Permissão de leitura HighLevel insuficiente. Envio indisponível.',
+   highlevel_http_400:'Consulta de histórico recusada pelo HighLevel. Envio indisponível.',
+   highlevel_http_422:'Contrato de consulta recusado pelo HighLevel. Envio indisponível.',
+   verification_timeout:'HighLevel não respondeu a tempo. Verifique novamente o canal.'
+  };
+  return blocked(reasons[code]||'Serviço de verificação indisponível. Verifique novamente o canal.');
+ }
+
 }
