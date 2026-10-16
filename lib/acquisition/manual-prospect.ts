@@ -62,6 +62,7 @@ export async function manualRecipientReadiness(db:any,target:ProspectRecipient){
   const reasons:Record<string,string>={
    conversation_scope_incomplete:'Histórico HighLevel incompleto. Envio indisponível até concluir a verificação.',
    acquisition_identity_unverified:'Identidade ou configuração de bloqueio do contato não confirmada no HighLevel.',
+   acquisition_dnd_missing:'HighLevel não retornou o estado de bloqueio deste canal. Não é possível enviar.',
    acquisition_dnd_unverified:'Configuração de bloqueio do canal não confirmada no HighLevel.',
    acquisition_history_unverified:'Histórico do contato não confirmado no HighLevel.',
    'HighLevel history page invalid':'Resposta de histórico HighLevel inválida.',

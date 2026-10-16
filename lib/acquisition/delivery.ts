@@ -30,15 +30,28 @@ export async function providerGate(payload:any,token:string,manual:boolean,budge
  // Final provider read follows history and precedes the durable dispatch gate.
  const live=await getOperationalContact({token,contactId:payload.contactId,timeoutMs:budget()});
  const identity=payload.channel==='email'?String(live?.email||'').trim().toLowerCase():String(live?.phone||'').replace(/\D/g,'');
- if(live?.id!==payload.contactId||live.locationId!==payload.locationId||identity!==payload.recipient||typeof live.dnd!=='boolean')throw Error('acquisition_identity_unverified');
- let dnd=live.dnd;
- if(live.dndSettings!==undefined&&(live.dndSettings===null||typeof live.dndSettings!=='object'||Array.isArray(live.dndSettings)))throw Error('acquisition_dnd_unverified');
- for(const [key,value] of Object.entries(live.dndSettings||{}))if(key.toLowerCase().replace(/[^a-z]/g,'')===payload.channel){
+ if(live?.id!==payload.contactId||live.locationId!==payload.locationId||identity!==payload.recipient)throw Error('acquisition_identity_unverified');
+ const dnd=operationalDnd(live,payload.channel);
+ return dnd?{kind:'opted_out',id:'provider-dnd:'+payload.contactId,source:'provider_dnd',at:new Date().toISOString()}:reply;
+}
+
+/** Explicit channel settings can represent DND when the legacy global boolean is omitted.
+ * Missing or malformed settings never mean permission. */
+export function operationalDnd(contact:any,channel:string):boolean{
+ if(contact.dnd===true||contact.tags?.includes('meulocal:opt-out'))return true;
+ if(contact.dnd!==undefined&&typeof contact.dnd!=='boolean')throw Error('acquisition_dnd_unverified');
+ if(contact.dndSettings!==undefined&&(contact.dndSettings===null||typeof contact.dndSettings!=='object'||Array.isArray(contact.dndSettings)))throw Error('acquisition_dnd_unverified');
+ let inactive=false;
+ for(const [key,value] of Object.entries(contact.dndSettings||{})){
+  const normalized=key.toLowerCase().replace(/[^a-z]/g,'');
+  if(normalized!==channel&&normalized!=='all')continue;
   const status=(value as {status?:unknown})?.status;
   if(status!=='active'&&status!=='inactive')throw Error('acquisition_dnd_unverified');
-  if(status==='active')dnd=true;
+  if(status==='active')return true;
+  if(normalized===channel)inactive=true;
  }
- return dnd?{kind:'opted_out',id:'provider-dnd:'+payload.contactId,source:'provider_dnd',at:new Date().toISOString()}:reply;
+ if(contact.dnd===false||inactive)return false;
+ throw Error('acquisition_dnd_missing');
 }
 
 /** Single provider send, fenced before transport. Unknown acceptance never retries. */

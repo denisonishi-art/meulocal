@@ -111,7 +111,18 @@ export async function getOperationalMessage(args:{token:string;messageId:string;
 
 export async function getOperationalContact(args:{token:string;contactId:string;timeoutMs?:number}){
  const res=await fetch(API+'/contacts/'+encodeURIComponent(args.contactId),{headers:{Authorization:'Bearer '+args.token,Accept:'application/json',Version:'2021-07-28'},cache:'no-store',signal:AbortSignal.timeout(args.timeoutMs||10000)});
- const data=await parse(res);return data.contact;
+ const data=await parse(res),contact=data.contact;
+ if(contact?.dnd!==undefined)return contact;
+ // Some contact-detail projections omit suppression fields. Read them from the
+ // documented exact contact search instead; absence never implies DND=false.
+ const field=contact?.email?'email':contact?.phone?'phone':null;
+ if(!field)return contact;
+ const value=String(contact[field]).trim();
+ const search=await fetch(API+'/contacts/search',{method:'POST',headers:{Authorization:'Bearer '+args.token,Accept:'application/json','Content-Type':'application/json',Version:'2021-07-28'},body:JSON.stringify({locationId:contact.locationId,filters:[{field,operator:'eq',value}],page:1,pageLimit:100}),cache:'no-store',signal:AbortSignal.timeout(args.timeoutMs||10000)});
+ const result=await parse(search),matches=result.contacts;
+ if(!Array.isArray(matches)||matches.length!==1||matches[0]?.id!==args.contactId||matches[0]?.locationId!==contact.locationId)throw Error('acquisition_dnd_unverified');
+ const scoped=matches[0];
+ return {...contact,...(typeof scoped.dnd==='boolean'?{dnd:scoped.dnd}:{}),...(contact.dndSettings===undefined&&scoped.dndSettings!==undefined?{dndSettings:scoped.dndSettings}:{})};
 }
 
 /** Page metadata is required to reconcile every unseen provider ID to a durable cursor. */
