@@ -1,0 +1,20 @@
+.section{scroll-margin-top:24px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:40px;align-items:stretch}
+.card{display:flex;flex-direction:column;background:#fff;border:1px solid #dce3d9;border-radius:20px;padding:36px;min-width:0}
+.featured{background:#f2f6e8;border:2px solid #8ba42a;padding:35px}
+.kicker{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#526129}
+.card h3{font-size:30px;letter-spacing:-1px;margin:18px 0 12px}
+.description{font-size:16px;line-height:1.6;color:#59665b;margin:0;min-height:52px}
+.price{font-size:48px;font-weight:800;letter-spacing:-2px;margin:26px 0}
+.price span{font-size:15px;font-weight:400;letter-spacing:0;color:#59665b;margin-left:8px}
+.included{font-weight:700;margin:0 0 16px}
+.features{display:grid;gap:17px;list-style:none;padding:0;margin:0 0 28px;line-height:1.5;font-size:15px}
+.features li{display:flex;gap:10px;align-items:flex-start}
+.features svg{flex-shrink:0;color:#536800;margin-top:2px}
+.features small{display:block;color:#59665b;font-size:12px;margin-top:4px}
+.status{font-size:13px;line-height:1.5;color:#526129;margin:0 0 24px}
+.card>a{margin-top:auto;line-height:1.5;text-align:center}
+.card>a:focus-visible{outline:3px solid #536800;outline-offset:4px}
+.notes{max-width:920px;margin-top:24px;color:#59665b;font-size:13px;line-height:1.7}
+.notes p{margin:10px 0}
+@media(max-width:720px){.grid{grid-template-columns:1fr;gap:20px}.card{padding:26px}.featured{padding:25px}.description{min-height:0}.price{font-size:44px}.card>a{width:100%}}

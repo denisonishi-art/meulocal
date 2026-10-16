@@ -1,3 +1,4 @@
+import plansStyles from './plans.module.css';
 import { ArrowRight, BarChart3, Bot, Check, Link2, MapPin, Search, Star, TrendingUp, Upload, Users } from 'lucide-react';
 
 const benefits = [
@@ -22,7 +23,23 @@ const afterHiring = [
   ['Você acompanha os resultados', 'Entre no MeuLocal quando quiser e veja a evolução da sua reputação.']
 ];
 
+const planFeatures = [
+  'Importação da sua base por CSV, sem integrar CRM',
+  'Pedidos e lembretes automáticos de avaliação',
+  'Perfil da Empresa no Google conectado, obrigatório',
+  'Painel com nota e evolução das avaliações',
+];
+
+const intelligenceFeatures = [
+  'IA identifica elogios e problemas recorrentes',
+  'Compara os temas com o período anterior',
+  'Resumo semanal com até três ações prioritárias',
+  'Recomendações sustentadas pelas avaliações',
+];
+
 const faqs = [
+  ['Qual é a diferença entre os planos?', 'O Essencial automatiza os pedidos de avaliação e o acompanhamento da reputação. O Inteligência acrescenta análise de temas, comparação entre períodos e um resumo semanal com até três ações prioritárias. Essa camada está em desenvolvimento; a contratação dos novos planos será liberada após validação.'],
+  ['E se minha empresa tiver poucas avaliações?', 'O plano Inteligência deverá informar quando não houver dados suficientes para concluir uma tendência. As recomendações serão sustentadas pelas avaliações disponíveis, sem inventar padrões.'],
   ['O MeuLocal cria avaliações?', 'Não. O MeuLocal facilita o pedido de avaliações reais aos clientes da sua própria empresa.'],
   ['De onde vêm os clientes que recebem os pedidos?', 'Da sua empresa. Você disponibiliza sua própria base de clientes ou contatos elegíveis; o MeuLocal não busca consumidores fora da sua operação.'],
   ['Preciso aprender a usar um software?', 'Não. O assistente MeuLocal conduz a configuração e a maior parte da operação acontece automaticamente.'],
@@ -53,6 +70,7 @@ export default function Home() {
         <div className="heroActions">
           <a className="primary" href="/diagnostico">Descubra sua Nota de Presença Local grátis <ArrowRight size={18}/></a>
           <span className="micro"><Check size={15}/> Análise simples e objetiva</span>
+          <a className="navCta" href="#planos">Conhecer os planos <ArrowRight size={16}/></a>
         </div>
         <div className="dashboard" aria-label="Exemplo de evolução local">
           <div className="dashHead"><div><span className="dot"></span>Seu crescimento local</div><span>Dados ilustrativos · Últimos 30 dias</span></div>
@@ -108,6 +126,45 @@ export default function Home() {
       </section>
 
             <section className="compare"><div className="container compareGrid"><div><div className="eyebrow light"><span></span>Inteligência competitiva</div><h2>Você sabe como está comparado às empresas que disputam os mesmos clientes?</h2><p>Dependendo do seu mercado, isso pode significar negócios próximos, empresas da mesma região ou concorrentes que aparecem para as mesmas buscas no Google.</p><ul><li><Check/>Diferença de avaliações</li><li><Check/>Disputa por buscas e intenção</li><li><Check/>Qualidade do site e SEO Local</li><li><Check/>Autoridade e oportunidades</li></ul></div><div className="score"><small>NOTA DE PRESENÇA LOCAL</small><div className="scoreValue">42<span>/100</span></div><div className="scoreBar"><i style={{width:'42%'}}></i></div><strong>Presença fraca · Potencial de ganho: Alto</strong><p>Quanto menor a nota, mais atenção sua presença precisa. O potencial mostra o espaço real para ganhar dos concorrentes relevantes para o seu mercado.</p></div></div></section>
+
+      <section id="planos" className={`section container ${plansStyles.section}`} aria-labelledby="plans-heading">
+        <div className="sectionIntro">
+          <div className="eyebrow"><span></span>Planos MeuLocal</div>
+          <h2 id="plans-heading">Automatize sua rotina.<br/>Entenda onde melhorar.</h2>
+          <p>Escolha entre acompanhar sua reputação e transformar as avaliações em prioridades para o seu negócio.</p>
+        </div>
+        <div className={plansStyles.grid}>
+          <article className={plansStyles.card} aria-labelledby="essential-heading">
+            <span className={plansStyles.kicker}>Automação da rotina</span>
+            <h3 id="essential-heading">Essencial</h3>
+            <p className={plansStyles.description}>Automatize os pedidos de avaliação e acompanhe sua reputação.</p>
+            <p className={plansStyles.price}>R$189<span>/mês</span></p>
+            <ul className={plansStyles.features}>
+              {planFeatures.map(feature=><li key={feature}><Check size={18} aria-hidden="true"/><span>{feature}</span></li>)}
+              <li><Check size={18} aria-hidden="true"/><span>Monitoramento e alertas ao responsável <small>Em validação · meta de até 3 horas*</small></span></li>
+            </ul>
+            <a className="primary" href="/diagnostico">Começar pelo diagnóstico grátis <ArrowRight size={16} aria-hidden="true"/></a>
+          </article>
+          <article className={`${plansStyles.card} ${plansStyles.featured}`} aria-labelledby="intelligence-heading">
+            <span className={plansStyles.kicker}>Inteligência para melhorar</span>
+            <h3 id="intelligence-heading">Inteligência</h3>
+            <p className={plansStyles.description}>Descubra o que seus clientes estão dizendo e onde melhorar.</p>
+            <p className={plansStyles.price}>R$289<span>/mês</span></p>
+            <p className={plansStyles.included}>Tudo do Essencial, mais:</p>
+            <ul className={plansStyles.features}>
+              {intelligenceFeatures.map(feature=><li key={feature}><Check size={18} aria-hidden="true"/><span>{feature}</span></li>)}
+            </ul>
+            <p className={plansStyles.status}>Análise de temas e resumo semanal em desenvolvimento.</p>
+            <a className="primary" href="/diagnostico">Conhecer pelo diagnóstico grátis <ArrowRight size={16} aria-hidden="true"/></a>
+          </article>
+        </div>
+        <div className={plansStyles.notes}>
+          <p><strong>Nos dois planos:</strong> o MeuLocal monitora e avisa. Nenhuma resposta é escrita ou publicada no Google.</p>
+          <p>* Monitoramento em validação: consulta horária planejada e meta de aviso em até 3 horas a partir da postagem da avaliação, com integração Google e canal de alerta ativos. O prazo ainda não foi comprovado em operação real.</p>
+          <p>Os novos planos estão em preparação. A contratação será liberada após validação das entregas e configuração do pagamento. O diagnóstico continua gratuito.</p>
+          <p>No Inteligência, dados insuficientes serão informados; o relatório não apresentará tendências sem evidência.</p>
+        </div>
+      </section>
 
       <section className="section container afterHire">
         <div className="sectionIntro">
