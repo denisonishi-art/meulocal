@@ -59,7 +59,7 @@ export default function AdminClient(){
   const contact=contactCheck.find(x=>x.id===p.id);
   if(!contact?.canSend||!contact.sendToken){setMsg('Verifique o canal antes de enviar.');return}
   if(!window.confirm('Enviar UMA mensagem para '+p.name+' por '+(contact.channel==='email'?'e-mail':'WhatsApp')+' em '+contact.recipient+'?\n\n'+p.message+'\n\nNenhuma cadência automática será ativada.'))return;
-  setBusy(true);setMsg('Preparando destinatário e conferindo o envio manual...');
+  setBusy(true);setManualRetryable(s=>({...s,[p.id]:false}));setMsg('Preparando destinatário e conferindo o envio manual...');
   try{
    const attempt=await getManualAttempt(window.sessionStorage,{leadId:'places:'+p.id+':'+contact.recipient,channel:contact.channel==='email'?'email':'whatsapp',message:p.message});
    const response=await fetch('/api/agents/prospect/send-manual',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sendToken:contact.sendToken,requestId:attempt.requestId,message:p.message,confirmed:true})});
@@ -73,7 +73,7 @@ export default function AdminClient(){
    // Retain this exact request ID after acceptance so reload/retry cannot duplicate it.
    setManualResults(s=>({...s,[p.id]:'Aceito pelo HighLevel. Recibo: '+result.messageId+'. Entrega ainda não confirmada.'}));
    setMsg('Mensagem aceita pelo HighLevel. Nenhuma cadência automática ativada.');await loadOverview();
-  }catch(e:any){setManualResults(s=>({...s,[p.id]:String(e.message||e)}));setMsg(String(e.message||e))}finally{setBusy(false)}
+  }catch(e:any){setContactCheck(s=>s.map(c=>c.id===p.id?{...c,canSend:false}:c));setManualResults(s=>({...s,[p.id]:String(e.message||e)}));setMsg(String(e.message||e))}finally{setBusy(false)}
  }
  async function checkChannels(){const companies=(rows.length?rows.filter(x=>selected.includes(x.id)):prepared).slice(0,5).map(x=>({id:x.id,name:x.name}));if(!companies.length)return;setBusy(true);setContactCheck([]);setMsg('Verificando canais comerciais, sem enviar mensagens...');try{const res=await fetch('/api/agents/prospect/contact-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companies})});const json=await res.json();if(!res.ok)throw Error(json.error||'Falha na consulta');setContactCheck(json.results||[]);setMsg('Verificação concluída. Escolha um destinatário habilitado e confirme a mensagem para enviar. Nenhum envio foi realizado.');}catch(e:any){setMsg('Falha ao verificar canais: '+String(e.message||e))}finally{setBusy(false)}}
  async function simulateDispatch(){if(!prepared.length)return;setBusy(true);setDispatchPreview([]);setMsg('Simulando envio, sem disparar mensagens...');try{const items=prepared.map(p=>{const candidate=rows.find(x=>x.name===p.name);const check=contactCheck.find(x=>x.name===p.name);return {id:candidate?.id||p.name,name:p.name,message:p.message,channel:(check?.channel||'blocked'),eligibilityStatus:check?.eligibilityStatus,eligibilityReasons:check?.eligibilityReasons||[]}});const r=await fetch('/api/agents/prospect/dispatch-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items})});const data=await r.json();if(!r.ok)throw Error(data.error||'Simulação falhou');setDispatchPreview(data.results||[]);setMsg('SIMULAÇÃO concluída: '+data.results.length+' empresas; '+data.sent+' envios; '+data.results.filter((x:{status:string})=>x.status==='BLOCKED').length+' bloqueadas. Nenhuma mensagem foi enviada.');}catch(e:any){setMsg('Falha na simulação: '+String(e.message||e))}finally{setBusy(false)}}
