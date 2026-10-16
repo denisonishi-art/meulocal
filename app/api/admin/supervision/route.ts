@@ -18,7 +18,7 @@ export async function GET(req:Request){
    db.from('outreach_events').select('id,lead_id,dispatch_state,dispatch_error,created_at',{count:'exact'}).in('dispatch_state',['reserved','dispatching','ambiguous']).order('created_at',{ascending:true}).limit(20),
    db.from('review_message_deliveries').select('id,business_id,state,error_code,created_at',{count:'exact'}).in('state',['reserved','dispatching','ambiguous']).order('created_at',{ascending:true}).limit(20),
    db.from('payment_events').select('id,activation_checkout_id,activation_state,activation_attempts,activation_error,created_at',{count:'exact'}).in('activation_state',['pending','processing']).in('event_type',['PAYMENT_CONFIRMED','PAYMENT_RECEIVED','CHECKOUT_PAID']).order('created_at',{ascending:true}).limit(20),
-   db.from('automation_enrollments').select('id,lead_id,acquisition_issue,acquisition_retry_at,created_at',{count:'exact'}).eq('track','meulocal_acquisition').eq('status','active').not('acquisition_issue','is',null).order('acquisition_retry_at',{ascending:true}).limit(20)
+   db.from('automation_enrollments').select('id,lead_id,acquisition_issue,acquisition_retry_at,created_at:started_at',{count:'exact'}).eq('track','meulocal_acquisition').eq('status','active').not('acquisition_issue','is',null).order('acquisition_retry_at',{ascending:true}).limit(20)
   ]);
   if([pending,completed,acquisition,reviews,payments,cadence].some(result=>result.error||result.count===null||!Array.isArray(result.data)))return json({error:'Não foi possível consultar a supervisão. Tente novamente.'},503);
   const section=(result:typeof pending)=>({count:result.count,rows:(result.data||[]).map(row=>{
