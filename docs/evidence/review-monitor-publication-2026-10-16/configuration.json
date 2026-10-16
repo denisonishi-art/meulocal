@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-16T17:14:41.801Z",
+  "project": "prj_tTEcf7eWDIAPt7Q1vZ3Qmawu8QSp",
+  "created": [
+    {
+      "name": "MEULOCAL_REVIEW_MONITOR_ENABLED",
+      "type": "plain",
+      "target": "production",
+      "created": true
+    },
+    {
+      "name": "MEULOCAL_REVIEW_MONITOR_CRON_SECRET",
+      "type": "sensitive",
+      "target": "production",
+      "created": true
+    }
+  ],
+  "enabled": false,
+  "existingCronSecretRotated": false,
+  "pilotBindingConfigured": false
+}

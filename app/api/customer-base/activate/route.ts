@@ -13,6 +13,7 @@ export async function POST(req:Request){
     if(audienceConfirmed!==true)return NextResponse.json({error:'Confirme que a base pode ser contatada pelos canais informados.'},{status:400});
     const {data,error}=await c.admin.rpc('activate_customer_base',{p_business_id:c.account!.business_id,p_user_id:c.user.id});
     if(error||data?.ok!==true){
+      if(error?.message?.includes('customer_base_google_required'))return NextResponse.json({error:'Conecte o Google e conclua a primeira sincronização antes de ativar.'},{status:409});
       if(error?.message?.includes('customer_base_onboarding_required'))return NextResponse.json({error:'Conclua e confirme o onboarding antes de ativar.'},{status:409});
       if(error?.message?.includes('customer_base_location_required'))return NextResponse.json({error:'O canal da empresa ainda precisa ser preparado. Confira as pendências no painel.'},{status:409});
       if(error?.message?.includes('customer_base_review_destination_required'))return NextResponse.json({error:'Confirme o perfil público da empresa para gerar o link de avaliação. A conexão Google é opcional.'},{status:409});

@@ -1,0 +1,18 @@
+[Unit]
+Description=MeuLocal review monitoring batches
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/meulocal-opendots/app
+EnvironmentFile=/etc/meulocal/review-monitor.env
+ExecStart=/usr/bin/docker exec --env-file /etc/meulocal/review-monitor.env meulocal-opendots /usr/local/bin/node /app/scripts/run-review-monitor.mjs
+TimeoutStartSec=45min
+NoNewPrivileges=true
+PrivateTmp=true
+StandardOutput=journal
+StandardError=journal
+ProtectSystem=strict
+ProtectHome=true

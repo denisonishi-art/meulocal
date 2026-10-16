@@ -1,0 +1,82 @@
+{
+  "runs": 0,
+  "alerts": 0,
+  "postgres": "PostgreSQL 17.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 15.2.0, 64-bit",
+  "receipts": 0,
+  "monitorTables": [
+    {
+      "rls": true,
+      "table": "review_monitor_alerts",
+      "anonRead": false,
+      "serviceRead": true,
+      "authenticatedWrite": false
+    },
+    {
+      "rls": true,
+      "table": "review_monitor_receipts",
+      "anonRead": false,
+      "serviceRead": true,
+      "authenticatedWrite": false
+    },
+    {
+      "rls": true,
+      "table": "review_monitor_runs",
+      "anonRead": false,
+      "serviceRead": true,
+      "authenticatedWrite": false
+    }
+  ],
+  "rpcPermissions": [
+    {
+      "args": "p_alert_id uuid, p_lease uuid, p_message_id text, p_location_id text",
+      "name": "accept_review_monitor_alert",
+      "anonExecute": false,
+      "serviceExecute": true,
+      "authenticatedExecute": false
+    },
+    {
+      "args": "p_business_id uuid, p_user_id uuid",
+      "name": "activate_customer_base_before_monitoring",
+      "anonExecute": false,
+      "serviceExecute": true,
+      "authenticatedExecute": false
+    },
+    {
+      "args": "p_business_id uuid",
+      "name": "claim_review_monitor_alert",
+      "anonExecute": false,
+      "serviceExecute": true,
+      "authenticatedExecute": false
+    },
+    {
+      "args": "p_business_id uuid",
+      "name": "claim_review_monitor_connection",
+      "anonExecute": false,
+      "serviceExecute": true,
+      "authenticatedExecute": false
+    },
+    {
+      "args": "p_user_id uuid, p_status text, p_business_confirmed boolean, p_confirmed boolean",
+      "name": "record_customer_onboarding_before_monitoring",
+      "anonExecute": false,
+      "serviceExecute": true,
+      "authenticatedExecute": false
+    },
+    {
+      "args": "p_location_id text, p_message_id text, p_contact_id text, p_status text",
+      "name": "record_review_monitor_receipt",
+      "anonExecute": false,
+      "serviceExecute": true,
+      "authenticatedExecute": false
+    },
+    {
+      "args": "p_business_id uuid",
+      "name": "review_monitor_health",
+      "anonExecute": false,
+      "serviceExecute": true,
+      "authenticatedExecute": false
+    }
+  ],
+  "latestMigration": "20261016155756",
+  "googleConnections": 0
+}

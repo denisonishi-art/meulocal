@@ -1,0 +1,280 @@
+TAP version 13
+# Subtest: failed score lookup cannot become an empty ready dashboard or invented score
+ok 1 - failed score lookup cannot become an empty ready dashboard or invented score
+  ---
+  duration_ms: 79.049125
+  type: 'test'
+  ...
+# Subtest: failed account lookup is an error with retry, not a missing payment/setup claim
+ok 2 - failed account lookup is an error with retry, not a missing payment/setup claim
+  ---
+  duration_ms: 25.542208
+  type: 'test'
+  ...
+# Subtest: unavailable claim verification cannot be ignored to show successful access
+ok 3 - unavailable claim verification cannot be ignored to show successful access
+  ---
+  duration_ms: 21.086375
+  type: 'test'
+  ...
+# Subtest: empty history requires Google without inventing real Google history
+ok 4 - empty history requires Google without inventing real Google history
+  ---
+  duration_ms: 14.175667
+  type: 'test'
+  ...
+# Subtest: failed refresh restores its action, exposes failure and preserves saved history
+ok 5 - failed refresh restores its action, exposes failure and preserves saved history
+  ---
+  duration_ms: 37.599542
+  type: 'test'
+  ...
+# Subtest: operations network failure exits loading and offers a retry instead of an unhandled rejection
+ok 6 - operations network failure exits loading and offers a retry instead of an unhandled rejection
+  ---
+  duration_ms: 16.528041
+  type: 'test'
+  ...
+# Subtest: validating an upload does not unmount the import confirmation step or reload operations
+ok 7 - validating an upload does not unmount the import confirmation step or reload operations
+  ---
+  duration_ms: 11.076833
+  type: 'test'
+  ...
+# Subtest: pilot notice never creates or upserts a GHL contact
+ok 8 - pilot notice never creates or upserts a GHL contact
+  ---
+  duration_ms: 33.398583
+  type: 'test'
+  ...
+# Subtest: explicit pilot binding refuses another business before provider operations
+ok 9 - explicit pilot binding refuses another business before provider operations
+  ---
+  duration_ms: 10.765166
+  type: 'test'
+  ...
+# Subtest: missing controlled recipient blocks provider operations
+ok 10 - missing controlled recipient blocks provider operations
+  ---
+  duration_ms: 10.771666
+  type: 'test'
+  ...
+# Subtest: unverified email and DND prevent notices
+ok 11 - unverified email and DND prevent notices
+  ---
+  duration_ms: 12.736209
+  type: 'test'
+  ...
+# Subtest: acceptance receipt persistence failure remains uncertain without resend
+ok 12 - acceptance receipt persistence failure remains uncertain without resend
+  ---
+  duration_ms: 14.339583
+  type: 'test'
+  ...
+# Subtest: installed scheduler treats disabled monitor as a successful visible no-op
+ok 13 - installed scheduler treats disabled monitor as a successful visible no-op
+  ---
+  duration_ms: 3.178208
+  type: 'test'
+  ...
+# Subtest: scheduler surfaces authenticated endpoint failures
+ok 14 - scheduler surfaces authenticated endpoint failures
+  ---
+  duration_ms: 0.412333
+  type: 'test'
+  ...
+# Subtest: signed native delivery persists while monitoring is disabled
+ok 15 - signed native delivery persists while monitoring is disabled
+  ---
+  duration_ms: 29.918042
+  type: 'test'
+  ...
+# Subtest: invalid provider signature cannot persist a delivery receipt
+ok 16 - invalid provider signature cannot persist a delivery receipt
+  ---
+  duration_ms: 25.868333
+  type: 'test'
+  ...
+# Subtest: signed delivery storage failure requests retry instead of acknowledging
+ok 17 - signed delivery storage failure requests retry instead of acknowledging
+  ---
+  duration_ms: 23.190209
+  type: 'test'
+  ...
+# Subtest: shared-secret workflow and other channels cannot confirm monitor delivery
+ok 18 - shared-secret workflow and other channels cannot confirm monitor delivery
+  ---
+  duration_ms: 23.592875
+  type: 'test'
+  ...
+# Subtest: cron refuses missing or wrong secret before any database access
+ok 19 - cron refuses missing or wrong secret before any database access
+  ---
+  duration_ms: 57.550208
+  type: 'test'
+  ...
+# Subtest: disabled cron performs no scans or dispatch
+ok 20 - disabled cron performs no scans or dispatch
+  ---
+  duration_ms: 17.72775
+  type: 'test'
+  ...
+# Subtest: enabled cron without server credentials fails closed
+ok 21 - enabled cron without server credentials fails closed
+  ---
+  duration_ms: 7.605875
+  type: 'test'
+  ...
+# Subtest: customer monitor requires authenticated active account
+ok 22 - customer monitor requires authenticated active account
+  ---
+  duration_ms: 13.133875
+  type: 'test'
+  ...
+# Subtest: customer monitor ignores supplied tenant and scopes every read to session business
+ok 23 - customer monitor ignores supplied tenant and scopes every read to session business
+  ---
+  duration_ms: 11.850375
+  type: 'test'
+  ...
+# Subtest: ledger outage is unavailable rather than healthy empty result
+ok 24 - ledger outage is unavailable rather than healthy empty result
+  ---
+  duration_ms: 2.400709
+  type: 'test'
+  ...
+# Subtest: admin health refuses unauthenticated request before database access
+ok 25 - admin health refuses unauthenticated request before database access
+  ---
+  duration_ms: 6.019792
+  type: 'test'
+  ...
+# Subtest: one/two stars alert even with no text or model
+ok 26 - one/two stars alert even with no text or model
+  ---
+  duration_ms: 0.470667
+  type: 'test'
+  ...
+# Subtest: three stars require attention without model
+ok 27 - three stars require attention without model
+  ---
+  duration_ms: 0.052833
+  type: 'test'
+  ...
+# Subtest: positive empty review does not require model
+ok 28 - positive empty review does not require model
+  ---
+  duration_ms: 0.046041
+  type: 'test'
+  ...
+# Subtest: high-rating complaints alert
+ok 29 - high-rating complaints alert
+  ---
+  duration_ms: 0.060333
+  type: 'test'
+  ...
+# Subtest: positive review can be clear
+ok 30 - positive review can be clear
+  ---
+  duration_ms: 0.099917
+  type: 'test'
+  ...
+# Subtest: model outage cannot hide complaint
+ok 31 - model outage cannot hide complaint
+  ---
+  duration_ms: 0.066709
+  type: 'test'
+  ...
+# Subtest: malformed model output and extra keys are uncertain
+ok 32 - malformed model output and extra keys are uncertain
+  ---
+  duration_ms: 0.136667
+  type: 'test'
+  ...
+# Subtest: provider timestamp-only changes do not repeat alerts
+ok 33 - provider timestamp-only changes do not repeat alerts
+  ---
+  duration_ms: 0.247208
+  type: 'test'
+  ...
+# Subtest: rating and text changes create a new version
+ok 34 - rating and text changes create a new version
+  ---
+  duration_ms: 0.212125
+  type: 'test'
+  ...
+# Subtest: invalid rating fails rather than suppressing
+ok 35 - invalid rating fails rather than suppressing
+  ---
+  duration_ms: 0.475959
+  type: 'test'
+  ...
+# Subtest: same review version is persisted only once
+ok 36 - same review version is persisted only once
+  ---
+  duration_ms: 0.276
+  type: 'test'
+  ...
+# Subtest: same review ID in another tenant remains distinct
+ok 37 - same review ID in another tenant remains distinct
+  ---
+  duration_ms: 0.142959
+  type: 'test'
+  ...
+# Subtest: ledger read/write failures are not success
+ok 38 - ledger read/write failures are not success
+  ---
+  duration_ms: 0.165542
+  type: 'test'
+  ...
+# Subtest: bounded work resumes with remaining reviews
+ok 39 - bounded work resumes with remaining reviews
+  ---
+  duration_ms: 0.1615
+  type: 'test'
+  ...
+# Subtest: alert is a notice to owner, never a public response
+ok 40 - alert is a notice to owner, never a public response
+  ---
+  duration_ms: 0.0555
+  type: 'test'
+  ...
+# Subtest: alert goes only to verified account owner as email
+ok 41 - alert goes only to verified account owner as email
+  ---
+  duration_ms: 14.819958
+  type: 'test'
+  ...
+# Subtest: wrong recipient scope blocks dispatch
+ok 42 - wrong recipient scope blocks dispatch
+  ---
+  duration_ms: 6.535667
+  type: 'test'
+  ...
+# Subtest: unknown provider acceptance is uncertain, not retry pending
+ok 43 - unknown provider acceptance is uncertain, not retry pending
+  ---
+  duration_ms: 15.102333
+  type: 'test'
+  ...
+# Subtest: deadline is three hours from Google posting, never first detection
+ok 44 - deadline is three hours from Google posting, never first detection
+  ---
+  duration_ms: 0.163625
+  type: 'test'
+  ...
+# Subtest: unknown posting time stays explicit and never invents a deadline
+ok 45 - unknown posting time stays explicit and never invents a deadline
+  ---
+  duration_ms: 0.064583
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 45
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 373.438542

@@ -1,0 +1,1 @@
+{"status":"PASS","cases":11,"postgres":"17.6 (Debian 17.6-2.pgdg13+1)","baseline":"fresh production public DDL; auth dependency stubs; synthetic rows only","remoteRequests":0,"realSends":0}

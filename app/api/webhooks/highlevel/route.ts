@@ -75,6 +75,13 @@ export async function POST(request:Request){
     }
   }
   const db=createClient(url,key);const row=normalize(body);
+  // Delivery status for monitoring emails is accepted only from signed native events.
+  // Provider acceptance and actual delivery remain separate states.
+  if(request.headers.get('x-ghl-signature')&&row.event_type==='OutboundMessage'&&row.direction==='outbound'&&/^(Email|TYPE_EMAIL)$/i.test(String(row.channel||body.messageTypeString||''))&&row.contact_id&&row.message_id&&row.ghl_location_id&&['delivered','failed','undelivered'].includes(String(row.normalized_status))){
+    const receipt=await db.rpc('record_review_monitor_receipt',{p_location_id:row.ghl_location_id,p_message_id:row.message_id,p_contact_id:row.contact_id,p_status:row.normalized_status==='delivered'?'delivered':'failed'});
+    if(receipt.error||receipt.data?.ok!==true)return NextResponse.json({ok:false,error:'monitor_receipt_persistence_failed'},{status:503});
+    if(receipt.data.matched)return NextResponse.json({ok:true,monitorReceipt:true});
+  }
   if(controlledWorkflow){const result=await processControlledInbound(db,row,body);return NextResponse.json(result,{status:result.httpStatus,headers:result.ok?{}:{'Retry-After':'60'}});}
   // Resolve the customer branch BEFORE the legacy journal/duplicate fast path.
   if(row.ghl_location_id&&row.contact_id){

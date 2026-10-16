@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly MeuLocal review monitoring
+
+[Timer]
+OnCalendar=hourly
+AccuracySec=1min
+Persistent=true
+Unit=meulocal-review-monitor.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,18 @@
+const {PGlite}=require('@electric-sql/pglite'),fs=require('fs'),assert=require('node:assert/strict');
+(async()=>{const db=new PGlite();await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create table businesses(id uuid primary key);create table customer_accounts(business_id uuid,user_id uuid,payment_status text);create table google_business_connections(business_id uuid,user_id uuid,status text,last_sync_status text,google_account_id text,google_location_id text,refresh_token_ciphertext text);create function record_customer_onboarding(uuid,text,boolean,boolean) returns jsonb language sql as 'select ''{"ok":true}''::jsonb';create function activate_customer_base(uuid,uuid) returns jsonb language sql as 'select ''{"ok":true}''::jsonb';`);
+await db.exec(fs.readFileSync('supabase/migrations/20261016155756_review_monitoring_alerts.sql','utf8'));
+const bid='00000000-0000-4000-8000-000000000001',uid='00000000-0000-4000-8000-000000000002';
+await db.query('insert into businesses values($1)',[bid]);await db.query("insert into customer_accounts values($1,$2,'active')",[bid,uid]);
+await assert.rejects(()=>db.query("select record_customer_onboarding($1,'completed',true,true)",[uid]),/onboarding_google_required/);
+await assert.rejects(()=>db.query('select activate_customer_base($1,$2)',[bid,uid]),/customer_base_google_required/);
+await db.query("insert into google_business_connections values($1,$2,'connected','success','accounts/a','locations/a','synthetic')",[bid,uid]);
+assert.equal((await db.query('select claim_review_monitor_connection() as j')).rows[0].j.business_id,bid);
+assert.equal((await db.query('select claim_review_monitor_connection() as j')).rows[0].j,null);
+await db.query("insert into review_monitor_alerts(business_id,review_id,version,rating,verdict,state) values($1,'a','v1',1,'negative','pending')",[bid]);
+const job=(await db.query('select claim_review_monitor_alert() as j')).rows[0].j;assert.equal(job.state,'preparing');assert.equal((await db.query('select claim_review_monitor_alert() as j')).rows[0].j,null);
+await db.query("update review_monitor_alerts set state='dispatching',dispatch_started_at=now()-interval '5 minutes' where id=$1",[job.id]);
+assert.equal((await db.query('select claim_review_monitor_alert() as j')).rows[0].j,null);assert.equal((await db.query('select state from review_monitor_alerts')).rows[0].state,'uncertain');
+await assert.rejects(()=>db.query("insert into review_monitor_alerts(business_id,review_id,version,rating,verdict,state) values($1,'a','v1',1,'negative','pending')",[bid]),/duplicate key/);
+assert.equal((await db.query('select review_monitor_health() as h')).rows[0].h.uncertain,1);
+await db.exec('set role authenticated');await assert.rejects(()=>db.query('select * from review_monitor_alerts'),/permission denied/);await assert.rejects(()=>db.query('select claim_review_monitor_alert()'),/permission denied/);
+await db.close();console.log('PASS: migration, Google gates, leases, duplicate prevention, uncertain dispatch, health, public access denied');})().catch(e=>{console.error(e);process.exitCode=1});

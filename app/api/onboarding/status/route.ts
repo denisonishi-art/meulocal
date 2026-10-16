@@ -23,6 +23,7 @@ export async function POST(request:Request){try{
  const {data,error}=await ctx.admin.rpc('record_customer_onboarding',{p_user_id:ctx.user.id,p_status:body.status,p_business_confirmed:body.businessConfirmed===true,p_confirmed:body.confirmed===true});
  if(error){const code=error.message||'';
   if(code.includes('onboarding_access_denied'))return json({error:'Conta de cliente não encontrada.'},404);
+  if(code.includes('onboarding_google_required'))return json({error:'Conecte o Google e conclua a primeira sincronização antes de finalizar.'},409);
   if(code.includes('onboarding_payment_required'))return json({error:'Onboarding só pode avançar após pagamento confirmado.'},409);
   if(code.includes('onboarding_confirmation_required')||code.includes('onboarding_business_confirmation_required'))return json({error:'Confirme seu negócio e a conclusão da configuração antes de continuar.'},409);
   return unavailable();

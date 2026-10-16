@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "checks": [
+    "home_requirement_from_posting_validation_copy",
+    "dashboard_disabled_accepted_uncertain_unknown_time_overdue",
+    "manual_read_only_refresh"
+  ],
+  "errors": [],
+  "externalRequests": 0,
+  "realSends": 0,
+  "fixtures": "synthetic browser interceptions; actual Next UI"
+}
