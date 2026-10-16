@@ -1,3 +1,9 @@
+# Publicação posterior — 16/10/2026
+
+Este checkpoint local foi sucedido por ../platform-publication-2026-10-16/CHECKPOINT.md. Código publicado 66d52a2; teste controlado real e rollback documentados ali. Não confundir as restrições históricas abaixo com o estado publicado atual. Operação ampla/prova financeira continuam pendentes.
+
+---
+
 # Estado atual — fechamento local de 15/10/2026
 
 Este resumo prevalece sobre as seções históricas abaixo. Código: `9fc9301`, branch `codex/highlevel-recovery-lifecycle`, checkout `/Users/denisonishi/.codex/worktrees/highlevel-opendots-inbound/meulocal`. Não tocar no checkout original de Documents. Pacote LOCAL_VERIFIED_REVIEWED, publicação não executada. Não marcar o objetivo global como concluído.

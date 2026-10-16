@@ -1,0 +1,114 @@
+{
+  "status": "REAL_VERIFIED_CONTROLLED_INBOUND",
+  "scope": "Teste22 2 only; suggestion and human review; zero outbound",
+  "eventId": "wEl8ooNl6AoG3L7TPnRG",
+  "highlevel": {
+    "workflowId": "957c3d55-c64c-4b84-88a6-1808c587f450",
+    "executionId": "01M526A6ZPCFGVGTZ59STX4RSM",
+    "contactId": "SdJ2oWZqsReI1TTq4cAd",
+    "conversationId": "cmQBF7jMIBjARXweCzKh",
+    "receivedAt": "2026-10-16T11:07:18.319Z",
+    "webhookResponse": {
+      "ok": true,
+      "ingested": 1,
+      "ignored": 0,
+      "eventIds": [
+        "wEl8ooNl6AoG3L7TPnRG"
+      ],
+      "ingestion": "saved",
+      "deliveryAttempt": {
+        "ok": true,
+        "completed": 1,
+        "pending": 0
+      }
+    }
+  },
+  "vercel": {
+    "logId": "m6zzv-1792148840939-fccc0ff72377",
+    "deploymentId": "dpl_H15rB2y4EuCFEXaHLFtzXgBiEgp2",
+    "at": 1792148840939,
+    "message": {
+      "stage": "controlled_inbox_ingested",
+      "ok": true,
+      "ingested": 1,
+      "ignored": 0,
+      "eventIds": [
+        "wEl8ooNl6AoG3L7TPnRG"
+      ],
+      "deliveryAttempt": {
+        "ok": true,
+        "completed": 1,
+        "pending": 0
+      }
+    }
+  },
+  "supabase": {
+    "project": "vznecxfmnthyxvsxwpzi",
+    "eventCount": 1,
+    "eventId": "wEl8ooNl6AoG3L7TPnRG",
+    "outboxState": "completed",
+    "attempts": 1,
+    "cleanupDone": true,
+    "cursor": "wEl8ooNl6AoG3L7TPnRG",
+    "leadBusinessMatchesPayload": true,
+    "lastReplyAt": "2026-10-16T11:07:18.319+00:00"
+  },
+  "opendots": {
+    "eventId": "wEl8ooNl6AoG3L7TPnRG",
+    "contactId": "SdJ2oWZqsReI1TTq4cAd",
+    "createdAt": "2026-10-16T11:07:28.127Z",
+    "receiptFile": "cf98172a3fff0b288777b091895987bdccc68f116c255401b3e00708919f1755.json",
+    "mode": "600",
+    "fingerprint": "8ef072a39bc309a389203486392f84b9ba74b0a5cef01a8aaca62cb70920db6d",
+    "action": "answer",
+    "status": "suggestion_only",
+    "requiresHumanReview": true,
+    "dispatch": false,
+    "fileHashes": [
+      {
+        "name": "commercial-engine.cjs",
+        "sha256": "c709239acfedaa8b091c5149601803128b615d5736e4d3bc27bc7e32b805e5ad"
+      },
+      {
+        "name": "commercial-receipts.mjs",
+        "sha256": "4bac090454a564c40c2460719a8e34f8fd6d21d304b150a91c2d6b1e6e76c193"
+      },
+      {
+        "name": "commercial-recovery.mjs",
+        "sha256": "0d690c84d059312b6d3946eb1ab26bfbd0da94cb9afbbd4f3dfb24f8be214fc3"
+      },
+      {
+        "name": "commercial-server.mjs",
+        "sha256": "1fd67b6e83b80121b25729832767e9c4aa89fc4ba7b4d561741c864caacd67bb"
+      }
+    ],
+    "decisionMessageSha256": "048121a38dadfb75aa456233928a2f40163ea57403b34a3d451c33bf2a461a5d"
+  },
+  "recovery": {
+    "afterRestart": "same_private_receipt_unchanged",
+    "sameDecisionFields": true,
+    "dispatched": 0,
+    "humanReview": true
+  },
+  "admin": {
+    "status": 200,
+    "completedCount": 1,
+    "eventVisible": true
+  },
+  "financial": {
+    "payment_events": {
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    },
+    "payment_checkouts": {
+      "before": 0,
+      "after": 0,
+      "unchanged": true
+    }
+  },
+  "existingAccountFieldsUnchanged": true,
+  "additionalOutreachTypes": [
+    "replied"
+  ]
+}

@@ -1,0 +1,167 @@
+{
+  "at": "2026-10-16T11:45:29.889Z",
+  "status": "CONTROLLED_PUBLISHED_VERIFIED_NOT_BROAD_OPERATION",
+  "deployment": {
+    "id": "dpl_5bMGDyJFzV6HaMb8nMjzJGs32stb",
+    "url": "https://meulocal.ia.br",
+    "sourceCommit": "66d52a280cf0b098ac55a58172cf8f94bf96ec32",
+    "branch": "codex/highlevel-recovery-lifecycle"
+  },
+  "priorDeployment": "dpl_8btmugFJKXmV3kxpVcsN1EWrjoAF",
+  "intermediateDeployments": [
+    "dpl_H15rB2y4EuCFEXaHLFtzXgBiEgp2",
+    "dpl_2pvmDqp4DgFrrRAHg17MCSNSQrvb"
+  ],
+  "migrations": [
+    {
+      "version": "20261015000000",
+      "source": "supabase/migrations/20261015_opendots_durable_handoffs.sql",
+      "sha256": "9010bc020245bb03b12f6280926e383d0ee07b493a00d99ac2ebb53c2f834dc0"
+    },
+    {
+      "version": "20261015000001",
+      "source": "supabase/migrations/20261015_002_controlled_inbox_cursor.sql",
+      "sha256": "b690802d188723134d11f2efbe796e102766839afb7a9740f9cbf18c281ff6cb"
+    },
+    {
+      "version": "20261015000002",
+      "source": "supabase/migrations/20261015_003_payment_activation_recovery.sql",
+      "sha256": "22fa3165a4112719647f298bb7ce800350be2c61309859c90caa8c4558fea236"
+    },
+    {
+      "version": "20261015000003",
+      "source": "supabase/migrations/20261015_004_payment_event_processing.sql",
+      "sha256": "2b75ed016d0a49b8efb2e38e2717d1e50c951a08c29028d99c234e7f8124dbb8"
+    },
+    {
+      "version": "20261015000004",
+      "source": "supabase/migrations/20261015_005_checkout_creation_recovery.sql",
+      "sha256": "2c2b1f35343cebd1527d24f805b3d6adbaa567eaeb16e91608bdac64a0b2dbfa"
+    },
+    {
+      "version": "20261015000005",
+      "source": "supabase/migrations/20261015_006_customer_access_claim.sql",
+      "sha256": "5d2c6b778b22582ebc003514ef73601ca9bcdd6cd685d553385e6c82c4f2050a"
+    },
+    {
+      "version": "20261015000006",
+      "source": "supabase/migrations/20261015_007_customer_base_transactions.sql",
+      "sha256": "b95c9e612d10bb1696f4391339ee689b9d013f0c0bb23c987f8b70020d473b55"
+    },
+    {
+      "version": "20261015000007",
+      "source": "supabase/migrations/20261015_008_customer_base_activation.sql",
+      "sha256": "893a4b69e087813d6fe5cf72b1a0571e1c6214b8f001b7e77aebd53a5acdaba9"
+    },
+    {
+      "version": "20261015000008",
+      "source": "supabase/migrations/20261015_009_review_delivery_ledger.sql",
+      "sha256": "2527dc6821d9efa1cce7831f701c1895f4f45383bf2bf778b86c1cbd3b0168bd"
+    },
+    {
+      "version": "20261015000009",
+      "source": "supabase/migrations/20261015_010_customer_review_ingestion.sql",
+      "sha256": "c6926f4d5ae98350e5eb853b24d58d59d5586a7bea958250a9def910f8885e6c"
+    },
+    {
+      "version": "20261015000010",
+      "source": "supabase/migrations/20261015_011_prospect_preparation.sql",
+      "sha256": "bba3b025f5af1d066aef92a3492a78d1d3d237b51edd446366a431f43fd5fd23"
+    },
+    {
+      "version": "20261015000011",
+      "source": "supabase/migrations/20261015_012_acquisition_delivery_journal.sql",
+      "sha256": "8e28dadf84a0e94e35a15b8d569128a9ce7a852cd636f33317ca54de9f7ff5ea"
+    },
+    {
+      "version": "20261015000012",
+      "source": "supabase/migrations/20261015_013_onboarding_completion_gates.sql",
+      "sha256": "da78c9f549fe2716f68ed9857a5982e5b97212ca448f65d39a50d77ddee41c85"
+    }
+  ],
+  "runtime": {
+    "container": "meulocal-opendots",
+    "changedFiles": [
+      {
+        "name": "commercial-engine.cjs",
+        "sha256": "c709239acfedaa8b091c5149601803128b615d5736e4d3bc27bc7e32b805e5ad"
+      },
+      {
+        "name": "commercial-receipts.mjs",
+        "sha256": "4bac090454a564c40c2460719a8e34f8fd6d21d304b150a91c2d6b1e6e76c193"
+      },
+      {
+        "name": "commercial-recovery.mjs",
+        "sha256": "0d690c84d059312b6d3946eb1ab26bfbd0da94cb9afbbd4f3dfb24f8be214fc3"
+      },
+      {
+        "name": "commercial-server.mjs",
+        "sha256": "1fd67b6e83b80121b25729832767e9c4aa89fc4ba7b4d561741c864caacd67bb"
+      }
+    ],
+    "unchangedIdentityAndUpstreamPreserved": true,
+    "proxy": "existing Traefik host → Nginx → meulocal-opendots:8787",
+    "recoveryUrl": "https://meulocal.ia.br/api/internal/opendots/recover",
+    "recoveryEnabled": true,
+    "dispatch": false
+  },
+  "gates": {
+    "MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED": false,
+    "MEULOCAL_ACQUISITION_OUTREACH_ENABLED": false,
+    "MEULOCAL_MANUAL_OUTREACH_ENABLED": false,
+    "MEULOCAL_REVIEW_OUTREACH_ENABLED": false
+  },
+  "legacyCadence": {
+    "paused": 71,
+    "agendaAndHistoryPreserved": true,
+    "automaticResume": false
+  },
+  "asaas": {
+    "at": "2026-10-16T02:21:39.618Z",
+    "webhookId": "50881627-f427-4917-a4a0-acb9bf42b53e",
+    "url": "https://meulocal.ia.br/api/webhooks/asaas",
+    "enabled": true,
+    "interrupted": false,
+    "sendType": "SEQUENTIALLY",
+    "eventsBefore": 34,
+    "eventsAfter": 38,
+    "added": [
+      "CHECKOUT_EXPIRED",
+      "CHECKOUT_CANCELED",
+      "CHECKOUT_PAID",
+      "CHECKOUT_CREATED"
+    ],
+    "paymentCreated": false
+  },
+  "asaasTokenProbe": {
+    "at": "2026-10-16T11:24:17.930Z",
+    "status": 400,
+    "body": {
+      "error": "invalid_event"
+    },
+    "financialEventSubmitted": false
+  },
+  "checks": {
+    "previousFullLocalRegression": 348,
+    "focusedAdminTests": 20,
+    "fullRegressionRepeated": false,
+    "typescript": "PASS",
+    "buildIncludingConfiguredLint": "PASS_existing_hook_and_css_warnings",
+    "independentReview": "no remaining P1/P2 in two scoped hotfixes; corrected harness findings",
+    "browserAdmin": "REAL_VERIFIED_authenticated_existing_session",
+    "customerJourney": "previous 8 isolated browser scenarios; genuine financial/access/onboarding/activation proof remains pending"
+  },
+  "sourceOverridesToPriorManifest": [
+    {
+      "source": "app/api/admin/supervision/route.ts",
+      "sha256": "6bc913199d271b7704dcf69a44efa8e93be6afeefaba23003c5a3a9929ee9ff9",
+      "reason": "actual started_at projection and explicit uncached reads"
+    }
+  ],
+  "remaining": [
+    "genuine payment/access/onboarding/activation proof; no sandbox or historical payment",
+    "first real customer prerequisites and tenant-specific channel/ingress/STOP verification",
+    "source integration into main requires merge authorization; never redeploy legacy main as rollback"
+  ],
+  "rollback": "ROLLBACK.md"
+}
