@@ -10,7 +10,7 @@ Avisar o responsável em até 3 horas da **postagem** da avaliação que exige a
 
 - `migration-applied.json`: versão 20261016155756, transação confirmada, checksum verificado, 47 versões históricas preservadas.
 - `database-postflight.json`: PostgreSQL 17.6, três novas tabelas com RLS, RPCs restritas, nenhum alerta/recibo/conexão Google.
-- `focused-tests.log`: 45/45; `adjacent-tests.log`: 28/28; `full-schema-tests.log`: 11/11 no PostgreSQL descartável com DDL público atual e dependências Auth simuladas.
+- `focused-tests.txt`: 45/45; `adjacent-tests.txt`: 28/28; `full-schema-tests.txt`: 11/11 no PostgreSQL descartável com DDL público atual e dependências Auth simuladas.
 - `browser.json` e screenshots: Next real com fixtures sintéticas, nenhuma chamada externa ou envio; não é prova da jornada de cliente real.
 - `configuration.json`: flag false e segredo exclusivo configurados na Vercel. Credenciais Google OAuth/encriptação e conexão legítima ausentes; modelo real também não validado.
 - `vps-installation.json`: instalação no container existente, sem trocar runtime nem alterar configuração comercial. Início/execução do timer serão registrados na evidência final.

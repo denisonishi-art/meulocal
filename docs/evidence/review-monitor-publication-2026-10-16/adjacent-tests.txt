@@ -1,0 +1,181 @@
+TAP version 13
+# isolated_database=meulocal_payment_test_12559_c873bd1c
+# Subtest: repeated activation saves one enrollment and preserves the first activation timestamp
+ok 1 - repeated activation saves one enrollment and preserves the first activation timestamp
+  ---
+  duration_ms: 1000.119209
+  type: 'test'
+  ...
+# Subtest: concurrent activation sessions converge instead of failing after partial enrollment
+ok 2 - concurrent activation sessions converge instead of failing after partial enrollment
+  ---
+  duration_ms: 527.133667
+  type: 'test'
+  ...
+# Subtest: settings write failure rolls back enrollment and contact state together
+ok 3 - settings write failure rolls back enrollment and contact state together
+  ---
+  duration_ms: 738.827209
+  type: 'test'
+  ...
+# Subtest: additional imports use remaining date capacity without resetting ramp or resuming a pause
+ok 4 - additional imports use remaining date capacity without resetting ramp or resuming a pause
+  ---
+  duration_ms: 1141.227542
+  type: 'test'
+  ...
+# Subtest: unconfirmed, opted-out, inactive and foreign-user contacts cannot be queued
+ok 5 - unconfirmed, opted-out, inactive and foreign-user contacts cannot be queued
+  ---
+  duration_ms: 805.58925
+  type: 'test'
+  ...
+# Subtest: browser roles cannot activate through the privileged transaction
+ok 6 - browser roles cannot activate through the privileged transaction
+  ---
+  duration_ms: 123.498417
+  type: 'test'
+  ...
+# Subtest: contact update failure rolls back settings, enrollment and audience-confirmation receipt
+ok 7 - contact update failure rolls back settings, enrollment and audience-confirmation receipt
+  ---
+  duration_ms: 612.920125
+  type: 'test'
+  ...
+# Subtest: actual activation route requires both human confirmations before any queue operation
+ok 8 - actual activation route requires both human confirmations before any queue operation
+  ---
+  duration_ms: 193.571417
+  type: 'test'
+  ...
+# Subtest: actual route returns success only after atomic persistence and safe retry
+ok 9 - actual route returns success only after atomic persistence and safe retry
+  ---
+  duration_ms: 364.006458
+  type: 'test'
+  ...
+# Subtest: actual route sanitizes database errors and distinguishes a paused queue
+ok 10 - actual route sanitizes database errors and distinguishes a paused queue
+  ---
+  duration_ms: 334.802083
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_12560_331c2151
+# Subtest: payment alone or an arbitrary completed status cannot complete onboarding
+ok 11 - payment alone or an arbitrary completed status cannot complete onboarding
+  ---
+  duration_ms: 507.377166
+  type: 'test'
+  ...
+# Subtest: business confirmation and explicit completion persist independently from payment and service activation
+ok 12 - business confirmation and explicit completion persist independently from payment and service activation
+  ---
+  duration_ms: 621.774
+  type: 'test'
+  ...
+# Subtest: a new session can resume confirmation without silently downgrading completed onboarding
+ok 13 - a new session can resume confirmation without silently downgrading completed onboarding
+  ---
+  duration_ms: 566.390458
+  type: 'test'
+  ...
+# Subtest: foreign users and unpaid accounts cannot confirm or complete another account
+ok 14 - foreign users and unpaid accounts cannot confirm or complete another account
+  ---
+  duration_ms: 395.04825
+  type: 'test'
+  ...
+# Subtest: failed lifecycle persistence rolls back onboarding confirmation and completion timestamps
+ok 15 - failed lifecycle persistence rolls back onboarding confirmation and completion timestamps
+  ---
+  duration_ms: 553.855583
+  type: 'test'
+  ...
+# Subtest: activation requires completed onboarding and actual location/review destination, with no OAuth requirement
+ok 16 - activation requires completed onboarding and actual location/review destination, with no OAuth requirement
+  ---
+  duration_ms: 924.787
+  type: 'test'
+  ...
+# Subtest: privileged onboarding and original queue implementation are unavailable to browser roles
+ok 17 - privileged onboarding and original queue implementation are unavailable to browser roles
+  ---
+  duration_ms: 246.542292
+  type: 'test'
+  ...
+# Subtest: server authentication and confirmations cannot be bypassed through direct POST
+ok 18 - server authentication and confirmations cannot be bypassed through direct POST
+  ---
+  duration_ms: 381.427959
+  type: 'test'
+  ...
+# Subtest: read/write failures are unavailable and never disclose database errors or assert completion
+ok 19 - read/write failures are unavailable and never disclose database errors or assert completion
+  ---
+  duration_ms: 114.560792
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_12561_04b20fa1
+# Subtest: SAIR and STOP save journal, opt-out and cadence closure once, including repeat deliveries
+ok 20 - SAIR and STOP save journal, opt-out and cadence closure once, including repeat deliveries
+  ---
+  duration_ms: 2487.196208
+  type: 'test'
+  ...
+# Subtest: a failed stop transaction leaves no acknowledged journal and succeeds on provider retry
+ok 21 - a failed stop transaction leaves no acknowledged journal and succeeds on provider retry
+  ---
+  duration_ms: 1172.168791
+  type: 'test'
+  ...
+# Subtest: a journal from the old partial handler is resumed instead of discarded as a duplicate
+ok 22 - a journal from the old partial handler is resumed instead of discarded as a duplicate
+  ---
+  duration_ms: 547.7185
+  type: 'test'
+  ...
+# Subtest: the same provider event ID with changed content is a conflict, never a successful duplicate
+ok 23 - the same provider event ID with changed content is a conflict, never a successful duplicate
+  ---
+  duration_ms: 577.004
+  type: 'test'
+  ...
+# Subtest: identical bodies on separate immutable message IDs stay separate
+ok 24 - identical bodies on separate immutable message IDs stay separate
+  ---
+  duration_ms: 592.900416
+  type: 'test'
+  ...
+# Subtest: a missing immutable ID or failed contact lookup cannot acknowledge or close the cadence
+ok 25 - a missing immutable ID or failed contact lookup cannot acknowledge or close the cadence
+  ---
+  duration_ms: 536.303333
+  type: 'test'
+  ...
+# Subtest: delivery status receipts do not close the cadence or increment send attempts
+ok 26 - delivery status receipts do not close the cadence or increment send attempts
+  ---
+  duration_ms: 763.52825
+  type: 'test'
+  ...
+# Subtest: sent and delivered transitions for one immutable message retain both receipts
+ok 27 - sent and delivered transitions for one immutable message retain both receipts
+  ---
+  duration_ms: 734.711083
+  type: 'test'
+  ...
+# Subtest: one external event ID cannot be reused to close another company contact
+ok 28 - one external event ID cannot be reused to close another company contact
+  ---
+  duration_ms: 1068.99425
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11012.3575
