@@ -28,3 +28,15 @@ test('explicit channel DND supports sparse legacy response without treating abse
  for(const c of [{},{dndSettings:{}},{dndSettings:{whatsapp:{status:'inactive'}}},{dnd:null},{dnd:'false'},{dndSettings:{email:{status:'unknown'}}}])assert.throws(()=>dnd(c,'email'));
 });
 test('opt-out tag remains authoritative independently of channel DND representation',()=>assert.equal(dnd({dndSettings:{email:{status:'inactive'}},tags:['meulocal:opt-out']},'email'),true));
+
+test('detail projection without DND uses a fresh exact scoped search, without writes',async()=>{
+ const c={id:'synthetic-id',locationId:'synthetic-location',email:'synthetic@example.invalid'};
+ for(const matches of [[{...c,dnd:false}],[{...c,dnd:true}],[c],[{...c,id:'foreign',dnd:false}],[]]){
+  const calls=[];
+  const api=load('lib/highlevel-operational.ts',{}, {fetch:async(url,init)=>{calls.push({url,init});return Response.json(calls.length===1?{contact:c}:{contacts:matches})},URLSearchParams});
+  const read=()=>api.getOperationalContact({token:'synthetic-token',contactId:c.id});
+  if(matches.length!==1||matches[0].id!==c.id)await assert.rejects(read,/dnd_unverified/);
+  else{const result=await read();assert.equal(result.dnd,matches[0].dnd);if(result.dnd===undefined)assert.throws(()=>dnd(result,'email'));}
+  assert.equal(calls.length,2);assert.equal(JSON.parse(calls[1].init.body).filters[0].operator,'eq');
+ }
+});
