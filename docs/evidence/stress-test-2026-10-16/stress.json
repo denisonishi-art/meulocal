@@ -1,0 +1,102 @@
+{
+  "status": "PASS",
+  "engine": "PGlite / single PostgreSQL WASM connection",
+  "limitations": [
+    "Queued submissions are serialized, not multi-session concurrency",
+    "Minimal schema fixtures, actual migration functions",
+    "No provider transport, Google OAuth, network load or production SLA measured"
+  ],
+  "remoteCalls": 0,
+  "realMessages": 0,
+  "realCharges": 0,
+  "ms": 31757,
+  "cases": [
+    {
+      "name": "1000 review observations replayed five times",
+      "status": "PASS",
+      "ms": 9061,
+      "submissions": 5000,
+      "uniqueRows": 1000,
+      "tenants": 20
+    },
+    {
+      "name": "100 claim submissions for one pilot never repeat an alert",
+      "status": "PASS",
+      "ms": 409,
+      "submissions": 100,
+      "claimed": 50,
+      "duplicateClaims": 0,
+      "scopeLeaks": 0
+    },
+    {
+      "name": "early, late, duplicate and reordered delivery receipts",
+      "status": "PASS",
+      "ms": 1244,
+      "alerts": 50,
+      "lateFailureCannotUndoDelivery": true
+    },
+    {
+      "name": "foreign receipts cannot complete another recipient",
+      "status": "PASS",
+      "ms": 4
+    },
+    {
+      "name": "expired preparation retries; unknown dispatch does not replay",
+      "status": "PASS",
+      "ms": 15
+    },
+    {
+      "name": "outage and missing publication time remain unhealthy",
+      "status": "PASS",
+      "ms": 25
+    },
+    {
+      "name": "public roles cannot read ledgers or claim work",
+      "status": "PASS",
+      "ms": 15
+    },
+    {
+      "name": "ledger survives database close and reopen",
+      "status": "PASS",
+      "ms": 837
+    },
+    {
+      "name": "200 inbound events replayed ten times create one durable job each",
+      "status": "PASS",
+      "ms": 4171,
+      "submissions": 2000,
+      "uniqueJobs": 200,
+      "duplicateRows": 0
+    },
+    {
+      "name": "100 queued claims on same OpenDots event yield one lease",
+      "status": "PASS",
+      "ms": 120
+    },
+    {
+      "name": "expired OpenDots worker resumes; stale worker cannot settle",
+      "status": "PASS",
+      "ms": 10
+    },
+    {
+      "name": "STOP is terminal and cannot enqueue another OpenDots decision",
+      "status": "PASS",
+      "ms": 5
+    },
+    {
+      "name": "100 activation submissions acquire only one payment lease",
+      "status": "PASS",
+      "ms": 132
+    },
+    {
+      "name": "payment write failure rolls back account, payment and lifecycle handoff",
+      "status": "PASS",
+      "ms": 20
+    },
+    {
+      "name": "payment recovers once and replay creates no duplicate lifecycle work",
+      "status": "PASS",
+      "ms": 141
+    }
+  ]
+}

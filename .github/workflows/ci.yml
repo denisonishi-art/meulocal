@@ -25,6 +25,10 @@ jobs:
         run: |
           node --test scripts/check-review-monitor.cjs scripts/check-review-monitor-routes.cjs scripts/check-review-monitor-release.cjs scripts/check-customer-dashboard.cjs
           node scripts/check-review-monitor-database.cjs
+      - name: Offline stress and onboarding contract
+        run: |
+          node --test scripts/check-stress-boundaries.cjs scripts/check-customer-journey.cjs
+          node scripts/stress-platform.cjs /tmp/meulocal-stress-result.json
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Build

@@ -1,0 +1,22 @@
+✔ completion refuses a failed persistence and keeps the retry action (376.913544ms)
+✔ skip refuses a failed persistence and does not claim a saved optional skip (277.960052ms)
+✔ a confirmed saved completion reaches the existing dashboard link (215.118343ms)
+✔ failed access lookup cannot present payment confirmed (166.981618ms)
+✔ network failure during completion is visible and never completes (99.784519ms)
+✔ confirmed pending payment remains blocked in the existing access gate (82.064972ms)
+✔ mandatory Google cannot be deferred or claimed connected without OAuth (46.945966ms)
+✔ completion without OAuth does not claim Google or automation active (66.713824ms)
+✔ reloading completed onboarding does not infer a disconnected Google from initial UI state (39.571365ms)
+✔ backlog stops at 100 batches and fails visibly rather than claiming drain (14.159252ms)
+✔ scheduler provider outage fails visibly and does not repeat an uncertain request (1.066555ms)
+✔ scheduler rejects redirects and attaches bounded timeout (1.173928ms)
+✔ large Google profile stops at twenty pages and explicitly remains truncated (207.340429ms)
+✔ ten thousand malformed/failed classifier outputs cannot become clear (597.684356ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2864.434682
