@@ -1,0 +1,61 @@
+{
+  "at": "2026-10-16T16:38:57.162Z",
+  "deployment": {
+    "id": "dpl_86Re7pWdHVgCHgSGVnHSwGEWo5CD",
+    "url": "meulocal-dx5te874h-denisonishi-8130s-projects.vercel.app",
+    "state": "READY",
+    "commit": "f11758be74c8c05607ef26a06f99d69b8a098f7d",
+    "branch": "main",
+    "project": "prj_tTEcf7eWDIAPt7Q1vZ3Qmawu8QSp"
+  },
+  "envPresence": [
+    {
+      "name": "CRON_SECRET",
+      "present": true,
+      "type": "sensitive",
+      "valueReadable": false
+    },
+    {
+      "name": "MEULOCAL_REVIEW_MONITOR_ENABLED",
+      "present": false,
+      "valueReadable": false
+    },
+    {
+      "name": "MEULOCAL_REVIEW_MONITOR_MODEL",
+      "present": false,
+      "valueReadable": false
+    },
+    {
+      "name": "GOOGLE_TOKEN_ENCRYPTION_KEY",
+      "present": false,
+      "valueReadable": false
+    },
+    {
+      "name": "GOOGLE_BUSINESS_CLIENT_ID",
+      "present": false,
+      "valueReadable": false
+    },
+    {
+      "name": "GOOGLE_BUSINESS_CLIENT_SECRET",
+      "present": false,
+      "valueReadable": false
+    },
+    {
+      "name": "GHL_API_KEY",
+      "present": true,
+      "type": "sensitive",
+      "valueReadable": false
+    },
+    {
+      "name": "GHL_LOCATION_ID",
+      "present": true,
+      "type": "sensitive",
+      "valueReadable": false
+    },
+    {
+      "name": "OPENAI_API_KEY",
+      "present": false,
+      "valueReadable": false
+    }
+  ]
+}

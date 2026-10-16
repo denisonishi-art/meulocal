@@ -26,12 +26,18 @@ export async function recordReviewObservations(db:any,businessId:string,reviews:
  let processed=0;
  for(const review of reviews){
   const version=reviewVersion(review);
-  const old=await db.from('review_monitor_alerts').select('id').eq('business_id',businessId).eq('review_id',review.reviewId).eq('version',version).maybeSingle();
+  const old=await db.from('review_monitor_alerts').select('id,review_published_at').eq('business_id',businessId).eq('review_id',review.reviewId).eq('version',version).maybeSingle();
   if(old.error)throw Error('review_monitor_read_failed');
-  if(old.data)continue;
+  const posted=typeof review.createTime==='string'&&/^\d{4}-\d{2}-\d{2}T/.test(review.createTime)?Date.parse(review.createTime):NaN;
+  const published=Number.isFinite(posted)&&posted<=Date.now()+5*60000?new Date(posted).toISOString():null;
+  const timing={review_published_at:published,deadline_at:published?new Date(posted+3*3600000).toISOString():null};
+  if(old.data){
+   if(published&&!old.data.review_published_at){const updated=await db.from('review_monitor_alerts').update(timing).eq('id',old.data.id).eq('business_id',businessId);if(updated.error)throw Error('review_publication_time_save_failed')}
+   continue;
+  }
   if(processed>=5)return {complete:false,processed};
   const verdict=await classifyReview(review,analyze);
-  const result=await db.from('review_monitor_alerts').insert({business_id:businessId,review_id:review.reviewId,version,rating:stars[review.starRating],verdict,state:verdict==='clear'?'ignored':'pending'});
+  const result=await db.from('review_monitor_alerts').insert({business_id:businessId,review_id:review.reviewId,version,rating:stars[review.starRating],...timing,error_code:published?null:'publication_time_unverified',verdict,state:verdict==='clear'?'ignored':'pending'});
   if(result.error&&result.error.code!=='23505')throw Error('review_monitor_save_failed');
   processed++;
  }

@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-16T17:15:42.307Z",
+  "installed": true,
+  "started": false,
+  "backup": "/opt/meulocal-opendots/backups/review-monitor-20261016",
+  "environmentMode": "0600 root:root",
+  "node": "existing container Node v24.21.0",
+  "runtimeReplaced": false,
+  "commercialEnvChanged": false,
+  "service": "meulocal-review-monitor.service",
+  "timer": "meulocal-review-monitor.timer"
+}

@@ -5,6 +5,7 @@ let failed=false;
 for(let batch=0;batch<100;batch++){
  const response=await fetch(new URL('/api/cron/review-monitor',base),{headers:{Authorization:'Bearer '+process.env.CRON_SECRET},redirect:'error',signal:AbortSignal.timeout(65000)});
  const result=await response.json();
+ if(response.status===200&&result.enabled===false){console.info(JSON.stringify({stage:'review_monitor_scheduler',enabled:false,action:'no_op'}));break}
  if(![200,503].includes(response.status)||result.enabled!==true)throw Error('monitor_unavailable_or_disabled');
  if(!result.ok)failed=true;
  if(!result.moreWork){if(failed)process.exitCode=1;break}

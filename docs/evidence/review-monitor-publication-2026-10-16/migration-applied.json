@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-16T17:15:14.693Z",
+  "project": "vznecxfmnthyxvsxwpzi",
+  "version": "20261016155756",
+  "name": "review_monitoring_alerts",
+  "sha256": "54ee6ae5a662e6ba378acd3d708fdf62525d140a4155a8344436fef6329ed2dc",
+  "appliedOnce": true,
+  "transaction": "committed",
+  "historicalVersionsUnchanged": 47,
+  "versionsAfter": 48
+}

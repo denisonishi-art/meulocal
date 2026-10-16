@@ -109,7 +109,7 @@ export const meulocalBusinessRules = {
     allowManualProvisioningFallback: true,
     googleBusinessConsentRequired: true,
     googleConnectionRequired: true,
-    reviewMonitoring: {intervalMinutes:60, alertDeadlineHours:3, publicRepliesEnabled:false},
+    reviewMonitoring: {intervalMinutes:60, alertDeadlineHours:3, deadlineOrigin:'google_review_create_time', publicRepliesEnabled:false},
     customerImportOptional: true,
     customerImportRequiresValidation: true,
     customerImportRequiresDedupe: true,

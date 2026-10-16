@@ -3,7 +3,7 @@ import { ArrowRight, BarChart3, Bot, Check, Link2, MapPin, Search, Star, Trendin
 const benefits = [
   { icon: Star, title: 'Mais avaliações', text: 'Seus clientes recebem pedidos e lembretes automáticos para avaliar sua empresa no Google.' },
   { icon: Search, title: 'Mais presença no Google', text: 'Analisamos seu posicionamento e comparamos sua empresa com quem disputa os mesmos clientes e buscas.' },
-  { icon: TrendingUp, title: 'Saiba quando algo exigir atenção', text: 'Monitoramos avaliações por hora e alertamos o responsável sobre notas baixas ou reclamações. Não escrevemos nem publicamos respostas.' }
+  { icon: TrendingUp, title: 'Saiba quando algo exigir atenção', text: 'Monitoramento de avaliações em validação. A proposta é avisar o responsável sobre notas baixas ou reclamações, sem escrever ou publicar respostas.' }
 ];
 
 const howItWorks = [
@@ -29,8 +29,8 @@ const faqs = [
   ['Como meus clientes recebem os pedidos?', 'Principalmente por WhatsApp e, quando fizer sentido, também por e-mail.'],
   ['O MeuLocal garante nota 5 no Google?', 'Não. O objetivo é aumentar a frequência de avaliações legítimas e melhorar continuamente sua reputação.'],
   ['Posso acompanhar os resultados?', 'Sim. Seu dashboard mostra as principais métricas e a evolução da sua reputação no Google.'],
-  ['Como funciona o monitoramento de avaliações?', 'Com seu Perfil da Empresa no Google conectado, verificamos as avaliações de hora em hora. Notas de 1 ou 2 estrelas geram alerta prioritário; notas de 3 estrelas e reclamações relevantes no texto também exigem atenção. Se a análise do texto não puder ser concluída, avisamos que o caso precisa ser conferido.'],
-  ['Em quanto tempo recebo um alerta?', 'O prazo do serviço é de até 3 horas após a avaliação ficar disponível pela API do Google, com a integração e o canal de alerta ativos. O aviso vai para o e-mail verificado do responsável pela conta. A entrega e as falhas são acompanhadas; se o acesso expirar, o monitoramento precisa ser restabelecido.'],
+  ['Como funciona o monitoramento de avaliações?', 'O monitoramento está em validação. Com seu Perfil da Empresa no Google conectado, a frequência planejada é de hora em hora. Notas de 1 ou 2 estrelas geram alerta prioritário; notas de 3 estrelas e reclamações relevantes no texto também exigem atenção. Se a análise do texto não puder ser concluída, avisamos que o caso precisa ser conferido.'],
+  ['Em quanto tempo recebo um alerta?', 'A meta em validação é avisar em até 3 horas a partir da postagem da avaliação, com a integração e o canal de alerta ativos. Esse prazo ainda não está comprovado em operação real. O aviso vai para o e-mail verificado do responsável pela conta. A entrega e as falhas são acompanhadas; se o acesso expirar, o monitoramento precisa ser restabelecido.'],
   ['O MeuLocal responde às avaliações?', 'Não. A inteligência artificial ajuda a identificar reclamações para avisar você. Nenhuma resposta é escrita ou publicada no Google pelo MeuLocal.'],
   ['Preciso integrar meu CRM?', 'Não. Envie sua base por CSV. Você precisa conectar o Perfil da Empresa no Google para ativar o serviço; o assistente orienta a configuração do canal e a revisão da base antes de qualquer envio.']
 ];
@@ -49,7 +49,7 @@ export default function Home() {
       <section id="top" className="hero container">
         <div className="eyebrow"><span></span>Crescimento local, sem complicação</div>
         <h1>Mais avaliações.<br/><em>Mais presença no Google.</em><br/>Mais clientes locais.</h1>
-        <p className="lead">Automatize pedidos de avaliação com sua base de clientes em CSV. Acompanhe sua reputação e receba alertas quando uma avaliação exigir atenção, sem integrar seu CRM.</p>
+        <p className="lead">Automatize pedidos de avaliação com sua base de clientes em CSV. Acompanhe sua reputação sem integrar seu CRM. Os alertas de avaliações estão em validação e ainda não são apresentados como serviço operacional.</p>
         <div className="heroActions">
           <a className="primary" href="/diagnostico">Descubra sua Nota de Presença Local grátis <ArrowRight size={18}/></a>
           <span className="micro"><Check size={15}/> Análise simples e objetiva</span>
