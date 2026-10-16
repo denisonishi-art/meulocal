@@ -6,7 +6,7 @@ import {isAdminRequest} from '@/lib/admin-auth';
 const optionalText=(limit:number)=>z.string().max(limit).nullish();
 const prospectSchema=z.object({
  id:z.string().trim().min(1).max(300),name:z.string().trim().min(1).max(240),score:z.number().int().min(0).max(100),
- address:optionalText(1000),rating:z.number().min(0).max(5).nullish(),reviews:z.number().int().min(0).max(100000000).optional(),
+ address:optionalText(1000),rating:z.number().min(0).max(5).nullish(),reviews:z.number().int().min(0).max(100000000),
  website:optionalText(2000),phone:optionalText(100),competitorAverageReviews:z.number().min(0).max(100000000).nullish(),
  niche:optionalText(200),region:optionalText(200),competitionMode:z.enum(['local_radius','city_region','search_market']).optional(),competitionLabel:optionalText(500),searchIntent:optionalText(1000)
 });
