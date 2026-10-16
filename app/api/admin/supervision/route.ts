@@ -10,7 +10,7 @@ export async function GET(req:Request){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL||process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)return json({error:'Supervisão indisponível.'},503);
  try{
-  const db=createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(5000)})}});
+  const db=createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,cache:'no-store',signal:AbortSignal.timeout(5000)})}});
   const columns='event_id,kind,business_id,state,attempts,receipt,created_at,updated_at';
   const [pending,completed,acquisition,reviews,payments,cadence]=await Promise.all([
    db.from('opendots_handoffs').select(columns,{count:'exact'}).in('state',['pending','processing']).order('created_at',{ascending:true}).order('event_id').limit(20),
@@ -20,6 +20,7 @@ export async function GET(req:Request){
    db.from('payment_events').select('id,activation_checkout_id,activation_state,activation_attempts,activation_error,created_at',{count:'exact'}).in('activation_state',['pending','processing']).in('event_type',['PAYMENT_CONFIRMED','PAYMENT_RECEIVED','CHECKOUT_PAID']).order('created_at',{ascending:true}).limit(20),
    db.from('automation_enrollments').select('id,lead_id,acquisition_issue,acquisition_retry_at,created_at:started_at',{count:'exact'}).eq('track','meulocal_acquisition').eq('status','active').not('acquisition_issue','is',null).order('acquisition_retry_at',{ascending:true}).limit(20)
   ]);
+  console.info(JSON.stringify({stage:'admin_supervision_read',databaseHost:new URL(url).hostname,sources:[pending,completed,acquisition,reviews,payments,cadence].map(result=>({count:result.count,rows:result.data?.length,error:result.error?.code||null}))}));
   if([pending,completed,acquisition,reviews,payments,cadence].some(result=>result.error||result.count===null||!Array.isArray(result.data)))return json({error:'Não foi possível consultar a supervisão. Tente novamente.'},503);
   const section=(result:typeof pending)=>({count:result.count,rows:(result.data||[]).map(row=>{
    const receipt=row.receipt;
