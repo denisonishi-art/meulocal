@@ -15,6 +15,16 @@ test('new verified email does not require an existing GHL contact and returns a 
 test('invalid email, missing MX, local opt-out, duplicate provider identity and disabled send never turn green',async()=>{for(const args of [{mx:false},{local:[{opt_out_at:'synthetic'}]},{contacts:[{},{}]},{flag:false}])assert.equal((await readiness(args).run()).canSend,false);const f=readiness();assert.equal((await f.api.manualRecipientReadiness(f.db,{...target,recipient:'invalid'})).canSend,false)});
 test('provider DND remains a blocker',async()=>{const c={id:'synthetic-contact',locationId:'uNh3KsM7WFuLeTN8Q583',email:target.recipient};assert.equal((await readiness({contacts:[c],stopped:true}).run()).canSend,false)});
 test('public phone alone is not claimed to be a valid WhatsApp channel',async()=>{const f=readiness();assert.equal((await f.api.manualRecipientReadiness(f.db,{...target,channel:'whatsapp',recipient:'+5511999999999'})).canSend,false)});
-test('UI sends only on confirmation and retains request ID for accepted intent',()=>{const s=fs.readFileSync('app/admin/AdminClient.tsx','utf8'),a=s.indexOf(' async function sendManualProspect'),b=s.indexOf(' async function checkChannels',a),flow=s.slice(a,b);assert.ok(flow.includes('window.confirm'));assert.ok(flow.includes('/api/agents/prospect/send-manual'));assert.ok(!flow.includes('clearManualAttempt'));assert.ok(s.includes('Pode enviar'));assert.ok(s.includes('disabled={busy||!c?.canSend||!!manualResults[p.id]}'));});
+test('UI sends only on confirmation and retains request ID for accepted intent',()=>{const s=fs.readFileSync('app/admin/AdminClient.tsx','utf8'),a=s.indexOf(' async function sendManualProspect'),b=s.indexOf(' async function checkChannels',a),flow=s.slice(a,b);assert.ok(flow.includes('window.confirm'));assert.ok(flow.includes('/api/agents/prospect/send-manual'));assert.ok(!flow.includes('clearManualAttempt'));assert.ok(s.includes('Pode enviar'));assert.ok(s.includes('disabled={busy||!c?.canSend||!!manualResults[p.id]&&!manualRetryable[p.id]}'));});
 
 test('contacts already tagged for GHL acquisition cannot overlap a new manual approach',async()=>{const c={id:'synthetic-contact',locationId:'uNh3KsM7WFuLeTN8Q583',email:target.recipient,tags:['follow-up']};assert.equal((await readiness({contacts:[c]}).run()).canSend,false)});
+
+const dnd=load('lib/acquisition/delivery.ts',{'@/lib/highlevel-operational':{}}).operationalDnd;
+test('explicit channel DND supports sparse legacy response without treating absence as permission',()=>{
+ assert.equal(dnd({dndSettings:{Email:{status:'inactive'}}},'email'),false);
+ assert.equal(dnd({dnd:false,dndSettings:{email:{status:'active'}}},'email'),true);
+ assert.equal(dnd({dnd:true,dndSettings:{email:{status:'inactive'}}},'email'),true);
+ assert.equal(dnd({dndSettings:{all:{status:'active'},email:{status:'inactive'}}},'email'),true);
+ for(const c of [{},{dndSettings:{}},{dndSettings:{whatsapp:{status:'inactive'}}},{dnd:null},{dnd:'false'},{dndSettings:{email:{status:'unknown'}}}])assert.throws(()=>dnd(c,'email'));
+});
+test('opt-out tag remains authoritative independently of channel DND representation',()=>assert.equal(dnd({dndSettings:{email:{status:'inactive'}},tags:['meulocal:opt-out']},'email'),true));
