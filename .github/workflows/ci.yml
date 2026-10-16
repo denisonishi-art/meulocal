@@ -30,7 +30,9 @@ jobs:
           node --test scripts/check-payment-plans.cjs
           node scripts/check-payment-plans-database.cjs
       - name: Manual prospect search and draft contracts
-        run: node --test scripts/check-manual-prospect-search.cjs
+        run: |
+          node --test scripts/check-manual-prospect-search.cjs scripts/check-manual-prospect-send.cjs
+          node scripts/check-manual-prospect-database.cjs
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Build

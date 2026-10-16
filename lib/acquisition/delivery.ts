@@ -2,7 +2,7 @@ import {getLocationAccessToken,getOperationalContact,getOperationalConversations
 export type AcquisitionIntent={leadId:string;kind:'initial'|'cadence'|'manual';step:number|null;requestId?:string;channel:'email'|'whatsapp';message:string;subject?:string};
 type Stop={kind:'replied'|'opted_out';id:string;source:'provider_message'|'provider_dnd';at:string};
 async function rpc(db:any,name:string,args:Record<string,unknown>){const response=await db.rpc(name,args);if(response.error)throw Error('acquisition_database_unavailable');return response.data}
-async function providerGate(payload:any,token:string,manual:boolean,budget:()=>number):Promise<Stop|null>{
+export async function providerGate(payload:any,token:string,manual:boolean,budget:()=>number):Promise<Stop|null>{
  const conversations=await getOperationalConversations({token,locationId:payload.locationId,contactId:payload.contactId,timeoutMs:budget()});
  let reply:Stop|null=null;
  for(const conv of conversations){
