@@ -1,0 +1,306 @@
+{
+  "scope": "PREPARED_LOCAL_NOT_AUTHORIZED_FOR_PUBLICATION",
+  "candidateRevision": "9fc9301cef5f32da7956a380387828d4c4a9c5ba",
+  "historicalObservedProductionRevision": "9b51872685688a4cffc282dacc96181ce5a66f0a",
+  "baselineMustBeRefreshed": true,
+  "project": {
+    "vercelTeam": "denisonishi-8130s-projects",
+    "vercelProjectId": "prj_tTEcf7eWDIAPt7Q1vZ3Qmawu8QSp",
+    "supabaseRef": "vznecxfmnthyxvsxwpzi"
+  },
+  "migrations": [
+    {
+      "order": 0,
+      "source": "supabase/migrations/20261015_opendots_durable_handoffs.sql",
+      "sha256": "9010bc020245bb03b12f6280926e383d0ee07b493a00d99ac2ebb53c2f834dc0",
+      "reservedReleaseVersion": "20261015000000",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 1,
+      "source": "supabase/migrations/20261015_002_controlled_inbox_cursor.sql",
+      "sha256": "b690802d188723134d11f2efbe796e102766839afb7a9740f9cbf18c281ff6cb",
+      "reservedReleaseVersion": "20261015000001",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 2,
+      "source": "supabase/migrations/20261015_003_payment_activation_recovery.sql",
+      "sha256": "22fa3165a4112719647f298bb7ce800350be2c61309859c90caa8c4558fea236",
+      "reservedReleaseVersion": "20261015000002",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 3,
+      "source": "supabase/migrations/20261015_004_payment_event_processing.sql",
+      "sha256": "2b75ed016d0a49b8efb2e38e2717d1e50c951a08c29028d99c234e7f8124dbb8",
+      "reservedReleaseVersion": "20261015000003",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 4,
+      "source": "supabase/migrations/20261015_005_checkout_creation_recovery.sql",
+      "sha256": "2c2b1f35343cebd1527d24f805b3d6adbaa567eaeb16e91608bdac64a0b2dbfa",
+      "reservedReleaseVersion": "20261015000004",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 5,
+      "source": "supabase/migrations/20261015_006_customer_access_claim.sql",
+      "sha256": "5d2c6b778b22582ebc003514ef73601ca9bcdd6cd685d553385e6c82c4f2050a",
+      "reservedReleaseVersion": "20261015000005",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 6,
+      "source": "supabase/migrations/20261015_007_customer_base_transactions.sql",
+      "sha256": "b95c9e612d10bb1696f4391339ee689b9d013f0c0bb23c987f8b70020d473b55",
+      "reservedReleaseVersion": "20261015000006",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 7,
+      "source": "supabase/migrations/20261015_008_customer_base_activation.sql",
+      "sha256": "893a4b69e087813d6fe5cf72b1a0571e1c6214b8f001b7e77aebd53a5acdaba9",
+      "reservedReleaseVersion": "20261015000007",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 8,
+      "source": "supabase/migrations/20261015_009_review_delivery_ledger.sql",
+      "sha256": "2527dc6821d9efa1cce7831f701c1895f4f45383bf2bf778b86c1cbd3b0168bd",
+      "reservedReleaseVersion": "20261015000008",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 9,
+      "source": "supabase/migrations/20261015_010_customer_review_ingestion.sql",
+      "sha256": "c6926f4d5ae98350e5eb853b24d58d59d5586a7bea958250a9def910f8885e6c",
+      "reservedReleaseVersion": "20261015000009",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 10,
+      "source": "supabase/migrations/20261015_011_prospect_preparation.sql",
+      "sha256": "bba3b025f5af1d066aef92a3492a78d1d3d237b51edd446366a431f43fd5fd23",
+      "reservedReleaseVersion": "20261015000010",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 11,
+      "source": "supabase/migrations/20261015_012_acquisition_delivery_journal.sql",
+      "sha256": "8e28dadf84a0e94e35a15b8d569128a9ce7a852cd636f33317ca54de9f7ff5ea",
+      "reservedReleaseVersion": "20261015000011",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    },
+    {
+      "order": 12,
+      "source": "supabase/migrations/20261015_013_onboarding_completion_gates.sql",
+      "sha256": "da78c9f549fe2716f68ed9857a5982e5b97212ca448f65d39a50d77ddee41c85",
+      "reservedReleaseVersion": "20261015000012",
+      "apply": "ONLY_IF_NOT_APPLIED_AND_SCHEMA_PRECONDITIONS_MATCH"
+    }
+  ],
+  "runtime": [
+    {
+      "path": "scripts/opendots-worker/commercial-engine.cjs",
+      "sha256": "c709239acfedaa8b091c5149601803128b615d5736e4d3bc27bc7e32b805e5ad"
+    },
+    {
+      "path": "scripts/opendots-worker/commercial-receipts.mjs",
+      "sha256": "4bac090454a564c40c2460719a8e34f8fd6d21d304b150a91c2d6b1e6e76c193"
+    },
+    {
+      "path": "scripts/opendots-worker/commercial-recovery.mjs",
+      "sha256": "0d690c84d059312b6d3946eb1ab26bfbd0da94cb9afbbd4f3dfb24f8be214fc3"
+    },
+    {
+      "path": "scripts/opendots-worker/commercial-server.mjs",
+      "sha256": "1fd67b6e83b80121b25729832767e9c4aa89fc4ba7b4d561741c864caacd67bb"
+    }
+  ],
+  "application": [
+    {
+      "path": ".eslintrc.json",
+      "sha256": "c42575f830bb5003bb7be58fbec13d0ca65a6188155067e98076a7f3977e7472"
+    },
+    {
+      "path": "app/admin/AdminClient.tsx",
+      "sha256": "8a1c99f1f00a99d968f5d273318b7a2218bdc80a9d0b58c60d05d12c688dacb8"
+    },
+    {
+      "path": "app/admin/OpenDotsSupervision.tsx",
+      "sha256": "2e76c9804a332a4e77c1216e5eb13aa38c278b223193625b9548971c4323b770"
+    },
+    {
+      "path": "app/api/admin/overview/route.ts",
+      "sha256": "b9af594f9fbe7cc2a4a35234236dbd2506f2024d093807fe7d4b6bbc024659a4"
+    },
+    {
+      "path": "app/api/admin/supervision/route.ts",
+      "sha256": "cda696298fc45685d81ebda154fbff6858bf21660678f407d0409090418b19e2"
+    },
+    {
+      "path": "app/api/agents/prospect/approve/route.ts",
+      "sha256": "df813c709b134d07c6a791ba127af2f99b8898e8a353ff83d2e4742e361bc916"
+    },
+    {
+      "path": "app/api/agents/prospect/dispatch-pending/route.ts",
+      "sha256": "f0fd5e5ab4c728b950af2002dcb23ec1d1c479855732f132995d890c73754fe6"
+    },
+    {
+      "path": "app/api/agents/prospect/reply/route.ts",
+      "sha256": "1c225203ed3a49bd53adc968a95b79ac26b46dcbcc75d414c9e01500436db4c2"
+    },
+    {
+      "path": "app/api/agents/prospect/send-approved-email/route.ts",
+      "sha256": "cd5866cb079985d3e5d07660c5bf613d17523f9aed2f519dd2eada859913f94b"
+    },
+    {
+      "path": "app/api/cron/acquisition-outreach/route.ts",
+      "sha256": "044d075c3794d43dccd0fd1fe967a0d76b9f1ede88dea3d23ef693dceaf1d710"
+    },
+    {
+      "path": "app/api/cron/google-sync/route.ts",
+      "sha256": "c078f9dc1b164cb4e98698cdc438c62d283e3e628aab0a024091b42ede7f2a1c"
+    },
+    {
+      "path": "app/api/cron/opendots/route.ts",
+      "sha256": "33c5ec28140796bcb6f3f6553f6f9016d41efb0c235866c3edf1f28c1097d598"
+    },
+    {
+      "path": "app/api/cron/review-requests/route.ts",
+      "sha256": "ff4d30ed18c27abc56918aae8c2673dd6107f0e9b0743dcbc26774a980fe6562"
+    },
+    {
+      "path": "app/api/customer-access/claim/route.ts",
+      "sha256": "df6fb612fc52a27f66289a1daa5b571c77111062abb6eb9fee4a65a2b26bd5a4"
+    },
+    {
+      "path": "app/api/customer-base/activate/route.ts",
+      "sha256": "b7dc8e2ed3711cb5a954d3114a9f6abba506e78178dd9f107c17c5c81c9bd5d6"
+    },
+    {
+      "path": "app/api/customer-base/confirm/route.ts",
+      "sha256": "e17a44d9f81f00de8b52f372a5739614196b6c963d7276b17540b11a226d1401"
+    },
+    {
+      "path": "app/api/customer-base/import/route.ts",
+      "sha256": "20f3bb2c615f24c95c2ea2ecef221ec85bab223d469b44952f8f916c9e15b08a"
+    },
+    {
+      "path": "app/api/customer-dashboard/route.ts",
+      "sha256": "3149e6939be38acaa7a399906dcc345c27fe9d24ceaf9b7f1b0628cfca6e6e9a"
+    },
+    {
+      "path": "app/api/internal/opendots/recover/route.ts",
+      "sha256": "df5fa9d49acfe903c14cc7f969ac2644ece3be134000a566d91bf192bff67023"
+    },
+    {
+      "path": "app/api/onboarding/status/route.ts",
+      "sha256": "23dbedcd89b91bacc11c58d2461397f8475bfbac6d1bc6fa05087f884a814249"
+    },
+    {
+      "path": "app/api/payments/checkout/route.ts",
+      "sha256": "5bac608dcb46f8b7c6e9844b726eccc6391479bc265bb7e8c25d618c0b0a7ad4"
+    },
+    {
+      "path": "app/api/webhooks/asaas/route.ts",
+      "sha256": "d1404f1d4bd7d5bf541aaa8d8ee77839f4e6fbd70c335aaae638550ff05a271d"
+    },
+    {
+      "path": "app/api/webhooks/highlevel/route.ts",
+      "sha256": "114665bdfbc55ee24eacdf1effa5131762d26ecab7d42a3586639b46852cf678"
+    },
+    {
+      "path": "app/dashboard/CustomerOperations.tsx",
+      "sha256": "124ea403971a8f601f4619f7e0bf263f60870c584b188a66cff649f8970a0fe2"
+    },
+    {
+      "path": "app/dashboard/DashboardClient.tsx",
+      "sha256": "aaa9119233247d40efe6b0e8c06720091e5a50cbed5737c77240ebabd1d45b0b"
+    },
+    {
+      "path": "app/onboarding/CustomerBaseSetup.tsx",
+      "sha256": "7706d7bde790680d3a54034c60634bf8ba11326714b2a1787b8512dc0e31bc5e"
+    },
+    {
+      "path": "app/onboarding/page.tsx",
+      "sha256": "eea6cdf62532f6f5221c6b5e1bc518d39a0780a90691ab362af14e82db4014b9"
+    },
+    {
+      "path": "lib/acquisition/delivery.ts",
+      "sha256": "a8df38685605bff1aaca3979aeabdd90f0e084e5167c5ec3f1319f28c9850a61"
+    },
+    {
+      "path": "lib/acquisition/manual-intent.ts",
+      "sha256": "016525888e92c9787891ab3b7bd4f996501768e3f654c48c929d8f433373a1a6"
+    },
+    {
+      "path": "lib/acquisition/message.ts",
+      "sha256": "4cca42a8dd9dab3a7d4ac3412c6caaf31be2002eee5576d01b32da290cd87fa9"
+    },
+    {
+      "path": "lib/admin-auth.ts",
+      "sha256": "f1c1b4ad61c59790b68f677959b6e42db841c8d8593dd4e4fb50eb087d9dc787"
+    },
+    {
+      "path": "lib/agents/opendots-commercial-bridge.ts",
+      "sha256": "f2416d86668c7e842e4052a59e23d636393853d809b9fa74220854a59b85fccd"
+    },
+    {
+      "path": "lib/agents/opendots-guidance.ts",
+      "sha256": "c1ddd1e8878e14a46b2ebeee537155a127c7131b5e9b2d93e06762559582c672"
+    },
+    {
+      "path": "lib/agents/opendots-outbox.ts",
+      "sha256": "d631669dc843ee9e9a5819a1464ab29f13977c19e949fbf1d55600bc526c9f63"
+    },
+    {
+      "path": "lib/ghl-controlled-inbound.ts",
+      "sha256": "5760e5b967b35be6dfd19f0de90a0b56975c471d67c9549378cfec83b25e6b57"
+    },
+    {
+      "path": "lib/ghl-controlled-reconciliation.ts",
+      "sha256": "f8b908dce133c46ac2be6c5f7d52617cb88a260cf5095a70ad31dadb75cefbf2"
+    },
+    {
+      "path": "lib/highlevel-operational.ts",
+      "sha256": "6a4bb9f410085645f7be55431030b0f7431d8f009b87619da0f2ff89ec7e420c"
+    },
+    {
+      "path": "lib/payments/asaas-event.ts",
+      "sha256": "29f80f419b154567a9a784ab45cddefffb5947b8e6f9b146ea2976a77aa0558c"
+    },
+    {
+      "path": "lib/payments/asaas-processing.ts",
+      "sha256": "6b520f4c6c2a9439d0322b3b402f5dec52ed3ea93c6af5b9f0bd321843f141f8"
+    },
+    {
+      "path": "lib/payments/asaas.ts",
+      "sha256": "e03ba92d76ce0ef26c4669369e3a03759d2675c712234237f937049fea901b0b"
+    },
+    {
+      "path": "lib/payments/customer-user.ts",
+      "sha256": "defaf4bec40c85ba02fcec715fbaa0ca92747dd08131b2b9189f7dd422b9fe9a"
+    },
+    {
+      "path": "lib/reviews/delivery.ts",
+      "sha256": "8f51716bc8c7df7291924019c47f98069913c80d015e450318a51944a3cb86b2"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "c82e51a0853b3106cebf9ec4edf9ee1ddc321b4feafa7b0b220a47f2adba8693"
+    },
+    {
+      "path": "package.json",
+      "sha256": "0fcea5d736ee0eae786776f4804c59c58e4dd5d4ff8624630e03852af69daa89"
+    }
+  ],
+  "noChangeDoNotPublish": [
+    "vercel.json",
+    "existing runtime identity, upstream, mounts and workspace-bootstrap",
+    "Google OAuth credentials"
+  ],
+  "noAutomaticExecution": true
+}

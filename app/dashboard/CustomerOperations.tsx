@@ -21,12 +21,17 @@ export default function CustomerOperations(){
   const[data,setData]=useState<Data|null>(null);const[loading,setLoading]=useState(true);const[error,setError]=useState('');const[showImporter,setShowImporter]=useState(false);
   async function load(){
     setLoading(true);setError('');
-    if(!url||!key){setError('Integração do painel não configurada.');setLoading(false);return}
-    const sb=createClient(url,key);const session=(await sb.auth.getSession()).data.session;
-    if(!session){window.location.href='/login';return}
-    const r=await fetch('/api/customer-dashboard',{headers:{Authorization:'Bearer '+session.access_token},cache:'no-store'});
-    const j=await r.json().catch(()=>({}));if(!r.ok){setError(j.error||'Não foi possível carregar os dados operacionais.');setLoading(false);return}
-    setData(j);setLoading(false);
+    try{
+      if(!url||!key){setError('Integração do painel não configurada.');return}
+      const sb=createClient(url,key);const session=(await sb.auth.getSession()).data.session;
+      if(!session){window.location.href='/login';return}
+      const r=await fetch('/api/customer-dashboard',{headers:{Authorization:'Bearer '+session.access_token},cache:'no-store'});
+      const j=await r.json().catch(()=>null);
+      if(!r.ok){setError(j?.error||'Não foi possível carregar os dados operacionais.');return}
+      if(!j?.account||!Array.isArray(j.payments)||!Array.isArray(j.automations)||!Array.isArray(j.requests)||!j.summary)throw Error('dashboard_response_unverified');
+      setData(j);
+    }catch{setError('Não foi possível carregar os dados operacionais. Tente novamente.')}
+    finally{setLoading(false)}
   }
   useEffect(()=>{load()},[]);
   if(loading)return <section className="dashboardPanel operationsPanel"><div className="panelTitle"><div><span>OPERAÇÃO</span><h2>Carregando suas ações...</h2></div><RefreshCw size={20}/></div></section>;
@@ -40,7 +45,7 @@ export default function CustomerOperations(){
         <div className="baseNumbers"><article><span>Na base</span><strong>{base.total}</strong></article><article><span>Na fila</span><strong>{base.queued}</strong></article><article><span>Em andamento</span><strong>{base.active}</strong></article><article><span>Concluídos</span><strong>{base.completed}</strong></article></div>
         <div className="protectionNote"><Workflow/><div><strong>{reviewSettings?.status==='active'?'Ativação protegida ativa':'Base pronta'}</strong><span>{reviewSettings?.status==='active'?'30 clientes no primeiro dia, 40 no segundo e até 50 por dia útil a partir do terceiro. No máximo 3 tentativas por contato.':'Ative a automação para iniciar a distribuição progressiva.'}</span></div></div>
         <button className="linkButton" type="button" onClick={()=>setShowImporter(true)}>Adicionar nova base</button>
-      </div>:<CustomerBaseSetup onReady={async()=>{setShowImporter(false);await load()}}/>}
+      </div>:<CustomerBaseSetup onReady={async ready=>{if(ready){setShowImporter(false);await load()}}}/>}
     </section>
 
     <section className="dashboardPanel operationsPanel" id="operacao">

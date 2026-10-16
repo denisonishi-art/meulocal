@@ -1,15 +1,15 @@
-import {getLocationAccessToken,findOperationalConversation,getOperationalConversationMessages} from './highlevel-operational';
+import {getLocationAccessToken,findOperationalConversation,getOperationalConversationMessages,getOperationalMessage,getOperationalContact} from './highlevel-operational';
 
+export const CONTROLLED_LOCATION_ID='uNh3KsM7WFuLeTN8Q583';
+export const CONTROLLED_CONTACT_ID='SdJ2oWZqsReI1TTq4cAd';
 export const CONTROLLED_WORKFLOW_ID='957c3d55-c64c-4b84-88a6-1808c587f450';
 export class ControlledInboundError extends Error{
  constructor(message:string,public status=400){super(message)}
 }
 const text=(value:unknown)=>typeof value==='string'?value.trim():'';
 
-/** Workflow customData does not include a supported message-ID merge value.
- * Resolve only an unambiguous recent real inbound, using existing read APIs.
- * No writes, import, send, or arbitrary latest-message substitution. */
-export async function resolveControlledInbound(body:any){
+/** Bind to an immutable provider ID or the triggering message timestamp, never execution time. */
+export async function resolveControlledInbound(body:any,options:{requireControlledTag?:boolean}={}){
  const custom=body?.customData&&typeof body.customData==='object'&&!Array.isArray(body.customData)?body.customData:{};
  const locationId=text(custom.locationId)||text(body.locationId)||text(body.location?.id);
  const contactId=text(custom.contactId)||text(body.contactId)||text(body.contact_id)||text(body.contact?.id);
@@ -19,17 +19,29 @@ export async function resolveControlledInbound(body:any){
  for(const value of [body.locationId,body.location?.id,custom.locationId])if(text(value)&&text(value)!==locationId)throw new ControlledInboundError('location_conflict');
  for(const value of [body.contactId,body.contact_id,body.contact?.id,custom.contactId])if(text(value)&&text(value)!==contactId)throw new ControlledInboundError('contact_conflict');
  if(text(body.message?.direction)&&body.message.direction!=='inbound')throw new ControlledInboundError('direction_conflict');
+ if(locationId!==CONTROLLED_LOCATION_ID||contactId!==CONTROLLED_CONTACT_ID)throw new ControlledInboundError('controlled_scope_not_authorized',409);
+ const ids=[custom.messageId,body.messageId,body.message?.id].map(text).filter(Boolean);
+ const times=[custom.messageOccurredAt,body.timestamp,body.dateAdded,body.message?.dateAdded].map(text).filter(Boolean);
+ if(new Set(ids).size>1)throw new ControlledInboundError('message_id_conflict');
+ // Require timezone and full time; dates and local execution timestamps are not anchors.
+ if(times.some(t=>!/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:\d{2})$/.test(t)||!Number.isFinite(Date.parse(t))))throw new ControlledInboundError('invalid_message_timestamp');
+ if(new Set(times.map(t=>Date.parse(t))).size>1)throw new ControlledInboundError('message_timestamp_conflict');
+ const requestedId=ids[0],occurredAt=times.length?Date.parse(times[0]):null;
+ if(!requestedId&&occurredAt===null)throw new ControlledInboundError('identity_anchor_missing',422);
  const token=await getLocationAccessToken(locationId);
+ if(options.requireControlledTag){
+  const contact=await getOperationalContact({token,contactId});
+  if(locationId!==CONTROLLED_LOCATION_ID||contactId!==CONTROLLED_CONTACT_ID||contact?.id!==contactId||contact?.locationId!==locationId||!contact?.tags?.includes('controlled-contact'))throw new ControlledInboundError('controlled_native_scope_unverified',409);
+ }
  const conversationId=await findOperationalConversation({token,locationId,contactId});
  if(!conversationId)throw new ControlledInboundError('message_identity_unverified',409);
- const messages=await getOperationalConversationMessages({token,conversationId,limit:50});
- const requestedId=text(custom.messageId)||text(body.messageId)||text(body.message?.id);
- const now=Date.now();
+ const messages=requestedId?[await getOperationalMessage({token,messageId:requestedId,conversationId})]:await getOperationalConversationMessages({token,conversationId,limit:50});
  const candidates=messages.filter((item:any)=>{
-  const at=Date.parse(item.dateAdded);
-  return typeof item.id==='string'&&item.contactId===contactId&&item.conversationId===conversationId&&item.direction==='inbound'&&
+  const at=Date.parse(item?.dateAdded);
+  return typeof item?.id==='string'&&item.contactId===contactId&&item.conversationId===conversationId&&
+   (!item.locationId||item.locationId===locationId)&&item.direction==='inbound'&&
    (item.messageType==='TYPE_WHATSAPP'||item.type===19)&&text(item.body)===message&&
-   Number.isFinite(at)&&now-at<=15*60*1000&&at-now<=30000&&(!requestedId||item.id===requestedId);
+   Number.isFinite(at)&&(!requestedId||item.id===requestedId)&&(occurredAt===null||at===occurredAt);
  });
  const unique=new Map<string,any>(candidates.map((item:any)=>[item.id,item]));
  if(unique.size!==1)throw new ControlledInboundError(unique.size?'message_identity_ambiguous':'message_identity_unverified',409);

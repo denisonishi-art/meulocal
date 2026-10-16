@@ -1,0 +1,223 @@
+{
+  "at": "2026-10-15T20:22:41.112121+00:00",
+  "scope": "LOCAL_COMPLETION_BLOCK_PUBLICATION_NOT_EXECUTED",
+  "tests": {
+    "onboarding": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    "controlledHandler": {
+      "tests": 30,
+      "passed": 30,
+      "failed": 0,
+      "scope": "actual_handler_and_bridge_isolated_provider"
+    },
+    "reconciliation": {
+      "tests": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    "postgresInbox": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    "runtimeHTTP": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "scope": "local_real_http_persisted_receipts"
+    },
+    "supervisedRecovery": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    "recoveryWorker": {
+      "tests": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "paymentUser": {
+      "tests": 8,
+      "passed": 8,
+      "failed": 0
+    },
+    "paymentDatabase": {
+      "tests": 13,
+      "passed": 13,
+      "failed": 0,
+      "engine": "PostgreSQL 17.6",
+      "scope": "synthetic_isolated_real_database"
+    },
+    "paymentLifecycle": {
+      "tests": 29,
+      "passed": 29,
+      "failed": 0,
+      "scope": "actual_handler_isolated_real_postgresql"
+    },
+    "checkoutReservation": {
+      "tests": 15,
+      "passed": 15,
+      "failed": 0,
+      "scope": "actual_route_isolated_real_postgresql"
+    },
+    "openDotsOutbox": {
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "scope": "actual_outbox_isolated_real_postgresql"
+    },
+    "customerAccess": {
+      "tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "scope": "actual_route_isolated_auth_real_postgresql"
+    },
+    "customerDashboard": {
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "scope": "actual_react_handlers_isolated_provider"
+    },
+    "customerDashboardAPI": {
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "scope": "actual_handler_installed_sdk_isolated_postgrest_transport"
+    },
+    "customerImportConfirmation": {
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "scope": "actual_handlers_xlsx_real_postgresql_synthetic_fixture",
+      "harnessRegression": "14_pass_after_verified_transient_docker_failure_original_attempt_preserved"
+    },
+    "customerBaseActivation": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "scope": "actual_route_real_postgresql_synthetic_fixture_no_transport"
+    },
+    "reviewDeliveryDatabase": {
+      "tests": 19,
+      "passed": 19,
+      "failed": 0,
+      "scope": "real_postgresql_synthetic_clock_no_transport"
+    },
+    "reviewDeliveryProcessor": {
+      "tests": 15,
+      "passed": 15,
+      "failed": 0
+    },
+    "reviewWebhook": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "scope": "actual_handler_real_postgresql_isolated_provider"
+    },
+    "reviewCronRoute": {
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "scope": "actual_route_auth_flags_isolated_processor"
+    },
+    "adminSupervision": {
+      "tests": 18,
+      "passed": 18,
+      "failed": 0
+    },
+    "acquisitionDefaultOffGates": {
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "scope": "transport_handlers_no_database_or_provider_access_approve_is_preparation_only"
+    },
+    "prospectPreparation": {
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "scope": "actual_route_and_real_postgresql_concurrent_sessions_no_provider"
+    },
+    "acquisitionJournal": {
+      "tests": 20,
+      "passed": 20,
+      "failed": 0
+    },
+    "acquisitionDelivery": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    "acquisitionRoutes": {
+      "tests": 8,
+      "passed": 8,
+      "failed": 0
+    },
+    "manualIntent": {
+      "tests": 3,
+      "passed": 3,
+      "failed": 0
+    },
+    "onboardingTransactionAndRoute": {
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    "rollbackRehearsal": {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0
+    }
+  },
+  "typescript": "pass_exit_0",
+  "lint": "pass_no_errors_two_hook_warnings",
+  "productionRelease": "not_executed",
+  "newNativeAppCreated": false,
+  "paymentRecovery": "local_verified_handler_checkout_recovery_not_published",
+  "asaasConfiguration": "authenticated_read_only_existing_webhook_missing_checkout_events_token_not_returned_by_get",
+  "realPaymentEvidence": "blocked_no_prior_payment_user_confirmed_no_new_charge",
+  "customerBase": "local_verified_import_confirmation_activation_delivery_inbound_external_proof_pending",
+  "remoteBaseDDL": "openapi_fields_observed_full_constraints_not_verified",
+  "reviewDelivery": "local_verified_cron_recovery_webhook_integrated_default_disabled_not_published",
+  "realReviewTransport": "not_executed",
+  "realReviewInbound": "not_verified_customer_scope",
+  "adminSupervisionPublication": "NOT_PUBLISHED",
+  "acquisitionEnabledTransport": "LOCAL_VERIFIED_DURABLE_NOT_PUBLISHED_DEFAULT_DISABLED",
+  "sourceRevision": "9fc9301cef5f32da7956a380387828d4c4a9c5ba",
+  "regression": {
+    "tests": 348,
+    "passed": 348,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": "release-regression.log",
+    "files": "exact_file_list_at_start_of_log"
+  },
+  "browser": {
+    "scenarios": 8,
+    "passed": 8,
+    "evidence": "release-browser.json",
+    "scope": "LOCAL_BROWSER_ACTUAL_HANDLERS_SQL_HTTP_RECEIPTS_ISOLATED_AUTH_PROVIDER_MODEL",
+    "externalRequests": []
+  },
+  "build": "pass_exit_0_with_css_and_existing_hook_warnings",
+  "review": {
+    "reviewer": "independent_existing_review_recovery_lifecycle",
+    "firstDelta": "d3f45e2..7654fd0",
+    "finding": {
+      "priority": "P2",
+      "cause": "oldest blocked cadence enrollment starves every later lead",
+      "fixedIn": "9fc9301",
+      "status": "closed"
+    },
+    "reReviewDelta": "7654fd0..9fc9301",
+    "remainingP1P2": 0,
+    "scope": "read_only_finding_and_adjacent_contracts_not_production_or_legacy_binary_rollback"
+  },
+  "rollback": "safe_version_flags_disable_restore_snapshots_preserved_no_new_sends_not_legacy_binary_rollback",
+  "publication": "PREPARED_WITH_EXTERNAL_PREFLIGHT_HOLD",
+  "financialProof": "NOT_VERIFIED_NO_PRIOR_PAYMENT_OR_ASAAS_SANDBOX_NO_PRODUCTION_PAYMENT_FABRICATED",
+  "remoteDDL": "full_schema_constraints_and_migration_ledger_preflight_pending",
+  "runtimeRealBoot": "not_executed_in_this_local_block"
+}

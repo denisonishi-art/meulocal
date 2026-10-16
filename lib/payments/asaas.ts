@@ -30,6 +30,7 @@ export async function getAsaasCustomerEmail(customerId: string): Promise<string 
   const response = await fetch(`${ASAAS_API_BASE}/customers/${encodeURIComponent(customerId)}`, {
     headers: { access_token: accessToken, 'User-Agent': 'MeuLocal/1.0' },
     cache: 'no-store',
+    signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) return null;
   const payload = await response.json() as { email?: unknown };
@@ -76,6 +77,7 @@ export async function createRecurringCheckout(input: CreateRecurringCheckoutInpu
       ...(input.customerData ? { customerData: input.customerData } : {}),
     }),
     cache: 'no-store',
+    signal: AbortSignal.timeout(20000),
   });
 
   const payload = await response.json();

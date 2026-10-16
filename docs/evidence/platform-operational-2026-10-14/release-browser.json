@@ -1,0 +1,21 @@
+{
+  "scope": "LOCAL_BROWSER_ACTUAL_HANDLERS_SQL_HTTP_RECEIPTS_ISOLATED_AUTH_PROVIDER_MODEL",
+  "results": [
+    "acquisition_browser_actual_handler_sql_saved_receipt",
+    "inbound_opendots_http_persisted_human_review_no_auto_reply",
+    "equal_messages_distinct_ids_partial_save_restart_reconciled_without_model_repeat",
+    "manual_human_confirmation_actual_handler_sql_receipt",
+    "uncertain_result_reload_retry_same_uuid_and_verified_fixture_reconciliation",
+    "sair_stop_cancel_saved_cadence_and_refuse_manual_send",
+    "login_paid_fixture_access_confirmed_onboarding_google_deferred_failure_retry_no_service_activation",
+    "activation_real_prerequisites_human_audience_confirmation_queued_not_delivered_no_oauth"
+  ],
+  "modelCalls": 2,
+  "receiptsDir": "/private/tmp/meulocal-browser-receipts-CZhI6C",
+  "externalRequests": [],
+  "financialProof": "NOT_VERIFIED_NO_ASAAS_SANDBOX",
+  "screenshots": [
+    "/private/tmp/meulocal-browser-uncertain.png",
+    "/private/tmp/meulocal-browser-dashboard.png"
+  ]
+}

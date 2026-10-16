@@ -1,99 +1,35 @@
 import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
+import {z} from 'zod';
 import {isAdminRequest} from '@/lib/admin-auth';
-import {enqueueGhlProspect,findBusinessEmail,sendGhlProspectWhatsApp} from '@/lib/ghl-prospecting';
-
-type PlaceContact={website?:string|null;phone?:string|null};
-
-async function placeContact(placeId:string):Promise<PlaceContact>{
-  const key=process.env.GOOGLE_PLACES_API_KEY;
-  if(!key)return {};
-  const resource=placeId.startsWith('places/')?placeId:`places/${placeId}`;
-  try{
-    const response=await fetch(`https://places.googleapis.com/v1/${resource}`,{
-      headers:{'X-Goog-Api-Key':key,'X-Goog-FieldMask':'websiteUri,nationalPhoneNumber'},
-      signal:AbortSignal.timeout(7000)
-    });
-    if(!response.ok)return {};
-    const place=await response.json();
-    return {website:place.websiteUri||null,phone:place.nationalPhoneNumber||null};
-  }catch{return {}}
-}
-
-function addDaysIso(base:string|Date,days:number){const d=new Date(base);d.setUTCDate(d.getUTCDate()+days);d.setUTCHours(13,0,0,0);return d.toISOString()}
-
-async function trackDispatch(db:any,d:any,contact:PlaceContact,email:string|null,eventType:'queued'|'failed',channel:'email'|'whatsapp'|'system',result?:{contactId?:string|null;conversationId?:string|null;messageId?:string|null},reason?:string){
-  let business=(await db.from('businesses').select('id').eq('google_place_id',d.place_id).maybeSingle()).data;
-  if(!business){
-    const inserted=await db.from('businesses').insert({google_place_id:d.place_id,name:d.business_name,phone:contact.phone||null,website:contact.website||null,source:'outbound',status:eventType==='queued'?'contacted':'qualified'}).select('id').single();
-    business=inserted.data;
-  }
-  if(!business?.id)return;
-  let lead=(await db.from('leads').select('id').eq('prospect_diagnostic_id',d.id).maybeSingle()).data;
-  if(!lead){
-    const inserted=await db.from('leads').insert({business_id:business.id,name:d.business_name,email,whatsapp:contact.phone||null,consent_email:false,consent_whatsapp:false,origin:'outbound',lifecycle_stage:eventType==='queued'?'mql':'lead',automation_track:'meulocal_acquisition',prospect_diagnostic_id:d.id}).select('id').single();
-    lead=inserted.data;
-  }
-  if(lead?.id){
-    const now=new Date().toISOString();
-    if(result?.contactId)await db.from('leads').update({ghl_contact_id:result.contactId,ghl_location_id:process.env.GHL_LOCATION_ID||'uNh3KsM7WFuLeTN8Q583',updated_at:now}).eq('id',lead.id);
-    const storedEventType=eventType;
-    await db.from('outreach_events').insert({lead_id:lead.id,channel,event_type:storedEventType,provider:'highlevel',external_id:result?.messageId||null,conversation_id:result?.conversationId||null,message_key:'diagnostic_initial',metadata:reason?{reason}:{source:'prospect_recovery',cadence_step:0}});
-    if(eventType==='queued'){
-      const nextRunAt=addDaysIso(now,3);
-      const existing=await db.from('automation_enrollments').select('id,status,step').eq('lead_id',lead.id).eq('track','meulocal_acquisition').maybeSingle();
-      if(existing.data?.id)await db.from('automation_enrollments').update({status:'active',step:Math.max(Number(existing.data.step||0),1),next_run_at:nextRunAt,completed_at:null}).eq('id',existing.data.id);
-      else await db.from('automation_enrollments').insert({lead_id:lead.id,track:'meulocal_acquisition',status:'active',step:1,next_run_at:nextRunAt});
-      await db.from('leads').update({next_action_at:nextRunAt,updated_at:now}).eq('id',lead.id);
-    }
-  }
-}
-
-function cronAuthorized(req:Request){const secret=process.env.CRON_SECRET;return Boolean(secret&&req.headers.get('authorization')===`Bearer ${secret}`)}
-
-export async function POST(req:Request){
-  if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
-  return dispatch(req);
-}
-
+import {initialAcquisitionMessage} from '@/lib/acquisition/message';
+import {deliverAcquisitionMessage} from '@/lib/acquisition/delivery';
+export const maxDuration=60;
+function dbClient(){const url=process.env.NEXT_PUBLIC_SUPABASE_URL||process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;return url&&key?createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(5000)})}}):null}
+const unavailable=()=>NextResponse.json({error:'Não foi possível consultar a operação. Tente novamente.'},{status:503});
+const schema=z.object({diagnosticIds:z.array(z.string().uuid()).length(1),confirmed:z.literal(true)});
+function disabled(){return NextResponse.json({status:'outreach_disabled',contactStarted:false,processed:0,error:'Envios desativados.'},{status:423})}
 export async function GET(req:Request){
-  if(!cronAuthorized(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
-  return dispatch(req);
+ const secret=process.env.CRON_SECRET;
+ if(!secret||req.headers.get('authorization')!=='Bearer '+secret)return NextResponse.json({error:'Não autorizado.'},{status:401});
+ if(process.env.MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED!=='true')return disabled();
+ return NextResponse.json({status:'confirmation_required',error:'O contato inicial exige seleção e confirmação administrativa.'},{status:423});
 }
-
-async function dispatch(req:Request){
-  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if(!url||!serviceKey)return NextResponse.json({error:'Banco não configurado.'},{status:503});
-  try{
-    const body=await req.json().catch(()=>({}));
-    const ids=Array.isArray(body.diagnosticIds)?body.diagnosticIds.map(String).filter(Boolean):null;
-    const db=createClient(url,serviceKey,{auth:{persistSession:false}});
-    let query=db.from('prospect_diagnostics').select('id,place_id,business_name,public_token').eq('status','approved').order('created_at',{ascending:true}).limit(10);
-    if(ids?.length)query=query.in('id',ids);
-    const {data:diagnostics,error}=await query;
-    if(error)throw error;
-    const appUrl=process.env.NEXT_PUBLIC_APP_URL||new URL(req.url).origin;
-    const results=await Promise.all((diagnostics||[]).map(async(d:any)=>{
-      const contact=await placeContact(d.place_id);
-      const email=await findBusinessEmail(contact.website);
-      if(!email){
-        if(!contact.phone){await trackDispatch(db,d,contact,null,'failed','system',undefined,'E-mail público e WhatsApp não encontrados');return {id:d.id,businessName:d.business_name,ok:false,reason:'E-mail público e WhatsApp não encontrados'};}
-        const result=await sendGhlProspectWhatsApp({businessName:d.business_name,phone:contact.phone,diagnosticUrl:`${appUrl}/d/${d.public_token}`});
-        if(result.ok){await db.from('prospect_diagnostics').update({status:'contacted',first_contact_at:new Date().toISOString()}).eq('id',d.id);await trackDispatch(db,d,contact,null,'queued','whatsapp',result);}
-        else await trackDispatch(db,d,contact,null,'failed','whatsapp',undefined,result.reason);
-        return {id:d.id,businessName:d.business_name,...result};
-      }
-      const result=await enqueueGhlProspect({
-        businessName:d.business_name,email,phone:contact.phone,website:contact.website,
-        diagnosticUrl:`${appUrl}/d/${d.public_token}`
-      });
-      if(result.ok){await trackDispatch(db,d,contact,email,'queued','email',result);}
-      else await trackDispatch(db,d,contact,email,'failed','email',undefined,result.reason);
-      return {id:d.id,businessName:d.business_name,email,...result};
-    }));
-    return NextResponse.json({ok:true,processed:results.length,contactStarted:results.filter(x=>x.ok).length,results});
-  }catch(error:any){
-    return NextResponse.json({error:error?.message||'Não foi possível disparar os prospects pendentes.'},{status:500});
-  }
+export async function POST(req:Request){
+ if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+ if(process.env.MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED!=='true')return disabled();
+ const parsed=schema.safeParse(await req.json().catch(()=>null));
+ if(!parsed.success)return NextResponse.json({error:'Selecione uma empresa e confirme o contato inicial.'},{status:400});
+ try{
+  const db=dbClient();if(!db)return unavailable();
+  const diagnostic=await db.from('prospect_diagnostics').select('id,public_token,business_name').eq('id',parsed.data.diagnosticIds[0]).maybeSingle();
+  const lead=await db.from('leads').select('id,email,whatsapp,consent_email,consent_whatsapp').eq('prospect_diagnostic_id',parsed.data.diagnosticIds[0]).maybeSingle();
+  if(diagnostic.error||lead.error)return unavailable();
+  if(!diagnostic.data||!lead.data)return NextResponse.json({error:'Diagnóstico e lead devem estar vinculados sem ambiguidade.'},{status:409});
+  const l=lead.data,d=diagnostic.data,channel=l.email&&l.consent_email?'email':l.whatsapp&&l.consent_whatsapp?'whatsapp':null;
+  if(!channel)return NextResponse.json({error:'Não há canal autorizado para este lead.'},{status:409});
+  const message=initialAcquisitionMessage(d.business_name,d.public_token);
+  const result=await deliverAcquisitionMessage(db,{leadId:l.id,kind:'initial',step:1,channel,message,subject:'Análise inicial de '+d.business_name});
+  return NextResponse.json({...result,contactStarted:result.processed},{status:result.ok&&!('stopped' in result)?200:409,headers:{'Cache-Control':'private, no-store'}});
+ }catch{return unavailable()}
 }

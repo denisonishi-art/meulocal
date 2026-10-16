@@ -9,5 +9,6 @@ export async function isAdminRequest(request:Request){
   if(!secret)return false;
   const cookie=request.headers.get('cookie')||'';
   const match=cookie.match(/(?:^|;\s*)meulocal_admin=([^;]+)/);
-  return Boolean(match&&decodeURIComponent(match[1])===await adminSessionToken(secret));
+  if(!match)return false;
+  try{return decodeURIComponent(match[1])===await adminSessionToken(secret)}catch{return false}
 }

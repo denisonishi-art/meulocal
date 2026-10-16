@@ -1,0 +1,142 @@
+TAP version 13
+# (node:17384) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: supervision is admin-only: absent, invalid and malformed cookies never read privileged data
+ok 1 - supervision is admin-only: absent, invalid and malformed cookies never read privileged data
+  ---
+  duration_ms: 99.069042
+  type: 'test'
+  ...
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":1,"rows":1,"error":null},{"count":25,"rows":20,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null}]}
+# Subtest: old pending work remains visible independently of recent completed work, with exact counts
+ok 2 - old pending work remains visible independently of recent completed work, with exact counts
+  ---
+  duration_ms: 21.56625
+  type: 'test'
+  ...
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":null,"error":null},{"count":null,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null}]}
+# Subtest: read failure cannot become a successful empty supervision screen or expose database details
+ok 3 - read failure cannot become a successful empty supervision screen or expose database details
+  ---
+  duration_ms: 13.054
+  type: 'test'
+  ...
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":1,"rows":1,"error":null},{"count":25,"rows":20,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null}]}
+# Subtest: saved receipt cannot expose arbitrary links, and unverified receipts have no guidance
+ok 4 - saved receipt cannot expose arbitrary links, and unverified receipts have no guidance
+  ---
+  duration_ms: 14.088292
+  type: 'test'
+  ...
+# Subtest: opening and refreshing admin with approved diagnostics never dispatches automatically
+ok 5 - opening and refreshing admin with approved diagnostics never dispatches automatically
+  ---
+  duration_ms: 91.178375
+  type: 'test'
+  ...
+# Subtest: failed admin load never claims operation is normal
+ok 6 - failed admin load never claims operation is normal
+  ---
+  duration_ms: 55.3665
+  type: 'test'
+  ...
+# Subtest: supervision displays human guidance and existing links without executing an action
+ok 7 - supervision displays human guidance and existing links without executing an action
+  ---
+  duration_ms: 5.214458
+  type: 'test'
+  ...
+# Subtest: supervision failure shows retry instead of empty success and can recover
+ok 8 - supervision failure shows retry instead of empty success and can recover
+  ---
+  duration_ms: 4.374875
+  type: 'test'
+  ...
+# Subtest: overview query failure is unavailable instead of a successful zero sample
+ok 9 - overview query failure is unavailable instead of a successful zero sample
+  ---
+  duration_ms: 108.169042
+  type: 'test'
+  ...
+# Subtest: admin saves selected diagnostics, exposes persisted link and does not start dispatch
+ok 10 - admin saves selected diagnostics, exposes persisted link and does not start dispatch
+  ---
+  duration_ms: 23.436458
+  type: 'test'
+  ...
+# Subtest: failed preparation preserves selection and allows retry without claiming a saved diagnostic
+ok 11 - failed preparation preserves selection and allows retry without claiming a saved diagnostic
+  ---
+  duration_ms: 17.959792
+  type: 'test'
+  ...
+# Subtest: manual retry preserves its UUID and content after uncertain result without claiming acceptance
+ok 12 - manual retry preserves its UUID and content after uncertain result without claiming acceptance
+  ---
+  duration_ms: 22.612666
+  type: 'test'
+  ...
+# Subtest: HTTP 200 without a message receipt keeps the draft and stable intent for reconciliation
+ok 13 - HTTP 200 without a message receipt keeps the draft and stable intent for reconciliation
+  ---
+  duration_ms: 22.452708
+  type: 'test'
+  ...
+# Subtest: manual accepted receipt clears draft only after explicit human confirmation
+ok 14 - manual accepted receipt clears draft only after explicit human confirmation
+  ---
+  duration_ms: 20.204459
+  type: 'test'
+  ...
+# Subtest: canceled human confirmation never posts a manual reply
+ok 15 - canceled human confirmation never posts a manual reply
+  ---
+  duration_ms: 15.835917
+  type: 'test'
+  ...
+# Subtest: initial contact confirms the exact message and targets one persisted diagnostic
+ok 16 - initial contact confirms the exact message and targets one persisted diagnostic
+  ---
+  duration_ms: 16.211875
+  type: 'test'
+  ...
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":1,"rows":1,"error":null},{"count":25,"rows":20,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null}]}
+# Subtest: supervision exposes uncertain deliveries and partial payment processing with explicit next steps and no raw errors
+ok 17 - supervision exposes uncertain deliveries and partial payment processing with explicit next steps and no raw errors
+  ---
+  duration_ms: 4.81125
+  type: 'test'
+  ...
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":1,"rows":1,"error":null},{"count":25,"rows":20,"error":null},{"count":null,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null}]}
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":1,"rows":1,"error":null},{"count":25,"rows":20,"error":null},{"count":1,"rows":1,"error":null},{"count":null,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null}]}
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":1,"rows":1,"error":null},{"count":25,"rows":20,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":null,"error":null},{"count":1,"rows":1,"error":null}]}
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":1,"rows":1,"error":null},{"count":25,"rows":20,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":null,"error":null}]}
+# Subtest: a failed required journal source never appears as a successful empty operation section
+ok 18 - a failed required journal source never appears as a successful empty operation section
+  ---
+  duration_ms: 17.748709
+  type: 'test'
+  ...
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":1,"rows":1,"error":null},{"count":25,"rows":20,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null}]}
+# Subtest: cadence supervision reads existing started_at without requiring a nonexistent creation column
+ok 19 - cadence supervision reads existing started_at without requiring a nonexistent creation column
+  ---
+  duration_ms: 4.026458
+  type: 'test'
+  ...
+# {"stage":"admin_supervision_read","databaseHost":"synthetic.invalid","sources":[{"count":1,"rows":1,"error":null},{"count":25,"rows":20,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null},{"count":1,"rows":1,"error":null}]}
+# Subtest: every required supervision source explicitly bypasses shared data caches
+ok 20 - every required supervision source explicitly bypasses shared data caches
+  ---
+  duration_ms: 6.047542
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 700.552959

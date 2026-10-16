@@ -2,15 +2,18 @@ import {NextResponse} from 'next/server';
 import {createClient} from '@supabase/supabase-js';
 import {isAdminRequest} from '@/lib/admin-auth';
 
+export const dynamic='force-dynamic';
+
 function dbClient(){
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL||process.env.SUPABASE_URL;
   const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
-  return url&&key?createClient(url,key,{auth:{persistSession:false}}):null;
+  return url&&key?createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(5000)})}}):null;
 }
 function recent<T>(rows:T[]|null|undefined){return rows||[]}
 
 export async function GET(req:Request){
   if(!await isAdminRequest(req))return NextResponse.json({error:'Não autorizado.'},{status:401});
+  try{
   const db=dbClient();
   if(!db)return NextResponse.json({error:'Banco não configurado.'},{status:503});
 
@@ -34,6 +37,8 @@ export async function GET(req:Request){
     db.from('review_request_events').select('id,business_id,enrollment_id,contact_id,channel,event_type,created_at').order('created_at',{ascending:false}).limit(300),
     db.from('customer_contacts').select('id,business_id,status,opt_out_at,created_at').order('created_at',{ascending:false}).limit(5000)
   ]);
+
+  if([businessesRes,leadsRes,diagnosticsRes,customersRes,automationsRes,outreachRes,paymentsRes,googleRes,ghlRes,ghlJobsRes,syncRes,reviewSettingsRes,reviewEnrollmentsRes,reviewEventsRes,contactsRes].some(result=>result.error||!Array.isArray(result.data)))return NextResponse.json({error:'Não foi possível carregar a operação. Tente novamente.'},{status:503});
 
   const businesses=recent<any>(businessesRes.data), leads=recent<any>(leadsRes.data), diagnostics=recent<any>(diagnosticsRes.data);
   const customers=recent<any>(customersRes.data), automations=recent<any>(automationsRes.data), outreach=recent<any>(outreachRes.data);
@@ -67,7 +72,7 @@ export async function GET(req:Request){
     const failed=event?.event_type==='failed';
     const channel=event?.channel==='whatsapp'?'WhatsApp':event?.channel==='email'?'E-mail':null;
     const reason=failed?(event.metadata?.reason||event.metadata?.error||'Falha ao iniciar a régua'):d.status==='approved'?'E-mail público não encontrado':null;
-    const lead=diagnosticLeads[0]||null;
+    const lead=diagnosticLeads.length===1?diagnosticLeads[0]:null;
     const automation=lead?automationByLead.get(lead.id)||null:null;
     const cadence=lead?.lifecycle_stage==='customer'||d.status==='converted'
       ?'Cliente'
@@ -136,4 +141,5 @@ export async function GET(req:Request){
     agents,
     infrastructure:{ghlJobs:ghlJobs.slice(0,30),syncLogs:syncLogs.slice(0,30)}
   });
+  }catch{return NextResponse.json({error:'Não foi possível carregar a operação. Tente novamente.'},{status:503})}
 }

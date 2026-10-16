@@ -1,0 +1,2121 @@
+{"files":["scripts/check-acquisition-delivery.cjs","scripts/check-acquisition-gates.cjs","scripts/check-acquisition-journal.cjs","scripts/check-acquisition-routes.cjs","scripts/check-admin-supervision.cjs","scripts/check-checkout-reservation.cjs","scripts/check-controlled-inbound.cjs","scripts/check-controlled-inbox-database.cjs","scripts/check-controlled-reconciliation.cjs","scripts/check-customer-access.cjs","scripts/check-customer-activation.cjs","scripts/check-customer-dashboard-api.cjs","scripts/check-customer-dashboard.cjs","scripts/check-customer-journey.cjs","scripts/check-manual-intent.cjs","scripts/check-onboarding-status.cjs","scripts/check-opendots-database.cjs","scripts/check-opendots-outbox.cjs","scripts/check-operational-gates.cjs","scripts/check-payment-database.cjs","scripts/check-payment-lifecycle.cjs","scripts/check-payment-user.cjs","scripts/check-platform-rollback.cjs","scripts/check-prospect-preparation.cjs","scripts/check-review-delivery-database.cjs","scripts/check-review-delivery-route.cjs","scripts/check-review-delivery.cjs","scripts/check-review-webhook.cjs","scripts/check-supervised-recovery.cjs","scripts/opendots-worker/commercial-recovery.test.mjs","scripts/opendots-worker/commercial-server.test.mjs"],"scope":"ISOLATED_LOCAL_NO_REAL_PROVIDER"}
+TAP version 13
+# isolated_database=meulocal_payment_test_16737_a98050f8
+# Subtest: default-off processor touches neither journal nor provider
+ok 1 - default-off processor touches neither journal nor provider
+  ---
+  duration_ms: 122.130666
+  type: 'test'
+  ...
+# Subtest: acceptance is saved before success and replay sends nothing
+ok 2 - acceptance is saved before success and replay sends nothing
+  ---
+  duration_ms: 473.966375
+  type: 'test'
+  ...
+# Subtest: history errors, truncation, foreign identities and unknown DND all refuse transport
+ok 3 - history errors, truncation, foreign identities and unknown DND all refuse transport
+  ---
+  duration_ms: 2002.111917
+  type: 'test'
+  ...
+# Subtest: reply and STOP persist an atomic terminal stop before any outbound
+ok 4 - reply and STOP persist an atomic terminal stop before any outbound
+  ---
+  duration_ms: 1583.895125
+  type: 'test'
+  ...
+# Subtest: provider timeout never falls back or repeats even after the lease expires
+ok 5 - provider timeout never falls back or repeats even after the lease expires
+  ---
+  duration_ms: 294.080833
+  type: 'test'
+  ...
+# Subtest: empty receipt and receipt save failure require reconciliation rather than success
+ok 6 - empty receipt and receipt save failure require reconciliation rather than success
+  ---
+  duration_ms: 637.297167
+  type: 'test'
+  ...
+# Subtest: lost response after SQL commit can recover the saved receipt without another provider call
+ok 7 - lost response after SQL commit can recover the saved receipt without another provider call
+  ---
+  duration_ms: 384.531333
+  type: 'test'
+  ...
+# Subtest: inbound journaled just before begin still stops the last dispatch gate
+ok 8 - inbound journaled just before begin still stops the last dispatch gate
+  ---
+  duration_ms: 310.557625
+  type: 'test'
+  ...
+# Subtest: stop during transport is preserved when valid late receipt arrives
+ok 9 - stop during transport is preserved when valid late receipt arrives
+  ---
+  duration_ms: 422.86525
+  type: 'test'
+  ...
+# Subtest: manual answer after inbound needs its explicit UUID and still respects STOP
+ok 10 - manual answer after inbound needs its explicit UUID and still respects STOP
+  ---
+  duration_ms: 573.722
+  type: 'test'
+  ...
+# Subtest: dispatch-pending: authorization is required before any work
+ok 11 - dispatch-pending: authorization is required before any work
+  ---
+  duration_ms: 80.467083
+  type: 'test'
+  ...
+# Subtest: dispatch-pending: missing or non-exact enable flag cannot touch data or providers
+ok 12 - dispatch-pending: missing or non-exact enable flag cannot touch data or providers
+  ---
+  duration_ms: 53.204875
+  type: 'test'
+  ...
+# Subtest: acquisition-outreach: authorization is required before any work
+ok 13 - acquisition-outreach: authorization is required before any work
+  ---
+  duration_ms: 6.342708
+  type: 'test'
+  ...
+# Subtest: acquisition-outreach: missing or non-exact enable flag cannot touch data or providers
+ok 14 - acquisition-outreach: missing or non-exact enable flag cannot touch data or providers
+  ---
+  duration_ms: 38.68225
+  type: 'test'
+  ...
+# Subtest: send-approved-email: authorization is required before any work
+ok 15 - send-approved-email: authorization is required before any work
+  ---
+  duration_ms: 3.008916
+  type: 'test'
+  ...
+# Subtest: send-approved-email: missing or non-exact enable flag cannot touch data or providers
+ok 16 - send-approved-email: missing or non-exact enable flag cannot touch data or providers
+  ---
+  duration_ms: 14.934083
+  type: 'test'
+  ...
+# Subtest: reply: authorization is required before any work
+ok 17 - reply: authorization is required before any work
+  ---
+  duration_ms: 8.455333
+  type: 'test'
+  ...
+# Subtest: reply: missing or non-exact enable flag cannot touch data or providers
+ok 18 - reply: missing or non-exact enable flag cannot touch data or providers
+  ---
+  duration_ms: 15.182459
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_16746_07cddcda
+# Subtest: parallel initial reservations share one durable slot and only one lease
+ok 19 - parallel initial reservations share one durable slot and only one lease
+  ---
+  duration_ms: 243.365958
+  type: 'test'
+  ...
+# Subtest: pre-transport failure is resumable; expired reservation replaces its lease safely
+ok 20 - pre-transport failure is resumable; expired reservation replaces its lease safely
+  ---
+  duration_ms: 688.712209
+  type: 'test'
+  ...
+# Subtest: once transport begins, failure and lease expiration never authorize resend
+ok 21 - once transport begins, failure and lease expiration never authorize resend
+  ---
+  duration_ms: 619.372625
+  type: 'test'
+  ...
+# Subtest: same intent with changed content conflicts; manual UUIDs identify distinct explicit intents
+ok 22 - same intent with changed content conflicts; manual UUIDs identify distinct explicit intents
+  ---
+  duration_ms: 376.940959
+  type: 'test'
+  ...
+# Subtest: ambiguous delivery blocks a different manual intent and another cadence attempt
+ok 23 - ambiguous delivery blocks a different manual intent and another cadence attempt
+  ---
+  duration_ms: 404.646458
+  type: 'test'
+  ...
+# Subtest: receipt persistence and cadence advancement are atomic and replayable
+ok 24 - receipt persistence and cadence advancement are atomic and replayable
+  ---
+  duration_ms: 503.444459
+  type: 'test'
+  ...
+# Subtest: failure after provider accept leaves no partially advanced journal, lead or enrollment
+ok 25 - failure after provider accept leaves no partially advanced journal, lead or enrollment
+  ---
+  duration_ms: 844.497833
+  type: 'test'
+  ...
+# Subtest: fresh opt-out, reply, identity, channel consent and location gates refuse dispatch
+ok 26 - fresh opt-out, reply, identity, channel consent and location gates refuse dispatch
+  ---
+  duration_ms: 1248.075458
+  type: 'test'
+  ...
+# Subtest: late valid receipt saves evidence while preserving a stop made during transport
+ok 27 - late valid receipt saves evidence while preserving a stop made during transport
+  ---
+  duration_ms: 447.118083
+  type: 'test'
+  ...
+# Subtest: manual reply may follow inbound but never overrides opt-out and pauses automation before transport
+ok 28 - manual reply may follow inbound but never overrides opt-out and pauses automation before transport
+  ---
+  duration_ms: 663.388167
+  type: 'test'
+  ...
+# Subtest: legacy attempts, ambiguous contact ownership and unapproved channels cannot reserve
+ok 29 - legacy attempts, ambiguous contact ownership and unapproved channels cannot reserve
+  ---
+  duration_ms: 692.204042
+  type: 'test'
+  ...
+# Subtest: cadence requires saved initial authority, a due active enrollment and no reply
+ok 30 - cadence requires saved initial authority, a due active enrollment and no reply
+  ---
+  duration_ms: 990.895333
+  type: 'test'
+  ...
+# Subtest: inbound journaled between provider history and begin blocks automated transport
+ok 31 - inbound journaled between provider history and begin blocks automated transport
+  ---
+  duration_ms: 196.126333
+  type: 'test'
+  ...
+# Subtest: message receipt is mandatory and cannot be reused for another guarded event
+ok 32 - message receipt is mandatory and cannot be reused for another guarded event
+  ---
+  duration_ms: 884.862417
+  type: 'test'
+  ...
+# Subtest: dispatch RPCs are service-only and do not grant new browser authority
+ok 33 - dispatch RPCs are service-only and do not grant new browser authority
+  ---
+  duration_ms: 870.336292
+  type: 'test'
+  ...
+# Subtest: final begin rechecks time and a legacy dispatch inserted after reservation
+ok 34 - final begin rechecks time and a legacy dispatch inserted after reservation
+  ---
+  duration_ms: 436.969
+  type: 'test'
+  ...
+# Subtest: STOP retry writes one receipt and a stop write failure rolls all state back
+ok 35 - STOP retry writes one receipt and a stop write failure rolls all state back
+  ---
+  duration_ms: 703.844833
+  type: 'test'
+  ...
+# Subtest: scope reassignment after reservation cannot stop or advance the new business
+ok 36 - scope reassignment after reservation cannot stop or advance the new business
+  ---
+  duration_ms: 474.848083
+  type: 'test'
+  ...
+# Subtest: STOP preserves an existing customer lifecycle while saving opt-out
+ok 37 - STOP preserves an existing customer lifecycle while saving opt-out
+  ---
+  duration_ms: 320.314792
+  type: 'test'
+  ...
+# Subtest: cadence preparation slots serialize across sessions, back off and reject stale settlement
+ok 38 - cadence preparation slots serialize across sessions, back off and reject stale settlement
+  ---
+  duration_ms: 827.998875
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_17450_527c68ab
+# Subtest: initial dispatch requires exact selected target and confirmation; scheduled GET never initiates it
+ok 39 - initial dispatch requires exact selected target and confirmation; scheduled GET never initiates it
+  ---
+  duration_ms: 157.798167
+  type: 'test'
+  ...
+# Subtest: initial route saves the accepted receipt and replay reuses it without tag/enqueue calls
+ok 40 - initial route saves the accepted receipt and replay reuses it without tag/enqueue calls
+  ---
+  duration_ms: 579.153208
+  type: 'test'
+  ...
+# Subtest: cadence route only advances a due eligible saved attempt, and retry sends nothing
+ok 41 - cadence route only advances a due eligible saved attempt, and retry sends nothing
+  ---
+  duration_ms: 1116.440625
+  type: 'test'
+  ...
+# Subtest: manual reply requires stable intent UUID and saves a real receipt before reporting acceptance
+ok 42 - manual reply requires stable intent UUID and saves a real receipt before reporting acceptance
+  ---
+  duration_ms: 512.15
+  type: 'test'
+  ...
+# Subtest: approved email requires the persisted lead and exact email, not a name-only provider search
+ok 43 - approved email requires the persisted lead and exact email, not a name-only provider search
+  ---
+  duration_ms: 506.059917
+  type: 'test'
+  ...
+# Subtest: route read failures and a stopped lead cannot become accepted or invoke legacy fallback
+ok 44 - route read failures and a stopped lead cannot become accepted or invoke legacy fallback
+  ---
+  duration_ms: 460.994834
+  type: 'test'
+  ...
+# Subtest: global cadence refuses a provider identity belonging to another fixture without sending
+ok 45 - global cadence refuses a provider identity belonging to another fixture without sending
+  ---
+  duration_ms: 858.04625
+  type: 'test'
+  ...
+# Subtest: a blocked oldest cadence backs off durably so the next eligible contact progresses
+ok 46 - a blocked oldest cadence backs off durably so the next eligible contact progresses
+  ---
+  duration_ms: 1452.262167
+  type: 'test'
+  ...
+# (node:18027) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: supervision is admin-only: absent, invalid and malformed cookies never read privileged data
+ok 47 - supervision is admin-only: absent, invalid and malformed cookies never read privileged data
+  ---
+  duration_ms: 106.56525
+  type: 'test'
+  ...
+# Subtest: old pending work remains visible independently of recent completed work, with exact counts
+ok 48 - old pending work remains visible independently of recent completed work, with exact counts
+  ---
+  duration_ms: 22.840042
+  type: 'test'
+  ...
+# Subtest: read failure cannot become a successful empty supervision screen or expose database details
+ok 49 - read failure cannot become a successful empty supervision screen or expose database details
+  ---
+  duration_ms: 10.285
+  type: 'test'
+  ...
+# Subtest: saved receipt cannot expose arbitrary links, and unverified receipts have no guidance
+ok 50 - saved receipt cannot expose arbitrary links, and unverified receipts have no guidance
+  ---
+  duration_ms: 15.142209
+  type: 'test'
+  ...
+# Subtest: opening and refreshing admin with approved diagnostics never dispatches automatically
+ok 51 - opening and refreshing admin with approved diagnostics never dispatches automatically
+  ---
+  duration_ms: 43.174417
+  type: 'test'
+  ...
+# Subtest: failed admin load never claims operation is normal
+ok 52 - failed admin load never claims operation is normal
+  ---
+  duration_ms: 31.272458
+  type: 'test'
+  ...
+# Subtest: supervision displays human guidance and existing links without executing an action
+ok 53 - supervision displays human guidance and existing links without executing an action
+  ---
+  duration_ms: 3.918708
+  type: 'test'
+  ...
+# Subtest: supervision failure shows retry instead of empty success and can recover
+ok 54 - supervision failure shows retry instead of empty success and can recover
+  ---
+  duration_ms: 3.548959
+  type: 'test'
+  ...
+# Subtest: overview query failure is unavailable instead of a successful zero sample
+ok 55 - overview query failure is unavailable instead of a successful zero sample
+  ---
+  duration_ms: 113.188
+  type: 'test'
+  ...
+# Subtest: admin saves selected diagnostics, exposes persisted link and does not start dispatch
+ok 56 - admin saves selected diagnostics, exposes persisted link and does not start dispatch
+  ---
+  duration_ms: 21.817959
+  type: 'test'
+  ...
+# Subtest: failed preparation preserves selection and allows retry without claiming a saved diagnostic
+ok 57 - failed preparation preserves selection and allows retry without claiming a saved diagnostic
+  ---
+  duration_ms: 19.387833
+  type: 'test'
+  ...
+# Subtest: manual retry preserves its UUID and content after uncertain result without claiming acceptance
+ok 58 - manual retry preserves its UUID and content after uncertain result without claiming acceptance
+  ---
+  duration_ms: 41.680084
+  type: 'test'
+  ...
+# Subtest: HTTP 200 without a message receipt keeps the draft and stable intent for reconciliation
+ok 59 - HTTP 200 without a message receipt keeps the draft and stable intent for reconciliation
+  ---
+  duration_ms: 25.92625
+  type: 'test'
+  ...
+# Subtest: manual accepted receipt clears draft only after explicit human confirmation
+ok 60 - manual accepted receipt clears draft only after explicit human confirmation
+  ---
+  duration_ms: 27.123
+  type: 'test'
+  ...
+# Subtest: canceled human confirmation never posts a manual reply
+ok 61 - canceled human confirmation never posts a manual reply
+  ---
+  duration_ms: 22.0195
+  type: 'test'
+  ...
+# Subtest: initial contact confirms the exact message and targets one persisted diagnostic
+ok 62 - initial contact confirms the exact message and targets one persisted diagnostic
+  ---
+  duration_ms: 16.410333
+  type: 'test'
+  ...
+# Subtest: supervision exposes uncertain deliveries and partial payment processing with explicit next steps and no raw errors
+ok 63 - supervision exposes uncertain deliveries and partial payment processing with explicit next steps and no raw errors
+  ---
+  duration_ms: 4.1055
+  type: 'test'
+  ...
+# Subtest: a failed required journal source never appears as a successful empty operation section
+ok 64 - a failed required journal source never appears as a successful empty operation section
+  ---
+  duration_ms: 17.295792
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_18046_202db383
+# Subtest: local intent and account are saved before provider work; retries cannot request a second checkout
+ok 65 - local intent and account are saved before provider work; retries cannot request a second checkout
+  ---
+  duration_ms: 262.29725
+  type: 'test'
+  ...
+# Subtest: provider result is saved once and subsequent requests reuse its URL
+ok 66 - provider result is saved once and subsequent requests reuse its URL
+  ---
+  duration_ms: 345.645333
+  type: 'test'
+  ...
+# Subtest: ambiguous provider failure stays recoverable and never automatically creates a replacement
+ok 67 - ambiguous provider failure stays recoverable and never automatically creates a replacement
+  ---
+  duration_ms: 377.868292
+  type: 'test'
+  ...
+# Subtest: customer scope and official price are checked before any intent exists
+ok 68 - customer scope and official price are checked before any intent exists
+  ---
+  duration_ms: 241.559959
+  type: 'test'
+  ...
+# Subtest: existing onboarding is preserved and active or past-due contracts cannot be recharged
+ok 69 - existing onboarding is preserved and active or past-due contracts cannot be recharged
+  ---
+  duration_ms: 491.203125
+  type: 'test'
+  ...
+# Subtest: a paid checkout awaiting access prevents a new financial operation
+ok 70 - a paid checkout awaiting access prevents a new financial operation
+  ---
+  duration_ms: 266.793917
+  type: 'test'
+  ...
+# Subtest: only confirmed cancellation or expiration permits another checkout intent
+ok 71 - only confirmed cancellation or expiration permits another checkout intent
+  ---
+  duration_ms: 248.304125
+  type: 'test'
+  ...
+# Subtest: provider completion cannot undo a payment processed before its HTTP response
+ok 72 - provider completion cannot undo a payment processed before its HTTP response
+  ---
+  duration_ms: 299.157541
+  type: 'test'
+  ...
+# Subtest: browser roles cannot reserve or complete financial intents
+ok 73 - browser roles cannot reserve or complete financial intents
+  ---
+  duration_ms: 362.668916
+  type: 'test'
+  ...
+# Subtest: actual route saves its intent before provider work and repeated requests reuse one result
+ok 74 - actual route saves its intent before provider work and repeated requests reuse one result
+  ---
+  duration_ms: 496.841625
+  type: 'test'
+  ...
+# Subtest: two concurrent route requests cannot issue two provider operations
+ok 75 - two concurrent route requests cannot issue two provider operations
+  ---
+  duration_ms: 364.232292
+  type: 'test'
+  ...
+# Subtest: provider timeout leaves a durable unknown intent and retry never recreates checkout
+ok 76 - provider timeout leaves a durable unknown intent and retry never recreates checkout
+  ---
+  duration_ms: 583.513667
+  type: 'test'
+  ...
+# Subtest: failed provider-result save preserves the intent and does not issue another request
+ok 77 - failed provider-result save preserves the intent and does not issue another request
+  ---
+  duration_ms: 506.021166
+  type: 'test'
+  ...
+# Subtest: lost response after provider-result commit reuses its saved URL
+ok 78 - lost response after provider-result commit reuses its saved URL
+  ---
+  duration_ms: 464.364166
+  type: 'test'
+  ...
+# Subtest: invalid customer scope is rejected before calling provider
+ok 79 - invalid customer scope is rejected before calling provider
+  ---
+  duration_ms: 108.599333
+  type: 'test'
+  ...
+# Subtest: real provider ID and scoped contact are persisted from the workflow envelope
+ok 80 - real provider ID and scoped contact are persisted from the workflow envelope
+  ---
+  duration_ms: 87.440666
+  type: 'test'
+  ...
+# Subtest: two matching real messages are refused before any local write
+ok 81 - two matching real messages are refused before any local write
+  ---
+  duration_ms: 27.87675
+  type: 'test'
+  ...
+# Subtest: message from another contact cannot establish identity
+ok 82 - message from another contact cannot establish identity
+  ---
+  duration_ms: 24.548833
+  type: 'test'
+  ...
+# Subtest: missing message text is refused before writes
+ok 83 - missing message text is refused before writes
+  ---
+  duration_ms: 17.095042
+  type: 'test'
+  ...
+# Subtest: unavailable handoff is persisted and cannot be reported as complete
+ok 84 - unavailable handoff is persisted and cannot be reported as complete
+  ---
+  duration_ms: 20.401125
+  type: 'test'
+  ...
+# Subtest: unfinished duplicate with unavailable remote remains pending
+ok 85 - unfinished duplicate with unavailable remote remains pending
+  ---
+  duration_ms: 12.814458
+  type: 'test'
+  ...
+# Subtest: receipt persistence failure is not completion
+ok 86 - receipt persistence failure is not completion
+  ---
+  duration_ms: 15.543375
+  type: 'test'
+  ...
+# Subtest: HTTP 200 without matching saved receipt is unverified
+ok 87 - HTTP 200 without matching saved receipt is unverified
+  ---
+  duration_ms: 4.444042
+  type: 'test'
+  ...
+# Subtest: authenticated saved receipt is accepted with no dispatch permissions
+ok 88 - authenticated saved receipt is accepted with no dispatch permissions
+  ---
+  duration_ms: 4.046458
+  type: 'test'
+  ...
+# Subtest: receipt for another event is unverified
+ok 89 - receipt for another event is unverified
+  ---
+  duration_ms: 5.4835
+  type: 'test'
+  ...
+# Subtest: local processing failure prevents handoff
+ok 90 - local processing failure prevents handoff
+  ---
+  duration_ms: 16.249666
+  type: 'test'
+  ...
+# Subtest: missing linked lead is not a completed bridge
+ok 91 - missing linked lead is not a completed bridge
+  ---
+  duration_ms: 19.426708
+  type: 'test'
+  ...
+# Subtest: outbound message cannot establish inbound identity
+ok 92 - outbound message cannot establish inbound identity
+  ---
+  duration_ms: 13.118791
+  type: 'test'
+  ...
+# Subtest: conflicting scoped identity is refused before writes
+ok 93 - conflicting scoped identity is refused before writes
+  ---
+  duration_ms: 11.421333
+  type: 'test'
+  ...
+# Subtest: fully saved duplicate returns receipt without forwarding again
+ok 94 - fully saved duplicate returns receipt without forwarding again
+  ---
+  duration_ms: 15.074875
+  type: 'test'
+  ...
+# Subtest: P2: workflow envelope without stable ID or trigger time is refused
+ok 95 - P2: workflow envelope without stable ID or trigger time is refused
+  ---
+  duration_ms: 16.214625
+  type: 'test'
+  ...
+# Subtest: P2: delayed invocation cannot steal a newer equal-text message
+ok 96 - P2: delayed invocation cannot steal a newer equal-text message
+  ---
+  duration_ms: 13.624833
+  type: 'test'
+  ...
+# Subtest: P2: terminal opt-out duplicate has the same completion criterion
+ok 97 - P2: terminal opt-out duplicate has the same completion criterion
+  ---
+  duration_ms: 11.22175
+  type: 'test'
+  ...
+# Subtest: P1: incomplete duplicate resumes delivery instead of being terminal
+ok 98 - P1: incomplete duplicate resumes delivery instead of being terminal
+  ---
+  duration_ms: 13.896
+  type: 'test'
+  ...
+# Subtest: stable ID permits an old message without substituting the most recent
+ok 99 - stable ID permits an old message without substituting the most recent
+  ---
+  duration_ms: 13.235292
+  type: 'test'
+  ...
+# Subtest: saved decision plus failed tag cleanup stays pending without repeating model
+ok 100 - saved decision plus failed tag cleanup stays pending without repeating model
+  ---
+  duration_ms: 27.142375
+  type: 'test'
+  ...
+# Subtest: signed native WhatsApp on supervised contact uses the durable processor
+ok 101 - signed native WhatsApp on supervised contact uses the durable processor
+  ---
+  duration_ms: 13.3105
+  type: 'test'
+  ...
+# Subtest: native event requires current controlled-contact tag before local writes
+ok 102 - native event requires current controlled-contact tag before local writes
+  ---
+  duration_ms: 12.992958
+  type: 'test'
+  ...
+# Subtest: dedicated native subscription ignores other contacts without writes or forwarding
+ok 103 - dedicated native subscription ignores other contacts without writes or forwarding
+  ---
+  duration_ms: 10.807
+  type: 'test'
+  ...
+# Subtest: STOP and SAIR complete on first receipt with no model delivery
+ok 104 - STOP and SAIR complete on first receipt with no model delivery
+  ---
+  duration_ms: 31.17575
+  type: 'test'
+  ...
+# Subtest: controlled wakeup never assigns the workflow text to a guessed message
+ok 105 - controlled wakeup never assigns the workflow text to a guessed message
+  ---
+  duration_ms: 10.682083
+  type: 'test'
+  ...
+# Subtest: reconciliation failure is not a completed controlled workflow
+ok 106 - reconciliation failure is not a completed controlled workflow
+  ---
+  duration_ms: 13.350333
+  type: 'test'
+  ...
+# Subtest: wrong scoped contact cannot use the reconciliation entry
+ok 107 - wrong scoped contact cannot use the reconciliation entry
+  ---
+  duration_ms: 19.487708
+  type: 'test'
+  ...
+# Subtest: wrong authentication cannot wake or persist the controlled inbox
+ok 108 - wrong authentication cannot wake or persist the controlled inbox
+  ---
+  duration_ms: 12.496625
+  type: 'test'
+  ...
+# Subtest: saved human guidance survives the bridge; only the persisted allowed path is accepted
+ok 109 - saved human guidance survives the bridge; only the persisted allowed path is accepted
+  ---
+  duration_ms: 11.43825
+  type: 'test'
+  ...
+# isolated_database=meulocal_inbox_test_18078
+# Subtest: initialization requires an already saved verified anchor and never resets an existing cursor
+ok 110 - initialization requires an already saved verified anchor and never resets an existing cursor
+  ---
+  duration_ms: 130.316916
+  type: 'test'
+  ...
+# Subtest: cursor lease serializes concurrent notifications and refuses foreign release
+ok 111 - cursor lease serializes concurrent notifications and refuses foreign release
+  ---
+  duration_ms: 244.64225
+  type: 'test'
+  ...
+# Subtest: two same-text real IDs and cursor are committed together, with distinct durable jobs
+ok 112 - two same-text real IDs and cursor are committed together, with distinct durable jobs
+  ---
+  duration_ms: 304.104833
+  type: 'test'
+  ...
+# Subtest: a second-message failure rolls back all writes and the cursor, leaving a resumable lease
+ok 113 - a second-message failure rolls back all writes and the cursor, leaving a resumable lease
+  ---
+  duration_ms: 432.934458
+  type: 'test'
+  ...
+# Subtest: an expired lease cannot commit any message or change the cursor
+ok 114 - an expired lease cannot commit any message or change the cursor
+  ---
+  duration_ms: 325.078042
+  type: 'test'
+  ...
+# Subtest: foreign message scope rolls back the batch before any cross-business write
+ok 115 - foreign message scope rolls back the batch before any cross-business write
+  ---
+  duration_ms: 248.243875
+  type: 'test'
+  ...
+# Subtest: outbound messages advance a durable cursor without acquisition writes or model jobs
+ok 116 - outbound messages advance a durable cursor without acquisition writes or model jobs
+  ---
+  duration_ms: 354.587666
+  type: 'test'
+  ...
+# Subtest: cursor table and RPCs are backend-only
+ok 117 - cursor table and RPCs are backend-only
+  ---
+  duration_ms: 307.306208
+  type: 'test'
+  ...
+# Subtest: STOP is persisted before delivery and suppresses previously queued model work
+ok 118 - STOP is persisted before delivery and suppresses previously queued model work
+  ---
+  duration_ms: 426.025125
+  type: 'test'
+  ...
+# Subtest: equal-text messages are ingested independently by their real IDs, oldest first
+ok 119 - equal-text messages are ingested independently by their real IDs, oldest first
+  ---
+  duration_ms: 31.665
+  type: 'test'
+  ...
+# Subtest: a delayed wakeup scans all unseen pages before selecting any write
+ok 120 - a delayed wakeup scans all unseen pages before selecting any write
+  ---
+  duration_ms: 8.115541
+  type: 'test'
+  ...
+# Subtest: missing cursor anchor is refused without ingesting a guessed latest message
+ok 121 - missing cursor anchor is refused without ingesting a guessed latest message
+  ---
+  duration_ms: 6.645875
+  type: 'test'
+  ...
+# Subtest: missing live controlled tag refuses even a cursor claim
+ok 122 - missing live controlled tag refuses even a cursor claim
+  ---
+  duration_ms: 6.844542
+  type: 'test'
+  ...
+# Subtest: concurrent wakeup does not consume a cursor owned by another request
+ok 123 - concurrent wakeup does not consume a cursor owned by another request
+  ---
+  duration_ms: 5.2935
+  type: 'test'
+  ...
+# Subtest: an ingest transaction failure leaves the previous cursor recoverable
+ok 124 - an ingest transaction failure leaves the previous cursor recoverable
+  ---
+  duration_ms: 6.018916
+  type: 'test'
+  ...
+# Subtest: provider failure releases the lease without any message write
+ok 125 - provider failure releases the lease without any message write
+  ---
+  duration_ms: 4.45675
+  type: 'test'
+  ...
+# Subtest: repeated notification with no new message does not reingest the anchor
+ok 126 - repeated notification with no new message does not reingest the anchor
+  ---
+  duration_ms: 4.478792
+  type: 'test'
+  ...
+# Subtest: provider pagination that repeats a cursor cannot be treated as a complete scan
+ok 127 - provider pagination that repeats a cursor cannot be treated as a complete scan
+  ---
+  duration_ms: 7.055125
+  type: 'test'
+  ...
+# Subtest: conflicting scopes in the workflow wakeup cannot reach the controlled inbox
+ok 128 - conflicting scopes in the workflow wakeup cannot reach the controlled inbox
+  ---
+  duration_ms: 4.665583
+  type: 'test'
+  ...
+# Subtest: SDK PromiseLike RPC without catch still releases a failed provider read cleanly
+ok 129 - SDK PromiseLike RPC without catch still releases a failed provider read cleanly
+  ---
+  duration_ms: 3.385041
+  type: 'test'
+  ...
+# Subtest: a malformed provider text field is refused before any ingestion
+ok 130 - a malformed provider text field is refused before any ingestion
+  ---
+  duration_ms: 3.085583
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_18392_9f978bce
+# Subtest: verified payer links only the paid business and repeated claims reuse the same account
+ok 131 - verified payer links only the paid business and repeated claims reuse the same account
+  ---
+  duration_ms: 563.98
+  type: 'test'
+  ...
+# Subtest: missing or rejected Auth token never invokes the privileged claim
+ok 132 - missing or rejected Auth token never invokes the privileged claim
+  ---
+  duration_ms: 88.411458
+  type: 'test'
+  ...
+# Subtest: unconfirmed email cannot claim a paid account
+ok 133 - unconfirmed email cannot claim a paid account
+  ---
+  duration_ms: 301.976875
+  type: 'test'
+  ...
+# Subtest: pending, canceled and past-due accounts cannot grant a login binding
+ok 134 - pending, canceled and past-due accounts cannot grant a login binding
+  ---
+  duration_ms: 656.443417
+  type: 'test'
+  ...
+# Subtest: email normalization permits an exact case-insensitive payer match
+ok 135 - email normalization permits an exact case-insensitive payer match
+  ---
+  duration_ms: 247.506625
+  type: 'test'
+  ...
+# Subtest: two businesses with the same payer email require human resolution
+ok 136 - two businesses with the same payer email require human resolution
+  ---
+  duration_ms: 277.648125
+  type: 'test'
+  ...
+# Subtest: multiple leads for the same business do not make an otherwise unique binding ambiguous
+ok 137 - multiple leads for the same business do not make an otherwise unique binding ambiguous
+  ---
+  duration_ms: 206.370667
+  type: 'test'
+  ...
+# Subtest: an account already linked to someone else cannot be taken over
+ok 138 - an account already linked to someone else cannot be taken over
+  ---
+  duration_ms: 261.094083
+  type: 'test'
+  ...
+# Subtest: backend rechecks Auth confirmation even if caller has a trusted user ID
+ok 139 - backend rechecks Auth confirmation even if caller has a trusted user ID
+  ---
+  duration_ms: 163.503959
+  type: 'test'
+  ...
+# Subtest: a database failure returns unavailable, never a fabricated missing activation
+ok 140 - a database failure returns unavailable, never a fabricated missing activation
+  ---
+  duration_ms: 139.077625
+  type: 'test'
+  ...
+# Subtest: concurrent login claims converge on one account binding
+ok 141 - concurrent login claims converge on one account binding
+  ---
+  duration_ms: 466.334541
+  type: 'test'
+  ...
+# Subtest: browser roles cannot call privileged access claiming RPC
+ok 142 - browser roles cannot call privileged access claiming RPC
+  ---
+  duration_ms: 107.772
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_18536_298072b7
+# Subtest: repeated activation saves one enrollment and preserves the first activation timestamp
+ok 143 - repeated activation saves one enrollment and preserves the first activation timestamp
+  ---
+  duration_ms: 435.978916
+  type: 'test'
+  ...
+# Subtest: concurrent activation sessions converge instead of failing after partial enrollment
+ok 144 - concurrent activation sessions converge instead of failing after partial enrollment
+  ---
+  duration_ms: 269.92325
+  type: 'test'
+  ...
+# Subtest: settings write failure rolls back enrollment and contact state together
+ok 145 - settings write failure rolls back enrollment and contact state together
+  ---
+  duration_ms: 616.004167
+  type: 'test'
+  ...
+# Subtest: additional imports use remaining date capacity without resetting ramp or resuming a pause
+ok 146 - additional imports use remaining date capacity without resetting ramp or resuming a pause
+  ---
+  duration_ms: 781.049541
+  type: 'test'
+  ...
+# Subtest: unconfirmed, opted-out, inactive and foreign-user contacts cannot be queued
+ok 147 - unconfirmed, opted-out, inactive and foreign-user contacts cannot be queued
+  ---
+  duration_ms: 641.734
+  type: 'test'
+  ...
+# Subtest: browser roles cannot activate through the privileged transaction
+ok 148 - browser roles cannot activate through the privileged transaction
+  ---
+  duration_ms: 106.904584
+  type: 'test'
+  ...
+# Subtest: contact update failure rolls back settings, enrollment and audience-confirmation receipt
+ok 149 - contact update failure rolls back settings, enrollment and audience-confirmation receipt
+  ---
+  duration_ms: 638.335083
+  type: 'test'
+  ...
+# Subtest: actual activation route requires both human confirmations before any queue operation
+ok 150 - actual activation route requires both human confirmations before any queue operation
+  ---
+  duration_ms: 186.181375
+  type: 'test'
+  ...
+# Subtest: actual route returns success only after atomic persistence and safe retry
+ok 151 - actual route returns success only after atomic persistence and safe retry
+  ---
+  duration_ms: 279.830042
+  type: 'test'
+  ...
+# Subtest: actual route sanitizes database errors and distinguishes a paused queue
+ok 152 - actual route sanitizes database errors and distinguishes a paused queue
+  ---
+  duration_ms: 329.92575
+  type: 'test'
+  ...
+# (node:18769) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: unauthenticated request never performs privileged data reads
+ok 153 - unauthenticated request never performs privileged data reads
+  ---
+  duration_ms: 81.648875
+  type: 'test'
+  ...
+# Subtest: pending, canceled and past-due accounts cannot read the operational dashboard
+ok 154 - pending, canceled and past-due accounts cannot read the operational dashboard
+  ---
+  duration_ms: 25.191792
+  type: 'test'
+  ...
+# Subtest: account read failure is unavailable, not a fictional missing account
+ok 155 - account read failure is unavailable, not a fictional missing account
+  ---
+  duration_ms: 7.223541
+  type: 'test'
+  ...
+# Subtest: failure in any required data source cannot become successful zero metrics
+ok 156 - failure in any required data source cannot become successful zero metrics
+  ---
+  duration_ms: 69.230209
+  type: 'test'
+  ...
+# Subtest: recent foreign activity cannot push the customers own activity out of the dashboard
+ok 157 - recent foreign activity cannot push the customers own activity out of the dashboard
+  ---
+  duration_ms: 7.8505
+  type: 'test'
+  ...
+# Subtest: activity of an older own lead remains visible beyond the 20-lead display limit
+ok 158 - activity of an older own lead remains visible beyond the 20-lead display limit
+  ---
+  duration_ms: 11.783833
+  type: 'test'
+  ...
+# Subtest: failed score lookup cannot become an empty ready dashboard or invented score
+ok 159 - failed score lookup cannot become an empty ready dashboard or invented score
+  ---
+  duration_ms: 59.47525
+  type: 'test'
+  ...
+# Subtest: failed account lookup is an error with retry, not a missing payment/setup claim
+ok 160 - failed account lookup is an error with retry, not a missing payment/setup claim
+  ---
+  duration_ms: 18.521375
+  type: 'test'
+  ...
+# Subtest: unavailable claim verification cannot be ignored to show successful access
+ok 161 - unavailable claim verification cannot be ignored to show successful access
+  ---
+  duration_ms: 14.709167
+  type: 'test'
+  ...
+# Subtest: empty history keeps Google optional and never claims real Google history
+ok 162 - empty history keeps Google optional and never claims real Google history
+  ---
+  duration_ms: 9.510584
+  type: 'test'
+  ...
+# Subtest: failed refresh restores its action, exposes failure and preserves saved history
+ok 163 - failed refresh restores its action, exposes failure and preserves saved history
+  ---
+  duration_ms: 25.745417
+  type: 'test'
+  ...
+# Subtest: operations network failure exits loading and offers a retry instead of an unhandled rejection
+ok 164 - operations network failure exits loading and offers a retry instead of an unhandled rejection
+  ---
+  duration_ms: 11.716875
+  type: 'test'
+  ...
+# Subtest: validating an upload does not unmount the import confirmation step or reload operations
+ok 165 - validating an upload does not unmount the import confirmation step or reload operations
+  ---
+  duration_ms: 8.89725
+  type: 'test'
+  ...
+# Subtest: completion refuses a failed persistence and keeps the retry action
+ok 166 - completion refuses a failed persistence and keeps the retry action
+  ---
+  duration_ms: 54.058125
+  type: 'test'
+  ...
+# Subtest: skip refuses a failed persistence and does not claim a saved optional skip
+ok 167 - skip refuses a failed persistence and does not claim a saved optional skip
+  ---
+  duration_ms: 15.628416
+  type: 'test'
+  ...
+# Subtest: a confirmed saved completion reaches the existing dashboard link
+ok 168 - a confirmed saved completion reaches the existing dashboard link
+  ---
+  duration_ms: 10.774458
+  type: 'test'
+  ...
+# Subtest: failed access lookup cannot present payment confirmed
+ok 169 - failed access lookup cannot present payment confirmed
+  ---
+  duration_ms: 12.993166
+  type: 'test'
+  ...
+# Subtest: network failure during completion is visible and never completes
+ok 170 - network failure during completion is visible and never completes
+  ---
+  duration_ms: 9.635208
+  type: 'test'
+  ...
+# Subtest: confirmed pending payment remains blocked in the existing access gate
+ok 171 - confirmed pending payment remains blocked in the existing access gate
+  ---
+  duration_ms: 14.488
+  type: 'test'
+  ...
+# Subtest: Google can be deferred without claiming a connection
+ok 172 - Google can be deferred without claiming a connection
+  ---
+  duration_ms: 7.498958
+  type: 'test'
+  ...
+# Subtest: completion without OAuth does not claim Google or automation active
+ok 173 - completion without OAuth does not claim Google or automation active
+  ---
+  duration_ms: 6.788
+  type: 'test'
+  ...
+# Subtest: reloading completed onboarding does not infer a disconnected Google from initial UI state
+ok 174 - reloading completed onboarding does not infer a disconnected Google from initial UI state
+  ---
+  duration_ms: 11.196833
+  type: 'test'
+  ...
+# Subtest: retry and reload reuse persisted identity, while another lead or message has a distinct intent
+ok 175 - retry and reload reuse persisted identity, while another lead or message has a distinct intent
+  ---
+  duration_ms: 2.394833
+  type: 'test'
+  ...
+# Subtest: corrupt or unavailable storage never falls back to an ephemeral attempt
+ok 176 - corrupt or unavailable storage never falls back to an ephemeral attempt
+  ---
+  duration_ms: 0.592917
+  type: 'test'
+  ...
+# Subtest: only a verified accepted receipt allows the matching local attempt to be cleared
+ok 177 - only a verified accepted receipt allows the matching local attempt to be cleared
+  ---
+  duration_ms: 0.42525
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_18828_fed717e2
+# Subtest: payment alone or an arbitrary completed status cannot complete onboarding
+ok 178 - payment alone or an arbitrary completed status cannot complete onboarding
+  ---
+  duration_ms: 211.634583
+  type: 'test'
+  ...
+# Subtest: business confirmation and explicit completion persist independently from payment and service activation
+ok 179 - business confirmation and explicit completion persist independently from payment and service activation
+  ---
+  duration_ms: 355.771167
+  type: 'test'
+  ...
+# Subtest: a new session can resume confirmation without silently downgrading completed onboarding
+ok 180 - a new session can resume confirmation without silently downgrading completed onboarding
+  ---
+  duration_ms: 262.969125
+  type: 'test'
+  ...
+# Subtest: foreign users and unpaid accounts cannot confirm or complete another account
+ok 181 - foreign users and unpaid accounts cannot confirm or complete another account
+  ---
+  duration_ms: 294.297917
+  type: 'test'
+  ...
+# Subtest: failed lifecycle persistence rolls back onboarding confirmation and completion timestamps
+ok 182 - failed lifecycle persistence rolls back onboarding confirmation and completion timestamps
+  ---
+  duration_ms: 349.922291
+  type: 'test'
+  ...
+# Subtest: activation requires completed onboarding and actual location/review destination, with no OAuth requirement
+ok 183 - activation requires completed onboarding and actual location/review destination, with no OAuth requirement
+  ---
+  duration_ms: 440.768708
+  type: 'test'
+  ...
+# Subtest: privileged onboarding and original queue implementation are unavailable to browser roles
+ok 184 - privileged onboarding and original queue implementation are unavailable to browser roles
+  ---
+  duration_ms: 156.116167
+  type: 'test'
+  ...
+# Subtest: server authentication and confirmations cannot be bypassed through direct POST
+ok 185 - server authentication and confirmations cannot be bypassed through direct POST
+  ---
+  duration_ms: 273.669916
+  type: 'test'
+  ...
+# Subtest: read/write failures are unavailable and never disclose database errors or assert completion
+ok 186 - read/write failures are unavailable and never disclose database errors or assert completion
+  ---
+  duration_ms: 77.311541
+  type: 'test'
+  ...
+# Subtest: P1 local writes and queue roll back together on injected business failure
+ok 187 - P1 local writes and queue roll back together on injected business failure
+  ---
+  duration_ms: 261.526875
+  type: 'test'
+  ...
+# Subtest: P1 retries resume a saved job without reapplying CRM changes
+ok 188 - P1 retries resume a saved job without reapplying CRM changes
+  ---
+  duration_ms: 833.6775
+  type: 'test'
+  ...
+# Subtest: P1 receipt transaction failure leaves lease recoverable
+ok 189 - P1 receipt transaction failure leaves lease recoverable
+  ---
+  duration_ms: 867.792209
+  type: 'test'
+  ...
+# Subtest: saved decision with pending operational cleanup remains resumable
+ok 190 - saved decision with pending operational cleanup remains resumable
+  ---
+  duration_ms: 483.174334
+  type: 'test'
+  ...
+# Subtest: P2 STOP is terminal with identical duplicate receipt, no model job
+ok 191 - P2 STOP is terminal with identical duplicate receipt, no model job
+  ---
+  duration_ms: 266.714625
+  type: 'test'
+  ...
+# Subtest: tenant identity conflicts are refused
+ok 192 - tenant identity conflicts are refused
+  ---
+  duration_ms: 64.362958
+  type: 'test'
+  ...
+# Subtest: onboarding and payment use persisted states; incomplete access cannot enqueue
+ok 193 - onboarding and payment use persisted states; incomplete access cannot enqueue
+  ---
+  duration_ms: 755.923416
+  type: 'test'
+  ...
+# Subtest: anon and authenticated cannot read queue or invoke privileged RPCs
+ok 194 - anon and authenticated cannot read queue or invoke privileged RPCs
+  ---
+  duration_ms: 329.896209
+  type: 'test'
+  ...
+# Subtest: ambiguous lead mapping causes no writes or cross-business handoff
+ok 195 - ambiguous lead mapping causes no writes or cross-business handoff
+  ---
+  duration_ms: 249.008416
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_19148_be6711ba
+# Subtest: persistent old failures cannot starve a later job whose retry has waited longer
+ok 196 - persistent old failures cannot starve a later job whose retry has waited longer
+  ---
+  duration_ms: 587.103875
+  type: 'test'
+  ...
+# Subtest: one rejected delivery does not prevent processing the next saved job
+ok 197 - one rejected delivery does not prevent processing the next saved job
+  ---
+  duration_ms: 426.298375
+  type: 'test'
+  ...
+# Subtest: settled handoff retains the same saved human guidance for the read-only admin
+ok 198 - settled handoff retains the same saved human guidance for the read-only admin
+  ---
+  duration_ms: 450.287333
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_19339_a8f62a80
+# synthetic_import_10000_elapsed_ms=780
+# Subtest: import and contacts save atomically; exact retry reuses the same import
+ok 199 - import and contacts save atomically; exact retry reuses the same import
+  ---
+  duration_ms: 277.0045
+  type: 'test'
+  ...
+# Subtest: injected contact write failure leaves no partially ready import and retry succeeds
+ok 200 - injected contact write failure leaves no partially ready import and retry succeeds
+  ---
+  duration_ms: 424.90875
+  type: 'test'
+  ...
+# Subtest: matching email or phone skips an existing identity and preserves opt-out
+ok 201 - matching email or phone skips an existing identity and preserves opt-out
+  ---
+  duration_ms: 405.595042
+  type: 'test'
+  ...
+# Subtest: same contact in a different company remains isolated and cannot be confirmed cross-tenant
+ok 202 - same contact in a different company remains isolated and cannot be confirmed cross-tenant
+  ---
+  duration_ms: 388.69375
+  type: 'test'
+  ...
+# Subtest: inactive account and foreign user cannot import or confirm an active company base
+ok 203 - inactive account and foreign user cannot import or confirm an active company base
+  ---
+  duration_ms: 669.776417
+  type: 'test'
+  ...
+# Subtest: failed confirmation rolls contacts and import back together
+ok 204 - failed confirmation rolls contacts and import back together
+  ---
+  duration_ms: 522.18975
+  type: 'test'
+  ...
+# Subtest: confirmation never makes an opted-out contact eligible again
+ok 205 - confirmation never makes an opted-out contact eligible again
+  ---
+  duration_ms: 383.509584
+  type: 'test'
+  ...
+# Subtest: browser roles cannot invoke service-owned import and confirmation RPCs
+ok 206 - browser roles cannot invoke service-owned import and confirmation RPCs
+  ---
+  duration_ms: 267.497458
+  type: 'test'
+  ...
+# Subtest: actual import route validates and deduplicates CSV, including a national phone in area code 55
+ok 207 - actual import route validates and deduplicates CSV, including a national phone in area code 55
+  ---
+  duration_ms: 301.39775
+  type: 'test'
+  ...
+# Subtest: actual confirmation route uses the atomic SQL contract and is repeatable
+ok 208 - actual confirmation route uses the atomic SQL contract and is repeatable
+  ---
+  duration_ms: 244.873625
+  type: 'test'
+  ...
+# Subtest: database failure cannot leave an import ready or leak database internals
+ok 209 - database failure cannot leave an import ready or leak database internals
+  ---
+  duration_ms: 171.2485
+  type: 'test'
+  ...
+# Subtest: oversized files and over-limit rows are rejected before writing an import
+ok 210 - oversized files and over-limit rows are rejected before writing an import
+  ---
+  duration_ms: 164.97375
+  type: 'test'
+  ...
+# Subtest: the supported 10000-row boundary is saved completely in one transaction
+ok 211 - the supported 10000-row boundary is saved completely in one transaction
+  ---
+  duration_ms: 836.169333
+  type: 'test'
+  ...
+# Subtest: two independent database sessions importing the same file converge on one import and contact
+ok 212 - two independent database sessions importing the same file converge on one import and contact
+  ---
+  duration_ms: 226.395708
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_19444_fa345b92
+# Subtest: event and business leases serialize different events for the same payment
+ok 213 - event and business leases serialize different events for the same payment
+  ---
+  duration_ms: 350.007041
+  type: 'test'
+  ...
+# Subtest: failed activation stays unprocessed and can be claimed again
+ok 214 - failed activation stays unprocessed and can be claimed again
+  ---
+  duration_ms: 704.479666
+  type: 'test'
+  ...
+# Subtest: wrong user cannot be linked or mark a payment processed
+ok 215 - wrong user cannot be linked or mark a payment processed
+  ---
+  duration_ms: 400.322083
+  type: 'test'
+  ...
+# Subtest: critical write failure rolls back payment, account, event and OpenDots handoff together
+ok 216 - critical write failure rolls back payment, account, event and OpenDots handoff together
+  ---
+  duration_ms: 654.015666
+  type: 'test'
+  ...
+# Subtest: expired lease cannot complete and the same event can resume
+ok 217 - expired lease cannot complete and the same event can resume
+  ---
+  duration_ms: 463.920375
+  type: 'test'
+  ...
+# Subtest: completion is atomic, preserves onboarding and queues one supervised transition
+ok 218 - completion is atomic, preserves onboarding and queues one supervised transition
+  ---
+  duration_ms: 510.903916
+  type: 'test'
+  ...
+# Subtest: confirmed and received events reuse the same activation without duplicating the lifecycle handoff
+ok 219 - confirmed and received events reuse the same activation without duplicating the lifecycle handoff
+  ---
+  duration_ms: 281.229958
+  type: 'test'
+  ...
+# Subtest: foreign or conflicting checkout identities cannot acquire activation authority
+ok 220 - foreign or conflicting checkout identities cannot acquire activation authority
+  ---
+  duration_ms: 423.116708
+  type: 'test'
+  ...
+# Subtest: RPC and activation lease table are inaccessible to browser roles
+ok 221 - RPC and activation lease table are inaccessible to browser roles
+  ---
+  duration_ms: 459.481083
+  type: 'test'
+  ...
+# Subtest: one provider payment cannot activate a second account using another valid checkout reference
+ok 222 - one provider payment cannot activate a second account using another valid checkout reference
+  ---
+  duration_ms: 267.570083
+  type: 'test'
+  ...
+# Subtest: an old lease release cannot clear a newer event lease for the same business
+ok 223 - an old lease release cannot clear a newer event lease for the same business
+  ---
+  duration_ms: 530.537583
+  type: 'test'
+  ...
+# Subtest: shared-link activation requires explicit configured link and matching payer, even with a real payment ID
+ok 224 - shared-link activation requires explicit configured link and matching payer, even with a real payment ID
+  ---
+  duration_ms: 483.399333
+  type: 'test'
+  ...
+# Subtest: old processed_at without atomic receipt requires reconciliation instead of silently granting access
+ok 225 - old processed_at without atomic receipt requires reconciliation instead of silently granting access
+  ---
+  duration_ms: 221.825625
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_20281_e7f51146
+# Subtest: authentication precedes parsing and all database work
+ok 226 - authentication precedes parsing and all database work
+  ---
+  duration_ms: 272.881083
+  type: 'test'
+  ...
+# Subtest: malformed JSON and malformed provider IDs are refused before storage
+ok 227 - malformed JSON and malformed provider IDs are refused before storage
+  ---
+  duration_ms: 260.07575
+  type: 'test'
+  ...
+# Subtest: real handler commits payment, linked access, event and one supervised handoff
+ok 228 - real handler commits payment, linked access, event and one supervised handoff
+  ---
+  duration_ms: 1897.109833
+  type: 'test'
+  ...
+# Subtest: failed Auth lookup is unprocessed and duplicate resumes without a premature invitation
+ok 229 - failed Auth lookup is unprocessed and duplicate resumes without a premature invitation
+  ---
+  duration_ms: 2060.354958
+  type: 'test'
+  ...
+# Subtest: failed settlement is retried with the created user and never sends another invitation
+ok 230 - failed settlement is retried with the created user and never sends another invitation
+  ---
+  duration_ms: 4185.888375
+  type: 'test'
+  ...
+# Subtest: concurrent duplicate requests cannot produce multiple access invitations or handoffs
+ok 231 - concurrent duplicate requests cannot produce multiple access invitations or handoffs
+  ---
+  duration_ms: 1046.833125
+  type: 'test'
+  ...
+# Subtest: same payment confirmed and received uses one checkout, user and lifecycle handoff
+ok 232 - same payment confirmed and received uses one checkout, user and lifecycle handoff
+  ---
+  duration_ms: 999.25325
+  type: 'test'
+  ...
+# Subtest: same event ID with conflicting financial payload is refused without new writes
+ok 233 - same event ID with conflicting financial payload is refused without new writes
+  ---
+  duration_ms: 1039.893458
+  type: 'test'
+  ...
+# Subtest: shared recurring link with no reference or subscription is matched and replay cannot create extra checkout
+ok 234 - shared recurring link with no reference or subscription is matched and replay cannot create extra checkout
+  ---
+  duration_ms: 892.192667
+  type: 'test'
+  ...
+# Subtest: shared-link processing preserves an already active account and completed onboarding
+ok 235 - shared-link processing preserves an already active account and completed onboarding
+  ---
+  duration_ms: 697.103208
+  type: 'test'
+  ...
+# Subtest: ambiguous lead email cannot choose a business or grant access
+ok 236 - ambiguous lead email cannot choose a business or grant access
+  ---
+  duration_ms: 1115.482375
+  type: 'test'
+  ...
+# Subtest: unrelated shared link is stored as ignored without activating or inviting
+ok 237 - unrelated shared link is stored as ignored without activating or inviting
+  ---
+  duration_ms: 693.968875
+  type: 'test'
+  ...
+# Subtest: missing checkout association remains durable and pending
+ok 238 - missing checkout association remains durable and pending
+  ---
+  duration_ms: 694.733084
+  type: 'test'
+  ...
+# Subtest: customer ID email lookup works without altering the immutable event payload
+ok 239 - customer ID email lookup works without altering the immutable event payload
+  ---
+  duration_ms: 955.380708
+  type: 'test'
+  ...
+# Subtest: financial amount mismatch cannot activate access
+ok 240 - financial amount mismatch cannot activate access
+  ---
+  duration_ms: 595.478625
+  type: 'test'
+  ...
+# Subtest: ambiguous invitation with a created user is reconciled without a second send
+ok 241 - ambiguous invitation with a created user is reconciled without a second send
+  ---
+  duration_ms: 982.4295
+  type: 'test'
+  ...
+# Subtest: ambiguous invitation without a visible user stays pending and cannot blindly send again
+ok 242 - ambiguous invitation without a visible user stays pending and cannot blindly send again
+  ---
+  duration_ms: 1573.617792
+  type: 'test'
+  ...
+# Subtest: nonpayment state change is committed with its processing receipt
+ok 243 - nonpayment state change is committed with its processing receipt
+  ---
+  duration_ms: 599.837458
+  type: 'test'
+  ...
+# Subtest: unsupported future events are observed and never interpreted as paid
+ok 244 - unsupported future events are observed and never interpreted as paid
+  ---
+  duration_ms: 357.903208
+  type: 'test'
+  ...
+# Subtest: periodic recovery finishes a saved payment using an existing user and emits no invitation
+ok 245 - periodic recovery finishes a saved payment using an existing user and emits no invitation
+  ---
+  duration_ms: 690.590917
+  type: 'test'
+  ...
+# Subtest: periodic recovery cannot authorize a new invitation; genuine webhook can resume that saved event
+ok 246 - periodic recovery cannot authorize a new invitation; genuine webhook can resume that saved event
+  ---
+  duration_ms: 965.052917
+  type: 'test'
+  ...
+# Subtest: a failing old event cannot starve an eligible payment waiting longer for its next attempt
+ok 247 - a failing old event cannot starve an eligible payment waiting longer for its next attempt
+  ---
+  duration_ms: 983.037708
+  type: 'test'
+  ...
+# Subtest: two businesses cannot issue parallel invitations to the same email or bind one user twice
+ok 248 - two businesses cannot issue parallel invitations to the same email or bind one user twice
+  ---
+  duration_ms: 1853.825083
+  type: 'test'
+  ...
+# Subtest: documented checkout-paid item envelope confirms the associated checkout without trusting redirects
+ok 249 - documented checkout-paid item envelope confirms the associated checkout without trusting redirects
+  ---
+  duration_ms: 915.465042
+  type: 'test'
+  ...
+# Subtest: lost database response after commit is recovered from the saved receipt without reinviting
+ok 250 - lost database response after commit is recovered from the saved receipt without reinviting
+  ---
+  duration_ms: 802.691209
+  type: 'test'
+  ...
+# Subtest: checkout-created event recovers a reserved reference without changing access or inviting
+ok 251 - checkout-created event recovers a reserved reference without changing access or inviting
+  ---
+  duration_ms: 687.942708
+  type: 'test'
+  ...
+# Subtest: paid webhook can recover provider ID before the checkout HTTP result is saved
+ok 252 - paid webhook can recover provider ID before the checkout HTTP result is saved
+  ---
+  duration_ms: 737.207542
+  type: 'test'
+  ...
+# Subtest: checkout-created without a saved immutable reference stays pending rather than guessing an account
+ok 253 - checkout-created without a saved immutable reference stays pending rather than guessing an account
+  ---
+  duration_ms: 386.934042
+  type: 'test'
+  ...
+# Subtest: failed cancellation write rolls back checkout and receipt, then the same event resumes
+ok 254 - failed cancellation write rolls back checkout and receipt, then the same event resumes
+  ---
+  duration_ms: 1117.920667
+  type: 'test'
+  ...
+# Subtest: existing user is linked before any invitation
+ok 255 - existing user is linked before any invitation
+  ---
+  duration_ms: 67.253917
+  type: 'test'
+  ...
+# Subtest: existing user beyond the first thousand is linked without invitation
+ok 256 - existing user beyond the first thousand is linked without invitation
+  ---
+  duration_ms: 6.712125
+  type: 'test'
+  ...
+# Subtest: failed user lookup never authorizes an invitation
+ok 257 - failed user lookup never authorizes an invitation
+  ---
+  duration_ms: 7.760625
+  type: 'test'
+  ...
+# Subtest: verified absence invites once with normalized email and expected redirect
+ok 258 - verified absence invites once with normalized email and expected redirect
+  ---
+  duration_ms: 53.731042
+  type: 'test'
+  ...
+# Subtest: ambiguous invite resolves a created user rather than sending another invitation
+ok 259 - ambiguous invite resolves a created user rather than sending another invitation
+  ---
+  duration_ms: 19.517625
+  type: 'test'
+  ...
+# Subtest: failed or thrown invitation without user remains incomplete
+ok 260 - failed or thrown invitation without user remains incomplete
+  ---
+  duration_ms: 38.934125
+  type: 'test'
+  ...
+# Subtest: a mismatched invitation response cannot link another person
+ok 261 - a mismatched invitation response cannot link another person
+  ---
+  duration_ms: 11.525583
+  type: 'test'
+  ...
+# Subtest: repeating provider pages are refused before invitation
+ok 262 - repeating provider pages are refused before invitation
+  ---
+  duration_ms: 9.388583
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_20404_544b4e81
+# Subtest: disable and restore on the safe version preserves paid state, opt-out, receipts and uncertain attempts without new sends
+ok 263 - disable and restore on the safe version preserves paid state, opt-out, receipts and uncertain attempts without new sends
+  ---
+  duration_ms: 2446.541542
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_20610_a8eadb4b
+# Subtest: preparation saves linked diagnostic/business/lead, with no flag, contact, consent or enrollment
+ok 264 - preparation saves linked diagnostic/business/lead, with no flag, contact, consent or enrollment
+  ---
+  duration_ms: 977.001542
+  type: 'test'
+  ...
+# Subtest: retry reuses the same diagnostic, token, business and lead; changed input never overwrites prior evidence
+ok 265 - retry reuses the same diagnostic, token, business and lead; changed input never overwrites prior evidence
+  ---
+  duration_ms: 204.415
+  type: 'test'
+  ...
+# Subtest: two independent approvals converge without duplicate diagnostics or leads
+ok 266 - two independent approvals converge without duplicate diagnostics or leads
+  ---
+  duration_ms: 459.645125
+  type: 'test'
+  ...
+# Subtest: existing conversion, opt-out, consent and schedule are preserved on approval
+ok 267 - existing conversion, opt-out, consent and schedule are preserved on approval
+  ---
+  duration_ms: 499.132167
+  type: 'test'
+  ...
+# Subtest: ambiguous historical diagnostics are refused rather than choosing or generating another
+ok 268 - ambiguous historical diagnostics are refused rather than choosing or generating another
+  ---
+  duration_ms: 162.223292
+  type: 'test'
+  ...
+# Subtest: a diagnostic linked to a foreign business cannot be silently reassigned
+ok 269 - a diagnostic linked to a foreign business cannot be silently reassigned
+  ---
+  duration_ms: 282.487208
+  type: 'test'
+  ...
+# Subtest: critical save failure rolls back diagnostic, business and lead together; retry can resume
+ok 270 - critical save failure rolls back diagnostic, business and lead together; retry can resume
+  ---
+  duration_ms: 410.030583
+  type: 'test'
+  ...
+# Subtest: browser roles cannot call privileged preparation or write the new state
+ok 271 - browser roles cannot call privileged preparation or write the new state
+  ---
+  duration_ms: 180.096958
+  type: 'test'
+  ...
+# Subtest: route rejects missing objects, invalid scores, duplicate IDs and oversized batches before persistence
+ok 272 - route rejects missing objects, invalid scores, duplicate IDs and oversized batches before persistence
+  ---
+  duration_ms: 24.099875
+  type: 'test'
+  ...
+# Subtest: database failure is unavailable with no provider fallback or private detail
+ok 273 - database failure is unavailable with no provider fallback or private detail
+  ---
+  duration_ms: 8.139625
+  type: 'test'
+  ...
+# Subtest: enabling the old outreach flag cannot turn preparation into a send
+ok 274 - enabling the old outreach flag cannot turn preparation into a send
+  ---
+  duration_ms: 54.151666
+  type: 'test'
+  ...
+# Subtest: existing unique business lead is linked without changing consent, scope or scheduled work
+ok 275 - existing unique business lead is linked without changing consent, scope or scheduled work
+  ---
+  duration_ms: 228.656
+  type: 'test'
+  ...
+# Subtest: an ambiguous business lead set rolls back preparation rather than choosing by name
+ok 276 - an ambiguous business lead set rolls back preparation rather than choosing by name
+  ---
+  duration_ms: 247.167042
+  type: 'test'
+  ...
+# Subtest: SQL rejects duplicate IDs and invalid inputs without partially preparing a batch
+ok 277 - SQL rejects duplicate IDs and invalid inputs without partially preparing a batch
+  ---
+  duration_ms: 179.850917
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_21188_478430e0
+# Subtest: parallel claims never reserve the same enrollment attempt twice
+ok 278 - parallel claims never reserve the same enrollment attempt twice
+  ---
+  duration_ms: 534.647125
+  type: 'test'
+  ...
+# Subtest: cumulative daily quota includes accepted and unresolved deliveries across requests
+ok 279 - cumulative daily quota includes accepted and unresolved deliveries across requests
+  ---
+  duration_ms: 987.554125
+  type: 'test'
+  ...
+# Subtest: an expired pre-send reservation can resume with a new lease, without spending another slot
+ok 280 - an expired pre-send reservation can resume with a new lease, without spending another slot
+  ---
+  duration_ms: 1332.629958
+  type: 'test'
+  ...
+# Subtest: once dispatch starts, lease expiry never permits blind replay
+ok 281 - once dispatch starts, lease expiry never permits blind replay
+  ---
+  duration_ms: 978.428667
+  type: 'test'
+  ...
+# Subtest: saving an accepted message commits receipt, attempt and next schedule atomically
+ok 282 - saving an accepted message commits receipt, attempt and next schedule atomically
+  ---
+  duration_ms: 1002.851917
+  type: 'test'
+  ...
+# Subtest: an injected receipt write failure leaves an unresolved dispatch and no false completed attempt
+ok 283 - an injected receipt write failure leaves an unresolved dispatch and no false completed attempt
+  ---
+  duration_ms: 968.038958
+  type: 'test'
+  ...
+# Subtest: reply before dispatch closes contact, enrollment and reservation together
+ok 284 - reply before dispatch closes contact, enrollment and reservation together
+  ---
+  duration_ms: 942.015458
+  type: 'test'
+  ...
+# Subtest: STOP persists opt-out and a late send receipt cannot reactivate the enrollment
+ok 285 - STOP persists opt-out and a late send receipt cannot reactivate the enrollment
+  ---
+  duration_ms: 903.462375
+  type: 'test'
+  ...
+# Subtest: stop retries are idempotent and cannot target a foreign business
+ok 286 - stop retries are idempotent and cannot target a foreign business
+  ---
+  duration_ms: 948.938875
+  type: 'test'
+  ...
+# Subtest: final dispatch gate checks current payment, pause, opt-out and exact provider binding
+ok 287 - final dispatch gate checks current payment, pause, opt-out and exact provider binding
+  ---
+  duration_ms: 1841.548792
+  type: 'test'
+  ...
+# Subtest: browser roles cannot read the ledger or execute privileged delivery/stop functions
+ok 288 - browser roles cannot read the ledger or execute privileged delivery/stop functions
+  ---
+  duration_ms: 931.634875
+  type: 'test'
+  ...
+# Subtest: a null lease never authorizes dispatch or settlement
+ok 289 - a null lease never authorizes dispatch or settlement
+  ---
+  duration_ms: 588.844917
+  type: 'test'
+  ...
+# Subtest: a legacy accepted receipt still consumes the daily quota after migration
+ok 290 - a legacy accepted receipt still consumes the daily quota after migration
+  ---
+  duration_ms: 482.152042
+  type: 'test'
+  ...
+# Subtest: a failure during stop processing rolls back receipt, contact, enrollment and reservation
+ok 291 - a failure during stop processing rolls back receipt, contact, enrollment and reservation
+  ---
+  duration_ms: 1379.164459
+  type: 'test'
+  ...
+# Subtest: different concurrent enrollments cannot overbook the final daily slot
+ok 292 - different concurrent enrollments cannot overbook the final daily slot
+  ---
+  duration_ms: 429.615167
+  type: 'test'
+  ...
+# Subtest: three accepted attempts follow the first-send calendar and finish without a fourth send
+ok 293 - three accepted attempts follow the first-send calendar and finish without a fourth send
+  ---
+  duration_ms: 1049.830875
+  type: 'test'
+  ...
+# Subtest: preparation failure is retryable after backoff while unknown dispatch stays blocked
+ok 294 - preparation failure is retryable after backoff while unknown dispatch stays blocked
+  ---
+  duration_ms: 830.490417
+  type: 'test'
+  ...
+# Subtest: a reservation cannot cross the local quota date before dispatch
+ok 295 - a reservation cannot cross the local quota date before dispatch
+  ---
+  duration_ms: 378.751291
+  type: 'test'
+  ...
+# Subtest: periodic recovery does not start an overdue review request before the existing 09:00 local schedule
+ok 296 - periodic recovery does not start an overdue review request before the existing 09:00 local schedule
+  ---
+  duration_ms: 414.423208
+  type: 'test'
+  ...
+# Subtest: cron rejects missing or wrong authentication before any work
+ok 297 - cron rejects missing or wrong authentication before any work
+  ---
+  duration_ms: 44.124958
+  type: 'test'
+  ...
+# Subtest: default disabled gate performs no database or provider work for POST or GET
+ok 298 - default disabled gate performs no database or provider work for POST or GET
+  ---
+  duration_ms: 10.12175
+  type: 'test'
+  ...
+# Subtest: enabled processing needs database configuration and uses one bounded processor invocation
+ok 299 - enabled processing needs database configuration and uses one bounded processor invocation
+  ---
+  duration_ms: 6.500708
+  type: 'test'
+  ...
+# Subtest: blocked deliveries and unexpected failures cannot be reported as successful recovery
+ok 300 - blocked deliveries and unexpected failures cannot be reported as successful recovery
+  ---
+  duration_ms: 8.877208
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_23044_d0ea7ac7
+# Subtest: disabled outreach performs no database or provider work
+ok 301 - disabled outreach performs no database or provider work
+  ---
+  duration_ms: 495.996583
+  type: 'test'
+  ...
+# Subtest: accepted provider message is journaled and repeat processing does not send it twice
+ok 302 - accepted provider message is journaled and repeat processing does not send it twice
+  ---
+  duration_ms: 1053.802833
+  type: 'test'
+  ...
+# Subtest: concurrent processors make one external call for the same enrollment
+ok 303 - concurrent processors make one external call for the same enrollment
+  ---
+  duration_ms: 889.365
+  type: 'test'
+  ...
+# Subtest: a reply or STOP in provider history closes the local cadence before any send
+ok 304 - a reply or STOP in provider history closes the local cadence before any send
+  ---
+  duration_ms: 1759.576542
+  type: 'test'
+  ...
+# Subtest: provider DND suppresses the request and persists opt-out
+ok 305 - provider DND suppresses the request and persists opt-out
+  ---
+  duration_ms: 1102.556584
+  type: 'test'
+  ...
+# Subtest: truncated history, foreign records and infrastructure errors fail closed before dispatch
+ok 306 - truncated history, foreign records and infrastructure errors fail closed before dispatch
+  ---
+  duration_ms: 2363.859625
+  type: 'test'
+  ...
+# Subtest: a provider timeout after accept never falls back to email or repeats the request
+ok 307 - a provider timeout after accept never falls back to email or repeats the request
+  ---
+  duration_ms: 1125.499167
+  type: 'test'
+  ...
+# Subtest: a missing immutable message receipt remains unresolved instead of being marked sent
+ok 308 - a missing immutable message receipt remains unresolved instead of being marked sent
+  ---
+  duration_ms: 977.332375
+  type: 'test'
+  ...
+# Subtest: save failure after accept leaves durable ambiguity and no resend
+ok 309 - save failure after accept leaves durable ambiguity and no resend
+  ---
+  duration_ms: 1119.850209
+  type: 'test'
+  ...
+# Subtest: lost response after database commit preserves the saved receipt and prevents duplicate send
+ok 310 - lost response after database commit preserves the saved receipt and prevents duplicate send
+  ---
+  duration_ms: 1170.314041
+  type: 'test'
+  ...
+# Subtest: STOP arriving during the provider call remains terminal after the late acceptance
+ok 311 - STOP arriving during the provider call remains terminal after the late acceptance
+  ---
+  duration_ms: 1090.512958
+  type: 'test'
+  ...
+# Subtest: an inbound journaled after the history read still blocks the final dispatch gate
+ok 312 - an inbound journaled after the history read still blocks the final dispatch gate
+  ---
+  duration_ms: 1100.50075
+  type: 'test'
+  ...
+# Subtest: a new provider contact is bound only by the same durable final gate
+ok 313 - a new provider contact is bound only by the same durable final gate
+  ---
+  duration_ms: 1166.03475
+  type: 'test'
+  ...
+# Subtest: email-only customers use their exact address and untrusted names remain plain text in HTML
+ok 314 - email-only customers use their exact address and untrusted names remain plain text in HTML
+  ---
+  duration_ms: 1042.138041
+  type: 'test'
+  ...
+# Subtest: saved business Place ID permits review delivery without Google OAuth, but missing destination refuses transport
+ok 315 - saved business Place ID permits review delivery without Google OAuth, but missing destination refuses transport
+  ---
+  duration_ms: 2328.379084
+  type: 'test'
+  ...
+# isolated_database=meulocal_payment_test_23151_cd425e8d
+# Subtest: SAIR and STOP save journal, opt-out and cadence closure once, including repeat deliveries
+ok 316 - SAIR and STOP save journal, opt-out and cadence closure once, including repeat deliveries
+  ---
+  duration_ms: 1475.606333
+  type: 'test'
+  ...
+# Subtest: a failed stop transaction leaves no acknowledged journal and succeeds on provider retry
+ok 317 - a failed stop transaction leaves no acknowledged journal and succeeds on provider retry
+  ---
+  duration_ms: 815.378917
+  type: 'test'
+  ...
+# Subtest: a journal from the old partial handler is resumed instead of discarded as a duplicate
+ok 318 - a journal from the old partial handler is resumed instead of discarded as a duplicate
+  ---
+  duration_ms: 629.233709
+  type: 'test'
+  ...
+# Subtest: the same provider event ID with changed content is a conflict, never a successful duplicate
+ok 319 - the same provider event ID with changed content is a conflict, never a successful duplicate
+  ---
+  duration_ms: 665.273959
+  type: 'test'
+  ...
+# Subtest: identical bodies on separate immutable message IDs stay separate
+ok 320 - identical bodies on separate immutable message IDs stay separate
+  ---
+  duration_ms: 832.872959
+  type: 'test'
+  ...
+# Subtest: a missing immutable ID or failed contact lookup cannot acknowledge or close the cadence
+ok 321 - a missing immutable ID or failed contact lookup cannot acknowledge or close the cadence
+  ---
+  duration_ms: 548.0965
+  type: 'test'
+  ...
+# Subtest: delivery status receipts do not close the cadence or increment send attempts
+ok 322 - delivery status receipts do not close the cadence or increment send attempts
+  ---
+  duration_ms: 719.497709
+  type: 'test'
+  ...
+# Subtest: sent and delivered transitions for one immutable message retain both receipts
+ok 323 - sent and delivered transitions for one immutable message retain both receipts
+  ---
+  duration_ms: 611.958208
+  type: 'test'
+  ...
+# Subtest: one external event ID cannot be reused to close another company contact
+ok 324 - one external event ID cannot be reused to close another company contact
+  ---
+  duration_ms: 1008.440083
+  type: 'test'
+  ...
+# Subtest: signed recovery reconciles fixed scope and drains the durable queue
+ok 325 - signed recovery reconciles fixed scope and drains the durable queue
+  ---
+  duration_ms: 42.126958
+  type: 'test'
+  ...
+# Subtest: invalid signature, browser origin and missing config execute no work
+ok 326 - invalid signature, browser origin and missing config execute no work
+  ---
+  duration_ms: 24.878333
+  type: 'test'
+  ...
+# Subtest: stale or future timestamps cannot authorize recovery
+ok 327 - stale or future timestamps cannot authorize recovery
+  ---
+  duration_ms: 8.872709
+  type: 'test'
+  ...
+# Subtest: caller cannot select another contact, event, URL, or any execution permission
+ok 328 - caller cannot select another contact, event, URL, or any execution permission
+  ---
+  duration_ms: 25.236834
+  type: 'test'
+  ...
+# Subtest: provider read failure still attempts already persisted jobs and reports incomplete work
+ok 329 - provider read failure still attempts already persisted jobs and reports incomplete work
+  ---
+  duration_ms: 3.350917
+  type: 'test'
+  ...
+# Subtest: queue failure cannot be reported as recovered
+ok 330 - queue failure cannot be reported as recovered
+  ---
+  duration_ms: 5.235958
+  type: 'test'
+  ...
+# Subtest: unexpected exceptions are sanitized and queue recovery is not skipped
+ok 331 - unexpected exceptions are sanitized and queue recovery is not skipped
+  ---
+  duration_ms: 3.960125
+  type: 'test'
+  ...
+# Subtest: pending payment remains visible and does not prevent inbox and queue recovery
+ok 332 - pending payment remains visible and does not prevent inbox and queue recovery
+  ---
+  duration_ms: 3.927041
+  type: 'test'
+  ...
+# Subtest: oversized or malformed signed body executes no work
+ok 333 - oversized or malformed signed body executes no work
+  ---
+  duration_ms: 8.864875
+  type: 'test'
+  ...
+# Subtest: blocked review delivery is visible without preventing the other recovery stages
+ok 334 - blocked review delivery is visible without preventing the other recovery stages
+  ---
+  duration_ms: 2.786833
+  type: 'test'
+  ...
+# Subtest: recovery uses a domain-bound signature, fixed URL, finite timeout, and no dispatch payload
+ok 335 - recovery uses a domain-bound signature, fixed URL, finite timeout, and no dispatch payload
+  ---
+  duration_ms: 9.93925
+  type: 'test'
+  ...
+# Subtest: next tick is scheduled only after completion; stopping during flight aborts and prevents rescheduling
+ok 336 - next tick is scheduled only after completion; stopping during flight aborts and prevents rescheduling
+  ---
+  duration_ms: 0.241791
+  type: 'test'
+  ...
+# Subtest: network failure and HTTP 200 without a processing result stay failed and retry
+ok 337 - network failure and HTTP 200 without a processing result stay failed and retry
+  ---
+  duration_ms: 0.43925
+  type: 'test'
+  ...
+# Subtest: missing URL disables recovery; arbitrary host, scheme, query, credentials or short secret are refused
+ok 338 - missing URL disables recovery; arbitrary host, scheme, query, credentials or short secret are refused
+  ---
+  duration_ms: 0.181709
+  type: 'test'
+  ...
+# Subtest: HTTP 200 with blocked reviews never reports recovery finished
+ok 339 - HTTP 200 with blocked reviews never reports recovery finished
+  ---
+  duration_ms: 0.265583
+  type: 'test'
+  ...
+# Subtest: P1 saved receipt survives restart, equal retry never repeats model
+ok 340 - P1 saved receipt survives restart, equal retry never repeats model
+  ---
+  duration_ms: 32.213625
+  type: 'test'
+  ...
+# Subtest: P1 concurrent retries share one model turn and one saved decision
+ok 341 - P1 concurrent retries share one model turn and one saved decision
+  ---
+  duration_ms: 47.676125
+  type: 'test'
+  ...
+# Subtest: same ID with different contact or message conflicts and never reexecutes
+ok 342 - same ID with different contact or message conflicts and never reexecutes
+  ---
+  duration_ms: 16.299292
+  type: 'test'
+  ...
+# Subtest: a persistence failure is not success and retry may save after recovery
+ok 343 - a persistence failure is not success and retry may save after recovery
+  ---
+  duration_ms: 10.7265
+  type: 'test'
+  ...
+# Subtest: STOP returns saved stop receipt with no model calls, including duplicate
+ok 344 - STOP returns saved stop receipt with no model calls, including duplicate
+  ---
+  duration_ms: 13.972625
+  type: 'test'
+  ...
+# Subtest: supervised lifecycle saves deterministic guidance, links existing UI and calls no model
+ok 345 - supervised lifecycle saves deterministic guidance, links existing UI and calls no model
+  ---
+  duration_ms: 12.005833
+  type: 'test'
+  ...
+# Subtest: valid 4000-character UTF-8 message fits the receiver envelope; oversized body is refused
+ok 346 - valid 4000-character UTF-8 message fits the receiver envelope; oversized body is refused
+  ---
+  duration_ms: 11.484583
+  type: 'test'
+  ...
+# Subtest: receipt exposes exactly the persisted human guidance, including after restart
+ok 347 - receipt exposes exactly the persisted human guidance, including after restart
+  ---
+  duration_ms: 12.554791
+  type: 'test'
+  ...
+# Subtest: receipt store refuses a corrupted persisted guidance destination
+ok 348 - receipt store refuses a corrupted persisted guidance destination
+  ---
+  duration_ms: 9.453708
+  type: 'test'
+  ...
+1..348
+# tests 348
+# suites 0
+# pass 348
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 83148.365666

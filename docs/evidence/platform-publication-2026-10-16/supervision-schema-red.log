@@ -1,0 +1,142 @@
+TAP version 13
+# (node:84519) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+# (Use `node --trace-deprecation ...` to show where the warning was created)
+# Subtest: supervision is admin-only: absent, invalid and malformed cookies never read privileged data
+ok 1 - supervision is admin-only: absent, invalid and malformed cookies never read privileged data
+  ---
+  duration_ms: 111.98425
+  type: 'test'
+  ...
+# Subtest: old pending work remains visible independently of recent completed work, with exact counts
+ok 2 - old pending work remains visible independently of recent completed work, with exact counts
+  ---
+  duration_ms: 22.85225
+  type: 'test'
+  ...
+# Subtest: read failure cannot become a successful empty supervision screen or expose database details
+ok 3 - read failure cannot become a successful empty supervision screen or expose database details
+  ---
+  duration_ms: 12.781541
+  type: 'test'
+  ...
+# Subtest: saved receipt cannot expose arbitrary links, and unverified receipts have no guidance
+ok 4 - saved receipt cannot expose arbitrary links, and unverified receipts have no guidance
+  ---
+  duration_ms: 8.61225
+  type: 'test'
+  ...
+# Subtest: opening and refreshing admin with approved diagnostics never dispatches automatically
+ok 5 - opening and refreshing admin with approved diagnostics never dispatches automatically
+  ---
+  duration_ms: 54.907125
+  type: 'test'
+  ...
+# Subtest: failed admin load never claims operation is normal
+ok 6 - failed admin load never claims operation is normal
+  ---
+  duration_ms: 29.341042
+  type: 'test'
+  ...
+# Subtest: supervision displays human guidance and existing links without executing an action
+ok 7 - supervision displays human guidance and existing links without executing an action
+  ---
+  duration_ms: 3.917209
+  type: 'test'
+  ...
+# Subtest: supervision failure shows retry instead of empty success and can recover
+ok 8 - supervision failure shows retry instead of empty success and can recover
+  ---
+  duration_ms: 3.877375
+  type: 'test'
+  ...
+# Subtest: overview query failure is unavailable instead of a successful zero sample
+ok 9 - overview query failure is unavailable instead of a successful zero sample
+  ---
+  duration_ms: 114.130333
+  type: 'test'
+  ...
+# Subtest: admin saves selected diagnostics, exposes persisted link and does not start dispatch
+ok 10 - admin saves selected diagnostics, exposes persisted link and does not start dispatch
+  ---
+  duration_ms: 22.488041
+  type: 'test'
+  ...
+# Subtest: failed preparation preserves selection and allows retry without claiming a saved diagnostic
+ok 11 - failed preparation preserves selection and allows retry without claiming a saved diagnostic
+  ---
+  duration_ms: 18.809292
+  type: 'test'
+  ...
+# Subtest: manual retry preserves its UUID and content after uncertain result without claiming acceptance
+ok 12 - manual retry preserves its UUID and content after uncertain result without claiming acceptance
+  ---
+  duration_ms: 30.24125
+  type: 'test'
+  ...
+# Subtest: HTTP 200 without a message receipt keeps the draft and stable intent for reconciliation
+ok 13 - HTTP 200 without a message receipt keeps the draft and stable intent for reconciliation
+  ---
+  duration_ms: 23.728542
+  type: 'test'
+  ...
+# Subtest: manual accepted receipt clears draft only after explicit human confirmation
+ok 14 - manual accepted receipt clears draft only after explicit human confirmation
+  ---
+  duration_ms: 19.609917
+  type: 'test'
+  ...
+# Subtest: canceled human confirmation never posts a manual reply
+ok 15 - canceled human confirmation never posts a manual reply
+  ---
+  duration_ms: 16.184041
+  type: 'test'
+  ...
+# Subtest: initial contact confirms the exact message and targets one persisted diagnostic
+ok 16 - initial contact confirms the exact message and targets one persisted diagnostic
+  ---
+  duration_ms: 18.893333
+  type: 'test'
+  ...
+# Subtest: supervision exposes uncertain deliveries and partial payment processing with explicit next steps and no raw errors
+ok 17 - supervision exposes uncertain deliveries and partial payment processing with explicit next steps and no raw errors
+  ---
+  duration_ms: 9.275
+  type: 'test'
+  ...
+# Subtest: a failed required journal source never appears as a successful empty operation section
+ok 18 - a failed required journal source never appears as a successful empty operation section
+  ---
+  duration_ms: 35.638084
+  type: 'test'
+  ...
+# Subtest: cadence supervision reads existing started_at without requiring a nonexistent creation column
+not ok 19 - cadence supervision reads existing started_at without requiring a nonexistent creation column
+  ---
+  duration_ms: 7.4515
+  type: 'test'
+  location: '/Users/denisonishi/.codex/worktrees/highlevel-opendots-inbound/meulocal/scripts/check-admin-supervision.cjs:58:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    503 !== 200
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 200
+  actual: 503
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/Users/denisonishi/.codex/worktrees/highlevel-opendots-inbound/meulocal/scripts/check-admin-supervision.cjs:58:185)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 18
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 689.734708

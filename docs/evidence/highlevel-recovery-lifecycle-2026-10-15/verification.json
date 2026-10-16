@@ -1,0 +1,36 @@
+{
+  "localStatus": "IMPLEMENTED_TESTED_LOCAL",
+  "productionStatus": "BLOCKED_IDENTITY_ANCHOR",
+  "unitBridge": {
+    "passed": 25
+  },
+  "runtimeHTTP": {
+    "passed": 7
+  },
+  "postgresTransactions": {
+    "passed": 9
+  },
+  "typescript": "passed",
+  "build": "passed",
+  "lint": "not_configured_in_base",
+  "independentReview": "original_adjacent_findings_fixed_and_native_adapter_rechecked",
+  "secretsPrinted": false,
+  "productionChanged": false,
+  "externalMessagesSent": 0,
+  "onboardingMode": "supervised",
+  "cadence": "existing_daily_cron_or_authorized_on_demand",
+  "nativeSubscriptionVerification": "no_administrable_native_subscription_proven_in_installed_apps",
+  "nativeAdapter": "signed_test22_controlled_tag_only",
+  "chromeInspection": "reopened_and_completed",
+  "installedAppsObserved": [
+    "Official WhatsApp Integration",
+    "LC GPT Connector"
+  ],
+  "pullRequest": 6,
+  "githubBuild": {
+    "runId": 38667995622,
+    "status": "passed"
+  },
+  "vercelPreview": "passed",
+  "ownedPostgresContainerCleanup": "verified_removed"
+}

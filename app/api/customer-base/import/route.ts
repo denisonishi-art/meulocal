@@ -1,5 +1,6 @@
 import {NextResponse} from 'next/server';
 import * as XLSX from 'xlsx';
+import {createHash} from 'node:crypto';
 import {customerContext,requireActiveAccount} from '@/lib/customer-context';
 
 const NAME_KEYS=['nome','name','cliente','customer'];
@@ -17,11 +18,12 @@ function findValue(row:Record<string,any>,keys:string[]){
   return '';
 }
 function normalizeEmail(v:string){const s=v.trim().toLowerCase();return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)?s:''}
-function normalizePhone(v:string){const d=v.replace(/\D/g,'');if(d.length<10||d.length>13)return '';return d.startsWith('55')?d:'55'+d}
+function normalizePhone(v:string){const d=v.replace(/\D/g,'');if(d.length===10||d.length===11)return '55'+d;return (d.length===12||d.length===13)&&d.startsWith('55')?d:''}
 function parseDate(v:string){if(!v)return null;const d=new Date(v);return Number.isNaN(d.getTime())?null:d.toISOString()}
 function contactKey(email:string,phone:string){return email?'email:'+email:phone?'phone:'+phone:''}
 
 export const runtime='nodejs';
+export const maxDuration=60;
 
 export async function POST(req:Request){
   const c=await customerContext(req);
@@ -33,10 +35,11 @@ export async function POST(req:Request){
     if(!(file instanceof File))return NextResponse.json({error:'Selecione um arquivo CSV ou Excel.'},{status:400});
     const lower=file.name.toLowerCase();
     if(!lower.endsWith('.csv')&&!lower.endsWith('.xlsx')&&!lower.endsWith('.xls'))return NextResponse.json({error:'Formato não suportado. Use CSV, XLSX ou XLS.'},{status:400});
-    if(file.size>8*1024*1024)return NextResponse.json({error:'Arquivo muito grande. O limite atual é 8 MB.'},{status:400});
+    if(file.size>4*1024*1024)return NextResponse.json({error:'Arquivo muito grande. Envie até 4 MB por arquivo.'},{status:400});
+    if(file.name.length>255)return NextResponse.json({error:'Use um nome de arquivo com até 255 caracteres.'},{status:400});
 
     const bytes=await file.arrayBuffer();
-    const workbook=XLSX.read(bytes,{type:'array',cellDates:true});
+    const workbook=XLSX.read(bytes,{type:'array',cellDates:true,sheetRows:10002,sheets:0});
     const sheet=workbook.Sheets[workbook.SheetNames[0]];
     const raw=XLSX.utils.sheet_to_json<Record<string,any>>(sheet,{defval:''});
     if(!raw.length)return NextResponse.json({error:'A planilha está vazia.'},{status:400});
@@ -48,48 +51,24 @@ export async function POST(req:Request){
       const whatsapp=normalizePhone(findValue(row,PHONE_KEYS));
       const lastPurchase=parseDate(findValue(row,DATE_KEYS));
       const ck=contactKey(email,whatsapp);
-      return {index:index+2,name,email,whatsapp,lastPurchase,contactKey:ck,valid:Boolean(ck)};
+      return {index:index+2,name,email,whatsapp,lastPurchase,contactKey:ck,valid:Boolean(ck)&&name.length<=200&&email.length<=320};
     });
 
-    const seen=new Set<string>();let duplicateRows=0;let invalidRows=0;
+    const seen=new Set<string>();const seenPhones=new Set<string>();let duplicateRows=0;let invalidRows=0;
     const candidates=parsed.filter(x=>{
       if(!x.valid){invalidRows++;return false}
-      if(seen.has(x.contactKey)){duplicateRows++;return false}
-      seen.add(x.contactKey);return true;
+      if(seen.has(x.contactKey)||(x.whatsapp&&seenPhones.has(x.whatsapp))){duplicateRows++;return false}
+      seen.add(x.contactKey);if(x.whatsapp)seenPhones.add(x.whatsapp);return true;
     });
 
-    const keys=candidates.map(x=>x.contactKey);
-    const existingKeys=new Set<string>();
-    for(let i=0;i<keys.length;i+=250){
-      const chunk=keys.slice(i,i+250);
-      const {data:existing,error:existingError}=await c.admin.from('customer_contacts').select('contact_key').eq('business_id',c.account!.business_id).in('contact_key',chunk);
-      if(existingError)throw existingError;
-      for(const row of existing||[])existingKeys.add((row as any).contact_key);
-    }
-    duplicateRows+=candidates.filter(x=>existingKeys.has(x.contactKey)).length;
-    const fresh=candidates.filter(x=>!existingKeys.has(x.contactKey));
-
-    const {data:imp,error:impError}=await c.admin.from('customer_imports').insert({
-      business_id:c.account!.business_id,user_id:c.user.id,file_name:file.name,status:'ready',
-      total_rows:raw.length,valid_rows:fresh.length,invalid_rows:invalidRows,duplicate_rows:duplicateRows
-    }).select('id').single();
-    if(impError)throw impError;
-
-    for(let i=0;i<fresh.length;i+=500){
-      const chunk=fresh.slice(i,i+500).map(x=>({
-        business_id:c.account!.business_id,import_id:imp.id,name:x.name||null,email:x.email||null,whatsapp:x.whatsapp||null,
-        last_purchase_at:x.lastPurchase,contact_key:x.contactKey,status:'imported'
-      }));
-      const {error:insertError}=await c.admin.from('customer_contacts').insert(chunk);
-      if(insertError)throw insertError;
-    }
-
-    return NextResponse.json({
-      ok:true,importId:imp.id,fileName:file.name,totalRows:raw.length,validRows:fresh.length,
-      invalidRows,duplicateRows,
-      preview:fresh.slice(0,8).map(x=>({name:x.name||'Sem nome',email:x.email||null,whatsapp:x.whatsapp||null,lastPurchaseAt:x.lastPurchase}))
+    const {data,error}=await c.admin.rpc('import_customer_base',{
+      p_business_id:c.account!.business_id,p_user_id:c.user.id,p_file_hash:createHash('sha256').update(Buffer.from(bytes)).digest('hex'),
+      p_file_name:file.name,p_rows:candidates.map(({name,email,whatsapp,lastPurchase})=>({name,email,whatsapp,lastPurchase})),
+      p_total_rows:raw.length,p_invalid_rows:invalidRows,p_duplicate_rows:duplicateRows
     });
-  }catch(error:any){
-    return NextResponse.json({error:error?.message||'Não foi possível processar a base.'},{status:500});
+    if(error||!data?.ok||!data.importId)return NextResponse.json({error:'Não foi possível salvar a importação. Tente novamente com o mesmo arquivo.'},{status:503});
+    return NextResponse.json(data);
+  }catch{
+    return NextResponse.json({error:'Não foi possível processar a base. Confira o arquivo e tente novamente.'},{status:503});
   }
 }
