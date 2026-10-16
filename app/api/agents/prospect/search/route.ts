@@ -9,23 +9,19 @@ const states='AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO 
 function requestedState(location:string){return location.toUpperCase().split(/[^A-Z]+/).find(token=>states.includes(token));}
 async function geocodeCoverage(location:string,key:string,state:string):Promise<Coverage|null>{
   try{
-    const url=`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${encodeURIComponent(key)}&language=pt-BR&region=BR&components=country:BR|administrative_area:${state}`;
-    const response=await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(7000)});const body=await response.json();
-    const results=(body.results||[]).filter((r:any)=>!r.partial_match&&r.address_components?.some((c:any)=>c.types?.includes('administrative_area_level_1')&&c.short_name===state));
-    let result=results.length===1?results[0]:null;
-    if(!result){
-      const fallback=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=br&addressdetails=1&q=${encodeURIComponent(location)}`,{headers:{'User-Agent':'MeuLocal prospect discovery'},cache:'no-store',signal:AbortSignal.timeout(7000)});
-      const rows=await fallback.json();
-      const matches=Array.isArray(rows)?rows.filter((r:any)=>r.address?.['ISO3166-2-lvl4']===`BR-${state}`):[];
-      if(matches.length!==1)return null;
-      const row=matches[0];const [south,north,west,east]=(row.boundingbox||[]).map(Number);
-      result={formatted_address:row.display_name,geometry:{viewport:{northeast:{lat:north,lng:east},southwest:{lat:south,lng:west}}}};
-    }
-    const v=result.geometry?.viewport;
-    if(!v)return null;
-    const low={latitude:v.southwest.lat,longitude:v.southwest.lng},high={latitude:v.northeast.lat,longitude:v.northeast.lng};
+    // Resolve geography with the same Places API already used for discovery.
+    // Never require an independently enabled Geocoding API or an external geocoder.
+    const response=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.viewport,places.addressComponents,places.types'},body:JSON.stringify({textQuery:location,languageCode:'pt-BR',regionCode:'BR',maxResultCount:5}),cache:'no-store',signal:AbortSignal.timeout(10000)});
+    if(!response.ok)return null;
+    const body=await response.json();
+    const geoTypes=['locality','sublocality','sublocality_level_1','sublocality_level_2','neighborhood','administrative_area_level_2'];
+    const results=(body.places||[]).filter((r:any)=>r.types?.some((t:string)=>geoTypes.includes(t))&&r.addressComponents?.some((c:any)=>c.types?.includes('administrative_area_level_1')&&c.shortText===state));
+    if(results.length!==1)return null;
+    const result=results[0],v=result.viewport;
+    if(!v?.low||!v?.high)return null;
+    const low=v.low,high=v.high;
     if(![low.latitude,low.longitude,high.latitude,high.longitude].every(Number.isFinite)||low.latitude>=high.latitude||low.longitude>=high.longitude)return null;
-    return {low,high,label:result.formatted_address||location};
+    return {low,high,label:result.formattedAddress||location};
   }catch{return null}
 }
 
