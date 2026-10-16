@@ -7,7 +7,7 @@ import CustomerBaseSetup from './CustomerBaseSetup';
 
 const steps = [
   { title: 'Confirmar seu negócio', text: 'Usamos os dados do diagnóstico para evitar perguntas repetidas.', icon: Store },
-  { title: 'Conectar seu Google', text: 'Conecte para sincronizar suas avaliações ou continue e faça isso depois.', icon: MessageCircle },
+  { title: 'Conectar seu Google', text: 'Conexão obrigatória para acompanhar suas avaliações e avisar quando algo exigir atenção.', icon: MessageCircle },
   { title: 'Trazer seus clientes', text: 'Envie uma planilha CSV ou Excel depois. Esta etapa é opcional para começar.', icon: FileSpreadsheet },
 ];
 type Location={id:string;accountId:string;title:string;address:string;placeId?:string|null;mapsUri?:string|null;newReviewUri?:string|null};
@@ -44,7 +44,7 @@ export default function OnboardingPage() {
     setStep(step+1);
   }
   async function deferStep(){
-    if(step===1){setStep(2);return}
+    if(step===1)return
     if(!window.confirm('Concluir a configuração sem importar a base agora? O serviço continuará aguardando ativação no painel.'))return;
     if(await setStatus('completed')){setSkipped(true);setStep(3)}
   }
@@ -91,7 +91,7 @@ export default function OnboardingPage() {
           </div>}
           {step === 2 && <CustomerBaseSetup onboarding onReady={setBaseReady}/>}
           {progressError&&<div className="loginError" role="alert">{progressError}</div>}
-          <div className="onboardingActions"><button className="primary" type="button" onClick={advance} disabled={(step===1&&!googleConnected)||(step===2&&!baseReady)}>{step === 2 ? 'Concluir configuração' : step===0?'Confirmar negócio':'Continuar'} <ArrowRight size={18}/></button>{(step === 1||step === 2) && <button className="linkButton" type="button" onClick={deferStep}>Fazer isso depois</button>}</div>
+          <div className="onboardingActions"><button className="primary" type="button" onClick={advance} disabled={(step===1&&!googleConnected)||(step===2&&!baseReady)}>{step === 2 ? 'Concluir configuração' : step===0?'Confirmar negócio':'Continuar'} <ArrowRight size={18}/></button>{step === 2 && <button className="linkButton" type="button" onClick={deferStep}>Fazer isso depois</button>}</div>
         </> : <div className="onboardingDone"><div className="stepIcon"><Check size={27}/></div><h2>Configuração concluída.</h2><p>{skipped ? 'Sua configuração inicial foi salva. Você pode enviar sua base depois pelo painel.' : 'Sua configuração inicial foi salva. Confira as pendências e aprove a ativação separadamente no painel.'}</p><p>{googleConnected?'A primeira sincronização do Google foi concluída.':'Você pode consultar a conexão com o Google e os dados disponíveis no painel.'}</p><a className="primary" href="/dashboard">Ver meu dashboard <ArrowRight size={18}/></a></div>}
       </div>
       <div className="privacyNote">Toda a experiência acontece dentro do MeuLocal.</div>

@@ -3,6 +3,7 @@ import {useEffect,useState} from 'react';
 import {createClient} from '@supabase/supabase-js';
 import {Activity,CheckCircle2,CircleDollarSign,MessageSquareText,RefreshCw,Settings2,Upload,Workflow} from 'lucide-react';
 import CustomerBaseSetup from '../onboarding/CustomerBaseSetup';
+import ReviewMonitorStatus from './ReviewMonitorStatus';
 
 const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -39,6 +40,7 @@ export default function CustomerOperations(){
   if(!data)return null;
   const lastPayment=data.payments?.[0];const base=data.reviewAutomation?.contacts||{total:0,eligible:0,queued:0,active:0,completed:0,optedOut:0};const reviewSettings=data.reviewAutomation?.settings;
   return <>
+    <ReviewMonitorStatus/>
     <section className="dashboardPanel operationsPanel" id="base-clientes">
       <div className="panelTitle"><div><span>BASE DE CLIENTES</span><h2>Seu flywheel de avaliações</h2></div><Upload size={20}/></div>
       {base.total>0&&!showImporter?<div className="baseDashboardSummary">

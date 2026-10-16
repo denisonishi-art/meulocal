@@ -75,6 +75,14 @@ export async function POST(request:Request){
     }
   }
   const db=createClient(url,key);const row=normalize(body);
+  // Delivery status for monitoring emails is accepted only from signed native events.
+  // Provider acceptance and actual delivery remain separate states.
+  if(process.env.MEULOCAL_REVIEW_MONITOR_ENABLED==='true'&&request.headers.get('x-ghl-signature')&&row.message_id&&row.ghl_location_id&&['delivered','failed','undelivered'].includes(String(row.normalized_status))){
+    const delivered=row.normalized_status==='delivered';
+    const receipt=await db.from('review_monitor_alerts').update({state:delivered?'delivered':'failed',...(delivered?{delivered_at:new Date().toISOString()}:{error_code:'provider_delivery_failed'})}).eq('message_id',row.message_id).eq('ghl_location_id',row.ghl_location_id).in('state',['accepted','failed']).select('id');
+    if(receipt.error)return NextResponse.json({ok:false,error:'monitor_receipt_persistence_failed'},{status:503});
+    if(receipt.data?.length)return NextResponse.json({ok:true,monitorReceipt:true});
+  }
   if(controlledWorkflow){const result=await processControlledInbound(db,row,body);return NextResponse.json(result,{status:result.httpStatus,headers:result.ok?{}:{'Retry-After':'60'}});}
   // Resolve the customer branch BEFORE the legacy journal/duplicate fast path.
   if(row.ghl_location_id&&row.contact_id){

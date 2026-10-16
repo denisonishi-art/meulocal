@@ -21,6 +21,10 @@ jobs:
           cache-dependency-path: package.json
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Review monitoring tests
+        run: |
+          node --test scripts/check-review-monitor.cjs scripts/check-review-monitor-routes.cjs scripts/check-customer-dashboard.cjs
+          node scripts/check-review-monitor-database.cjs
       - name: Typecheck
         run: npx tsc --noEmit
       - name: Build

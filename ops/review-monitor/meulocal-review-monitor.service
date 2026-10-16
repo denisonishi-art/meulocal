@@ -1,0 +1,16 @@
+[Unit]
+Description=MeuLocal review monitoring batches
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=meulocal
+WorkingDirectory=/opt/meulocal
+EnvironmentFile=/etc/meulocal/review-monitor.env
+ExecStart=/usr/bin/node /opt/meulocal/scripts/run-review-monitor.mjs
+TimeoutStartSec=45min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

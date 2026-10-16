@@ -9,11 +9,16 @@ async function fetchAllReviews(accessToken:string,accountId:string,locationId:st
   do{
     const u=new URL(`https://mybusiness.googleapis.com/v4/${accountId}/${locationId}/reviews`);
     u.searchParams.set('pageSize','50');u.searchParams.set('orderBy','updateTime desc');if(pageToken)u.searchParams.set('pageToken',pageToken);
-    const res=await fetch(u,{headers:{Authorization:`Bearer ${accessToken}`},cache:'no-store'});const payload=await res.json();
+    const res=await fetch(u,{headers:{Authorization:`Bearer ${accessToken}`},cache:'no-store',signal:AbortSignal.timeout(5000)});const payload=await res.json();
     if(!res.ok)throw new Error(payload?.error?.message||'GOOGLE_REVIEWS_FETCH_FAILED');
     all.push(...(payload.reviews||[]));totalReviewCount=Number(payload.totalReviewCount||totalReviewCount||all.length);averageRating=payload.averageRating==null?averageRating:Number(payload.averageRating);pageToken=payload.nextPageToken;pages++;
   }while(pageToken&&pages<20);
   return {reviews:all,totalReviewCount,averageRating,pages,truncated:Boolean(pageToken)};
+}
+
+export async function fetchConnectedGoogleReviews(conn:Connection){
+ const refreshed=await refreshGoogleAccessToken(decryptToken(conn.refresh_token_ciphertext));
+ return fetchAllReviews(refreshed.access_token,conn.google_account_id,conn.google_location_id);
 }
 
 export async function syncGoogleReputation(admin:AdminClient,conn:Connection,source:'manual'|'cron'|'onboarding'){
