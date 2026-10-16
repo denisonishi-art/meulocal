@@ -1,0 +1,13 @@
+{
+  "source": "authenticated GitGuardian incident UI",
+  "workspace": 867022,
+  "incident": 38283204,
+  "historicalCommit": "7654fd05ec23336e1796d7d37c7b7c0b0fc8453b",
+  "classification": "test credential",
+  "observedState": "Ignored",
+  "reopenControlPresent": true,
+  "productionSecretsRotated": false,
+  "detectorsDisabled": false,
+  "historyRewritten": false,
+  "nextGate": "fresh remote check required"
+}
