@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-17T01:23:55.541Z",
+  "status": "PASS",
+  "checks": [
+    "required_fields_validate_before_navigation",
+    "essential_confirmed_link_without_diagnosis_or_provider_write",
+    "intelligence_confirmed_link_no_price_changes",
+    "changing_plan_changes_destination",
+    "invalid_plan_blocks_navigation",
+    "mobile_and_desktop_fields_full_width_spaced_no_overflow",
+    "legacy_context_optional_editable_and_not_required"
+  ],
+  "providerNavigationsIntercepted": [
+    "https://www.asaas.com/000/c/hkztixnoy3z2jxn0",
+    "https://www.asaas.com/000/c/71k8chmbik8gy1ph",
+    "https://www.asaas.com/000/c/71k8chmbik8gy1ph"
+  ],
+  "realProviderRequests": 0,
+  "apiCalls": [],
+  "externalRequests": [],
+  "browserErrors": [],
+  "syntheticDataOnly": true
+}
