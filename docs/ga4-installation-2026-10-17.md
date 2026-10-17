@@ -32,7 +32,13 @@ Usuário: “então pode instalar”. Instalar a medição da conta MeuLocal cri
 
 ## Publicação e prova real
 
-Pendente de execução no momento deste registro. A confirmação será anexada em docs/evidence/ga4-2026-10-17/production.json.
+Publicado em 2026-10-17, deployment dpl_59kKBTDxDskeqwymPsubp5Y59MJB (Ready), domínio https://meulocal.ia.br. Fonte 1fd131a6dd165787226a6fafe95764db4e1b96ac na branch codex/checkout-fields-direct-payment, enviada ao GitHub; sem merge na main. Evidência: docs/evidence/ga4-2026-10-17/production.json.
+
+Visita controlada real: zero requisição Google antes de aceitar; page_view para G-09EZKSRFRM, page_location https://meulocal.ia.br/ sem query, título fixo MeuLocal, resposta HTTP 204. Retirada limpou cookies de medição e recarga após recusa não carregou a tag. Nenhuma mensagem ou escrita comercial. Gates de produção comparados antes/depois e preservados, incluindo o gate manual que já estava true; isso não autoriza envio neste bloco.
+
+Realtime da propriedade correta foi recarregado e ainda exibiu 0 usuários/eventos às 2026-10-17T11:27:55.147Z (08:27:55 em São Paulo). RECEIPT_VERIFIED / REPORT_PROCESSING_NOT_VERIFIED. Não se atribui a causa exclusivamente a latência; documentação Google admite demora inicial de até 30 minutos (https://support.google.com/analytics/answer/9744165). Não foram fabricados eventos para preencher relatório.
+
+Atenção de integração: mudança está publicada e versionada na branch, mas ainda não foi mesclada na main. Um futuro deploy de main sem integrar esses arquivos retirará a tag. Não houve merge neste bloco.
 
 Critérios: implantação Ready com domínio correto; sem requisição Google antes da escolha; visita controlada consentida gera page_view para a tag correta com URL saneada; recusa/retirada bloqueia eventos; confirmar separadamente recepção HTTP e exibição no GA4 Realtime. Um HTTP 204 não comprova relatório processado nem conversões comerciais.
 

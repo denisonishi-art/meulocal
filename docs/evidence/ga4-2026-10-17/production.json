@@ -1,0 +1,91 @@
+{
+  "at": "2026-10-17T11:24:33.376Z",
+  "mode": "real_production_controlled_browser_visit",
+  "site": "https://meulocal.ia.br",
+  "measurementId": "G-09EZKSRFRM",
+  "noGoogleBeforeConsent": true,
+  "acceptedMeasurementByControlledTest": true,
+  "collections": [
+    {
+      "event": "page_view",
+      "measurementId": "G-09EZKSRFRM",
+      "pageLocation": "https://meulocal.ia.br/",
+      "pageTitle": "MeuLocal",
+      "referrer": "",
+      "status": 204
+    }
+  ],
+  "cookiesClearedOnWithdrawal": true,
+  "noTagAfterRefusedReload": true,
+  "blockedExternalHosts": [],
+  "messages": 0,
+  "commercialWrites": 0,
+  "ga4ReportProcessed": "NOT_VERIFIED",
+  "deployment": {
+    "at": "2026-10-17T11:27:07.068Z",
+    "project": "prj_tTEcf7eWDIAPt7Q1vZ3Qmawu8QSp",
+    "id": "dpl_59kKBTDxDskeqwymPsubp5Y59MJB",
+    "url": "https://meulocal-7mm578kya-denisonishi-8130s-projects.vercel.app",
+    "state": "READY",
+    "aliases": [
+      "meulocal.ia.br",
+      "www.meulocal.ia.br",
+      "meulocal.vercel.app",
+      "meulocal-denisonishi-8130s-projects.vercel.app"
+    ],
+    "meta": {
+      "commit": "1fd131a6dd165787226a6fafe95764db4e1b96ac",
+      "ga4BaseCommit": "f1d48028ca5835d30af6c634bcc5624f7f121d40"
+    },
+    "gates": [
+      {
+        "name": "MEULOCAL_REVIEW_MONITOR_ENABLED",
+        "type": "plain",
+        "value": "false"
+      },
+      {
+        "name": "MEULOCAL_REVIEW_OUTREACH_ENABLED",
+        "type": "plain",
+        "value": "false"
+      },
+      {
+        "name": "MEULOCAL_MANUAL_OUTREACH_ENABLED",
+        "type": "plain",
+        "value": "true"
+      },
+      {
+        "name": "MEULOCAL_ACQUISITION_OUTREACH_ENABLED",
+        "type": "plain",
+        "value": "false"
+      },
+      {
+        "name": "MEULOCAL_PROSPECT_INITIAL_OUTREACH_ENABLED",
+        "type": "plain",
+        "value": "false"
+      },
+      {
+        "name": "MEULOCAL_RESEARCH_ELIGIBILITY_ENABLED",
+        "type": "sensitive",
+        "value": "NOT_READ"
+      },
+      {
+        "name": "MEULOCAL_RESEARCH_ENABLED",
+        "type": "encrypted",
+        "value": "NOT_READ"
+      }
+    ]
+  },
+  "previousDeployment": "dpl_HC6nKJxgriHwKYeJG5ynDV28dJuh",
+  "sourceCommit": "1fd131a6dd165787226a6fafe95764db4e1b96ac",
+  "branch": "codex/checkout-fields-direct-payment",
+  "operationalGatesPreserved": true,
+  "realtime": {
+    "observedAt": "2026-10-17T11:27:55.147Z",
+    "propertyId": "559363806",
+    "activeUsersLast30Minutes": 0,
+    "eventsVisible": false,
+    "status": "NOT_VERIFIED",
+    "note": "HTTP 204 confirma recepção; o processamento no relatório não foi comprovado neste bloco."
+  },
+  "mainMerged": false
+}
