@@ -143,7 +143,7 @@ export default function Home() {
               {planFeatures.map(feature=><li key={feature}><Check size={18} aria-hidden="true"/><span>{feature}</span></li>)}
               <li><Check size={18} aria-hidden="true"/><span>Monitoramento e alertas ao responsável <small>Em validação · meta de até 3 horas*</small></span></li>
             </ul>
-            <a className="primary" href="/contratar?plan=essencial">Contratar Essencial <ArrowRight size={16} aria-hidden="true"/></a>
+            <a className="primary" href="https://www.asaas.com/000/c/hkztixnoy3z2jxn0">Contratar Essencial <ArrowRight size={16} aria-hidden="true"/></a>
           </article>
           <article className={`${plansStyles.card} ${plansStyles.featured}`} aria-labelledby="intelligence-heading">
             <span className={plansStyles.kicker}>Inteligência para melhorar</span>
@@ -155,7 +155,7 @@ export default function Home() {
               {intelligenceFeatures.map(feature=><li key={feature}><Check size={18} aria-hidden="true"/><span>{feature}</span></li>)}
             </ul>
             <p className={plansStyles.status}>Análise de temas e resumo semanal em desenvolvimento.</p>
-            <a className="primary" href="/contratar?plan=inteligencia">Contratar Inteligência <ArrowRight size={16} aria-hidden="true"/></a>
+            <a className="primary" href="https://www.asaas.com/000/c/71k8chmbik8gy1ph">Contratar Inteligência <ArrowRight size={16} aria-hidden="true"/></a>
           </article>
         </div>
         <div className={plansStyles.notes}>
