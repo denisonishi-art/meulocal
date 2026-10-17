@@ -1,0 +1,59 @@
+.fields {
+  display: grid;
+  gap: 18px;
+  margin: 22px 0 8px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.control {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  min-height: 52px;
+  padding: 13px 14px;
+  border: 1px solid #dce3db;
+  border-radius: 10px;
+  background: #fff;
+  color: #172019;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.control::placeholder {
+  color: #707b73;
+  opacity: 1;
+}
+
+.control:focus-visible {
+  outline: 2px solid #daf44c;
+  outline-offset: 3px;
+}
+
+.control:disabled {
+  opacity: .65;
+}
+
+.optional {
+  color: #bac3bc;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.error {
+  margin-top: 14px;
+  color: #ffd5cf;
+  font-size: 14px;
+  line-height: 1.5;
+}

@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: catalog rejects unknown and prototype names
+ok 1 - catalog rejects unknown and prototype names
+  ---
+  duration_ms: 0.397167
+  type: 'test'
+  ...
+# Subtest: provider link IDs resolve to exact plans with legacy fallback preserved
+ok 2 - provider link IDs resolve to exact plans with legacy fallback preserved
+  ---
+  duration_ms: 0.061875
+  type: 'test'
+  ...
+# Subtest: essencial checkout ignores client price and preserves plan in callbacks
+ok 3 - essencial checkout ignores client price and preserves plan in callbacks
+  ---
+  duration_ms: 21.3055
+  type: 'test'
+  ...
+# Subtest: inteligencia checkout ignores client price and preserves plan in callbacks
+ok 4 - inteligencia checkout ignores client price and preserves plan in callbacks
+  ---
+  duration_ms: 8.134417
+  type: 'test'
+  ...
+# Subtest: invalid/missing plan never reserves or calls provider
+ok 5 - invalid/missing plan never reserves or calls provider
+  ---
+  duration_ms: 7.217375
+  type: 'test'
+  ...
+# Subtest: disabled plan fails closed before provider call
+ok 6 - disabled plan fails closed before provider call
+  ---
+  duration_ms: 6.938125
+  type: 'test'
+  ...
+# Subtest: changing an existing reservation to another plan returns conflict
+ok 7 - changing an existing reservation to another plan returns conflict
+  ---
+  duration_ms: 4.522917
+  type: 'test'
+  ...
+# Subtest: catalog/reservation mismatch never reaches provider
+ok 8 - catalog/reservation mismatch never reaches provider
+  ---
+  duration_ms: 4.354875
+  type: 'test'
+  ...
+# Subtest: ready checkout is reused without creating another provider session
+ok 9 - ready checkout is reused without creating another provider session
+  ---
+  duration_ms: 5.963875
+  type: 'test'
+  ...
+# Subtest: uncertain save records reconciliation without retrying provider
+ok 10 - uncertain save records reconciliation without retrying provider
+  ---
+  duration_ms: 7.984583
+  type: 'test'
+  ...
+# Subtest: provider payload uses credit card and monthly subscription
+ok 11 - provider payload uses credit card and monthly subscription
+  ---
+  duration_ms: 5.137417
+  type: 'test'
+  ...
+# Subtest: public plan availability exposes no provider or administrative IDs
+ok 12 - public plan availability exposes no provider or administrative IDs
+  ---
+  duration_ms: 2.739458
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 216.110791
