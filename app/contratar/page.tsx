@@ -19,6 +19,7 @@ export default function ContratarPage(){
   const [businessId,setBusinessId]=useState<string|null>(null);
   const [leadId,setLeadId]=useState<string|null>(null);
   const [businessName,setBusinessName]=useState('');
+  const [city,setCity]=useState('');
   const [loading,setLoading]=useState(false);
   const [ready,setReady]=useState(false);
   const [error,setError]=useState('');
@@ -40,10 +41,16 @@ export default function ContratarPage(){
   async function startCheckout(e:FormEvent){
     e.preventDefault(); setError('');
     if(!checkoutEnabled){setError('A contratação deste plano ainda não está liberada.');return}
-    if(!businessId||!leadId){setError('Faça o diagnóstico gratuito antes de iniciar a assinatura.');return}
+    if((!businessId||!leadId)&&(!businessName.trim()||!city.trim())){setError('Informe sua empresa e cidade para contratar.');return}
     setLoading(true);
     try{
-      const res=await fetch('/api/payments/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,phone,businessId,leadId,planId})});
+      let resolvedBusinessId=businessId,resolvedLeadId=leadId;
+      if(!resolvedBusinessId||!resolvedLeadId){
+        const prep=await fetch('/api/payments/prepare-direct',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({businessName,city,name,email,phone,planId})});
+        const prepared=await prep.json();if(!prep.ok)throw new Error(prepared.error||'Não foi possível identificar sua empresa.');
+        resolvedBusinessId=prepared.businessId;resolvedLeadId=prepared.leadId;
+      }
+      const res=await fetch('/api/payments/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,phone,businessId:resolvedBusinessId,leadId:resolvedLeadId,planId})});
       const data=await res.json();
       if(!res.ok)throw new Error(data.error||'Não foi possível iniciar o pagamento.');
       window.location.href=data.checkoutUrl;
@@ -84,10 +91,10 @@ export default function ContratarPage(){
           <label>Nome<input value={name} onChange={e=>setName(e.target.value)} required autoComplete="name"/></label>
           <label>E-mail<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email" readOnly={Boolean(leadId)}/></label>
           <label>WhatsApp<input value={phone} onChange={e=>setPhone(e.target.value)} autoComplete="tel" placeholder="(11) 99999-9999"/></label>
-          {!businessId||!leadId?<div className="loginError">Para ativar, comece pelo diagnóstico gratuito para vincular corretamente sua empresa.</div>:null}
+          {(!businessId||!leadId)&&<><label>Nome da empresa<input value={businessName} onChange={e=>setBusinessName(e.target.value)} required minLength={2} maxLength={200}/></label><label>Cidade / UF<input value={city} onChange={e=>setCity(e.target.value)} required minLength={2} maxLength={120} placeholder="São Paulo / SP"/></label></>}
           {error&&<small role="alert">{error}</small>}
-          <button className="primary checkoutButton" type="submit" disabled={loading||!checkoutEnabled||!businessId||!leadId}>{loading?'Abrindo pagamento...':!checkoutEnabled?'Contratação em preparação':<>Assinar {plan.name} <ArrowRight size={18}/></>}</button>
-          {!businessId||!leadId?<a className="linkButton" href="/diagnostico">Fazer diagnóstico grátis</a>:<small>Pagamento seguro processado pelo Asaas. A ativação ocorre após confirmação do pagamento.</small>}
+          <button className="primary checkoutButton" type="submit" disabled={loading||!checkoutEnabled}>{loading?'Abrindo pagamento...':!checkoutEnabled?'Contratação em preparação':<>Assinar {plan.name} <ArrowRight size={18}/></>}</button>
+          <small>Pagamento seguro processado pelo Asaas. A ativação ocorre após confirmação do pagamento. Não é necessário fazer diagnóstico.</small>
         </form>
       </div>
 
