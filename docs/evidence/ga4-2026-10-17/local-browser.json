@@ -1,0 +1,50 @@
+{
+  "at": "2026-10-17T11:18:46.447Z",
+  "mode": "local_production_build_canonical_origin_proxy_Google_script_mocked",
+  "realGoogleEvents": 0,
+  "remoteWrites": 0,
+  "checks": [
+    {
+      "name": "desktop_no_google_before_consent_or_after_refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "desktop_consent_loads_one_tag_and_sanitized_page_view",
+      "status": "PASS"
+    },
+    {
+      "name": "desktop_SPA_navigation_once_without_query_leak",
+      "status": "PASS"
+    },
+    {
+      "name": "desktop_private_route_disables_measurement",
+      "status": "PASS"
+    },
+    {
+      "name": "desktop_withdrawal_and_privacy_disclosure",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile_no_google_before_consent_or_after_refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile_consent_loads_one_tag_and_sanitized_page_view",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile_SPA_navigation_once_without_query_leak",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile_private_route_disables_measurement",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile_withdrawal_and_privacy_disclosure",
+      "status": "PASS"
+    }
+  ],
+  "pass": 10,
+  "fail": 0
+}

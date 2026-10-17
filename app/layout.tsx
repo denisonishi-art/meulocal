@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import AnalyticsConsent from './AnalyticsConsent';
 import './mobile.css';
 import {siteConfig} from '@/lib/site';
 
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
         {children}
+        <AnalyticsConsent />
       </body>
     </html>
   );

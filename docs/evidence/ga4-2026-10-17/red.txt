@@ -1,0 +1,169 @@
+TAP version 13
+# Subtest: only fixed public pages on the two canonical hosts can be measured
+not ok 1 - only fixed public pages on the two canonical hosts can be measured
+  ---
+  duration_ms: 0.924167
+  type: 'test'
+  location: '/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:5:1'
+  failureType: 'testCodeFailure'
+  error: 'analytics policy is not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    load (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:3:24)
+    TestContext.<anonymous> (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:5:88)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: no consent and refusal cause zero Google script loads and zero events
+not ok 2 - no consent and refusal cause zero Google script loads and zero events
+  ---
+  duration_ms: 0.173583
+  type: 'test'
+  location: '/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:6:1'
+  failureType: 'testCodeFailure'
+  error: 'analytics policy is not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    load (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:3:24)
+    TestContext.<anonymous> (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:6:91)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: after consent exactly one manual public pageview excludes query, fragment and personal title
+not ok 3 - after consent exactly one manual public pageview excludes query, fragment and personal title
+  ---
+  duration_ms: 0.111125
+  type: 'test'
+  location: '/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:7:1'
+  failureType: 'testCodeFailure'
+  error: 'analytics policy is not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    load (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:3:24)
+    TestContext.<anonymous> (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:7:114)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: public navigation records one event per actual path transition
+not ok 4 - public navigation records one event per actual path transition
+  ---
+  duration_ms: 0.080167
+  type: 'test'
+  location: '/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:8:1'
+  failureType: 'testCodeFailure'
+  error: 'analytics policy is not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    load (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:3:24)
+    TestContext.<anonymous> (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:8:84)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: late loader cannot send a public event after navigation to a private path
+not ok 5 - late loader cannot send a public event after navigation to a private path
+  ---
+  duration_ms: 0.112833
+  type: 'test'
+  location: '/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:9:1'
+  failureType: 'testCodeFailure'
+  error: 'analytics policy is not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    load (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:3:24)
+    TestContext.<anonymous> (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:9:95)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: revoking before load or after load blocks events and clears measurement cookies
+not ok 6 - revoking before load or after load blocks events and clears measurement cookies
+  ---
+  duration_ms: 0.065416
+  type: 'test'
+  location: '/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:10:1'
+  failureType: 'testCodeFailure'
+  error: 'analytics policy is not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    load (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:3:24)
+    TestContext.<anonymous> (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:10:101)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Google script failure is recoverable without duplicate injection or assumed success
+not ok 7 - Google script failure is recoverable without duplicate injection or assumed success
+  ---
+  duration_ms: 0.049083
+  type: 'test'
+  location: '/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:11:1'
+  failureType: 'testCodeFailure'
+  error: 'analytics policy is not implemented'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    load (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:3:24)
+    TestContext.<anonymous> (/private/tmp/meulocal-ga4-release-20261017/scripts/check-analytics.cjs:11:105)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 0
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 166.65325
