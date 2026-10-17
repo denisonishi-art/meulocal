@@ -20,4 +20,15 @@ Base: origin/main 5f5d07fca45bdea7554ab5c38f168f32cf83ea6e, incluindo os links d
 
 ## Limites
 
-Esta validação comprova layout e seleção do destino; não comprova pagamento, webhook, convite ou onboarding reais. O checkout de cobrança final continua no Asaas. Preparar revisão da alteração; publicação em produção não executada neste bloco.
+Esta validação comprova layout e seleção do destino; não comprova pagamento, webhook, convite ou onboarding reais. O checkout de cobrança final continua no Asaas. Preparação inicial concluída; publicação posterior expressamente autorizada pelo usuário e comprovada abaixo.
+
+
+## Publicação autorizada — 16/10/2026, São Paulo
+
+PR #20 mesclada; commit de produção f1d48028ca5835d30af6c634bcc5624f7f121d40. CI, GitGuardian e preview passaram antes da integração. O deployment dpl_HC6nKJxgriHwKYeJG5ynDV28dJuh está READY e tem o domínio meulocal.ia.br confirmado pela API administrativa da Vercel.
+
+Sete cenários passaram novamente no domínio publicado, nos dois planos e em desktop/mobile. A navegação Asaas foi interceptada antes de sair do navegador: nenhum acesso real ao provedor, cobrança, alteração de contato ou envio foi executado. Isso comprova formulário e destino do link, não pagamento/onboarding reais. Imagens e resultados em production-browser.json, production-desktop.png e production-mobile.png.
+
+Nenhuma variável de ambiente, configuração Asaas, preço, workflow ou migration foi alterada. Checkout original preservado em feat/opendots-prospeccao-meulocal, HEAD 6ad83bb e 78 entradas pendentes.
+
+Rollback de aplicação: deployment anterior dpl_3ea6ov9LRwMCA65snwLzi2t2eE2o (commit 5f5d07fca45bdea7554ab5c38f168f32cf83ea6e), guardado em deployment-before.json. Não usar o checkout original antigo como rollback. Não há alteração de banco a reverter.

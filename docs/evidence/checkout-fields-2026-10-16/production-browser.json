@@ -1,0 +1,35 @@
+{
+  "deployment": {
+    "at": "2026-10-17T01:44:04.554Z",
+    "project": "prj_tTEcf7eWDIAPt7Q1vZ3Qmawu8QSp",
+    "id": "dpl_HC6nKJxgriHwKYeJG5ynDV28dJuh",
+    "state": "READY",
+    "commit": "f1d48028ca5835d30af6c634bcc5624f7f121d40",
+    "branch": "main",
+    "url": "https://meulocal-59boifbxr-denisonishi-8130s-projects.vercel.app",
+    "productionAliasConfirmed": true,
+    "domain": "https://meulocal.ia.br"
+  },
+  "environment": "production_UI_with_provider_navigation_intercepted",
+  "at": "2026-10-17T01:44:17.505Z",
+  "status": "PASS",
+  "checks": [
+    "required_fields_validate_before_navigation",
+    "essential_confirmed_link_without_diagnosis_or_provider_write",
+    "intelligence_confirmed_link_no_price_changes",
+    "changing_plan_changes_destination",
+    "invalid_plan_blocks_navigation",
+    "mobile_and_desktop_fields_full_width_spaced_no_overflow",
+    "legacy_context_optional_editable_and_not_required"
+  ],
+  "providerNavigationsIntercepted": [
+    "https://www.asaas.com/000/c/hkztixnoy3z2jxn0",
+    "https://www.asaas.com/000/c/71k8chmbik8gy1ph",
+    "https://www.asaas.com/000/c/71k8chmbik8gy1ph"
+  ],
+  "realProviderRequests": 0,
+  "apiCalls": [],
+  "externalRequests": [],
+  "browserErrors": [],
+  "syntheticDataOnly": true
+}
