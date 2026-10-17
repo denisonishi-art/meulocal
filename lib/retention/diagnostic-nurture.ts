@@ -30,6 +30,9 @@ export function decideDiagnosticNurture(s:Snapshot,now:string):Decision{
  if(s.uncertainDelivery)return {status:'paused',reason:'delivery_uncertain'};
  if(!s.diagnosticDelivered)return {status:'paused',reason:'diagnostic_not_delivered'};
  if(new Set(s.sentStages).size!==s.sentStages.length)return {status:'blocked',reason:'duplicate_history'};
+ const expected:Stage[]=['d0','d1','d3','d5','d7'];
+ if(s.sentStages.some((stage,i)=>stage!==expected[i]))
+  return {status:'blocked',reason:'out_of_order_history'};
  for(const step of steps){
   if(s.sentStages.includes(step.stage))continue;
   if(t-start<step.afterHours*3600000)return {status:'paused',reason:'not_due'};
