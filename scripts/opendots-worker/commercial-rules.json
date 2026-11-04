@@ -1,0 +1,18 @@
+{
+  "promise": "Mais avaliações. Mais presença no Google. Mais clientes locais.",
+  "plans": {
+    "essencial": {
+      "name": "MeuLocal Essencial",
+      "monthlyPriceBRL": 189,
+      "status": "preparation"
+    },
+    "inteligencia": {
+      "name": "MeuLocal Inteligência",
+      "monthlyPriceBRL": 289,
+      "status": "development",
+      "notReadyYet": ["análise de temas", "resumo semanal"]
+    }
+  },
+  "legacyMonthlyPriceBRL": 397,
+  "note": "Fonte única de regras comerciais do worker. Manter sincronizado com lib/agents/business-rules.ts."
+}

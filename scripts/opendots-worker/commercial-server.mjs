@@ -14,7 +14,7 @@ function sameSignature(payload,provided,secret){
  const actual=Buffer.from(provided||'');return expected.length===actual.length&&timingSafeEqual(expected,actual);
 }
 async function bodyText(req){let s='';for await(const part of req){s+=part;if(Buffer.byteLength(s)>32768)throw Error('payload_too_large')}return s}
-function createReceiver({secret,modelTurn,receipts}){
+function createReceiver({secret,modelTurn,receipts,onDecision}){
  const inFlight=new Map();
  if(!receipts)throw Error('durable_receipts_required');
  if(!secret||secret.length<24)throw Error('OPENDOTS_COMMERCIAL_SECRET_required');
@@ -34,7 +34,14 @@ function createReceiver({secret,modelTurn,receipts}){
    if(pending&&pending.fingerprint!==fingerprint)return reply(409,{error:'event_payload_conflict'});
    let promise=pending?.promise;
    if(!promise){
-    promise=(async()=>{const decision=await decideCommercialEvent(event,{modelTurn});return receipts.save(decision,event)})();
+    promise=(async()=>{
+    const decision=await decideCommercialEvent(event,{modelTurn});
+    let final=decision;
+    if(typeof onDecision==='function'){
+     try{final=(await onDecision(decision,event))||decision;}catch(err){console.error(JSON.stringify({stage:'dispatch_error',eventId:event.eventId,error:String(err?.message||err).slice(0,160)}));}
+    }
+    return receipts.save(final,event);
+   })();
     inFlight.set(event.eventId,{fingerprint,promise});
    }
    try{return reply(200,await promise)}finally{if(inFlight.get(event.eventId)?.promise===promise)inFlight.delete(event.eventId)}
