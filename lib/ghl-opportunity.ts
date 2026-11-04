@@ -1,9 +1,11 @@
 import {getLocationAccessToken,createOperationalOpportunity} from '@/lib/highlevel-operational';
 
-// Pipeline/stage defaults match the existing GoHighLevel pipeline for the MeuLocal
-// location. Override via env once the commercial pipeline/stage names are confirmed.
-export const DEFAULT_PIPELINE_ID='O7n2zR5RFaTeBkGrmww6';
-export const DEFAULT_PIPELINE_STAGE_ID='f66aaa3e-9fb8-4f35-ab00-26b7ae4aaa9c';
+// Pipeline/stage defaults verified against the live HighLevel API for the MeuLocal
+// location. "Vendas MeuLocal" already existed, so it is reused (no new pipeline).
+// Stage "Novo lead" = "Prospect aprovado" — the opportunity starts here, only after
+// explicit approval in MeuLocal (the sync runs inside send-manual after bind).
+export const DEFAULT_PIPELINE_ID='GeQnDT0zT4wQfojd7VFo';
+export const DEFAULT_PIPELINE_STAGE_ID='aeef9f4e-894d-4ea9-80b7-22b442fbfce5';
 
 export function operationalOpportunityConfig(){
  const pipelineId=process.env.GHL_PIPELINE_ID||DEFAULT_PIPELINE_ID;

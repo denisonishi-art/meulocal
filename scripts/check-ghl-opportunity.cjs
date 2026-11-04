@@ -36,6 +36,12 @@ test('createOperationalOpportunity posts an open opportunity in the configured p
  assert.equal(create.body.pipelineStageId,'s');
  assert.equal(create.body.name,'Empresa X');
 });
+test('defaults point to the reused Vendas MeuLocal pipeline and Novo lead stage',()=>{
+ const api=load('lib/ghl-opportunity.ts',{'@/lib/highlevel-operational':{}},{process:{env:{}}});
+ const c=api.operationalOpportunityConfig();
+ assert.equal(c.pipelineId,'GeQnDT0zT4wQfojd7VFo');
+ assert.equal(c.pipelineStageId,'aeef9f4e-894d-4ea9-80b7-22b442fbfce5');
+});
 test('syncOperationalOpportunity is inert when the flag is not enabled',async()=>{
  const api=load('lib/ghl-opportunity.ts',{'@/lib/highlevel-operational':{getLocationAccessToken:async()=>{throw Error('unexpected')},createOperationalOpportunity:async()=>{throw Error('unexpected')}}},{process:{env:{GHL_OPPORTUNITY_SYNC_ENABLED:'false'}}});
  const r=await api.syncOperationalOpportunity({locationId:'loc',contactId:'c1',name:'n'});
