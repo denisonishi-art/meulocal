@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
 import {createHmac} from 'node:crypto';
 import {createDispatcher,createDeepSeekModelTurn} from './commercial-server-hermes.mjs';
-import {canDispatch,contactBlocked,contactAllowedForDispatch,contactIsolatedForHermes,sendGhlResponse,reconcileSentMessage} from './ghl-dispatch.mjs';
+import {canDispatch,contactBlocked,contactAllowedForDispatch,contactIsolatedForHermes,sendGhlResponse,reconcileSentMessage,readContactForSend} from './ghl-dispatch.mjs';
 import {createDispatchLedger} from './dispatch-ledger.mjs';
 import {createReceiver} from './commercial-server.mjs';
 import {createReceiptStore} from './commercial-receipts.mjs';
@@ -48,6 +48,23 @@ test('dispatch blocks a DND/opt-out contact before sending',async()=>{
   const sends=[];const d=makeDispatcher({contactBlocked:()=>({blocked:true,reason:'dnd'}),sendGhlResponse:async x=>{sends.push(x);return {messageId:'m'}}});
   const r=await d(decision,ev);
   assert.equal(r.dispatch.status,'blocked');assert.equal(r.dispatch.reason,'dnd');assert.equal(sends.length,0);
+});
+test('readContactForSend verifies DND via exact search when the detail omits it',async()=>{
+  const fetchImpl=async(url)=>{
+    if(String(url).includes('/contacts/search'))return {ok:true,json:async()=>({contacts:[{id:'c',locationId:'loc',dnd:false}]})};
+    return {ok:true,json:async()=>({contact:{id:'c',locationId:'loc',phone:'+5511'}})};
+  };
+  const c=await readContactForSend({token:'t',locationId:'loc',contactId:'c',fetchImpl});
+  assert.equal(c.dnd,false);
+});
+test('readContactForSend fails closed when DND cannot be verified',async()=>{
+  const fetchImpl=async(url)=>String(url).includes('/contacts/search')?{ok:true,json:async()=>({contacts:[]})}:{ok:true,json:async()=>({contact:{id:'c',locationId:'loc',phone:'+5511'}})};
+  await assert.rejects(readContactForSend({token:'t',locationId:'loc',contactId:'c',fetchImpl}),/contact_dnd_unverified/);
+});
+test('dispatch blocks (not pending) when the contact read fails',async()=>{
+  let sends=0;const d=makeDispatcher({readContactForSend:async()=>{throw Error('contact_dnd_unverified')},sendGhlResponse:async()=>{sends++;return {messageId:'m'}}});
+  const r=await d(decision,ev);
+  assert.equal(r.dispatch.status,'blocked');assert.equal(r.dispatch.reason,'contact_dnd_unverified');assert.equal(sends,0);
 });
 
 // ---- Fix 1: recoverable + idempotent dispatch ----
