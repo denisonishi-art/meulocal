@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
 import {createHmac} from 'node:crypto';
-import {dispatchDecision,createHermesModelTurn} from './commercial-server-hermes.mjs';
+import {dispatchDecision,createDeepSeekModelTurn} from './commercial-server-hermes.mjs';
 import {canDispatch,contactBlocked,sendGhlResponse} from './ghl-dispatch.mjs';
 import {createReceiver} from './commercial-server.mjs';
 import {createReceiptStore} from './commercial-receipts.mjs';
@@ -56,14 +56,17 @@ test('dispatchDecision never sends for handoff/stop/none and surfaces provider e
   assert.equal(err.dispatch.status,'error');assert.ok(calls>0);
  }finally{restoreFetch();setEnv({MEULOCAL_AUTO_REPLY_ENABLED:undefined,GHL_API_KEY:undefined})}
 });
-test('createHermesModelTurn resolves stdout and rejects on non-zero exit',async()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hermes-bin-'));const ok=path.join(dir,'ok'),bad=path.join(dir,'bad');
- fs.writeFileSync(ok,'#!/bin/sh\necho \'{"action":"handoff","channel":"none","message":"","rationale":"x","requiresHumanReview":true}\'\n');fs.chmodSync(ok,0o755);
- fs.writeFileSync(bad,'#!/bin/sh\necho boom >&2\nexit 1\n');fs.chmodSync(bad,0o755);
- try{
-  assert.equal(await createHermesModelTurn({bin:ok,timeoutMs:5000})('p'),'{"action":"handoff","channel":"none","message":"","rationale":"x","requiresHumanReview":true}');
-  await assert.rejects(createHermesModelTurn({bin:bad,timeoutMs:5000})('p'),/hermes_model_exit_1/);
- }finally{fs.rmSync(dir,{recursive:true,force:true})}
+test('createDeepSeekModelTurn calls chat/completions with no tools and returns content',async()=>{
+ const calls=[];const content='{"action":"handoff","channel":"none","message":"","rationale":"x","requiresHumanReview":true}';
+ const mt=createDeepSeekModelTurn({apiKey:'sk-test',baseUrl:'https://api.deepseek.invalid/v1',fetchImpl:async(url,init)=>{calls.push({url:String(url),body:JSON.parse(init.body)});return {ok:true,json:async()=>({choices:[{message:{content}}]})}}});
+ assert.equal(await mt('p'),content);
+ assert.equal(calls[0].body.model,'deepseek-v4-pro');
+ assert.equal(calls[0].body.tools,undefined); // zero tool execution surface
+ assert.equal(calls[0].body.temperature,0.2);
+});
+test('createDeepSeekModelTurn fails on non-2xx and empty response',async()=>{
+ await assert.rejects(createDeepSeekModelTurn({apiKey:'sk-test',fetchImpl:async()=>({ok:false,status:401,json:async()=>({})})})('p'),/deepseek_http_401/);
+ await assert.rejects(createDeepSeekModelTurn({apiKey:'sk-test',fetchImpl:async()=>({ok:true,json:async()=>({choices:[]})})})('p'),/deepseek_empty_response/);
 });
 test('receiver runs onDecision exactly once per event (dedup by saved receipt)',async()=>{
  const secret='synthetic-integration-secret-with-24-chars';const dir=fs.mkdtempSync(path.join(os.tmpdir(),'meulocal-dispatch-'));const receipts=createReceiptStore(dir,secret);

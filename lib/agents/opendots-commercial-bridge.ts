@@ -19,11 +19,14 @@ export async function deliverOpenDotsEvent(input:OpenDotsEvent){
   const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-MeuLocal-Signature':'sha256='+signature,'X-MeuLocal-Event-Id':input.eventId},body,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});
   if(!res.ok)return {status:'rejected',httpStatus:res.status} as const;
   const receipt=await res.json().catch(()=>null);
-  if(receipt?.status!=='decision_saved'||receipt.eventId!==input.eventId||receipt.dispatched!==0||
-   !['answer','follow_up','handoff','stop'].includes(receipt.action))return {status:'receipt_unverified',httpStatus:res.status} as const;
+  // dispatched is 0 (suggestion only) or 1 (worker sent via GHL). Both are valid,
+  // idempotent receipts; the worker's durable receipt store guarantees one decision (and
+  // at most one send) per eventId, so a replayed/duplicate call never produces two messages.
+  if(receipt?.status!=='decision_saved'||receipt.eventId!==input.eventId||(receipt.dispatched!==0&&receipt.dispatched!==1)||
+   !['answer','follow_up','handoff','stop'].includes(receipt.action))return {status:'receipt_unverified',httpStatus:res.status};
   const guidance=readOpenDotsGuidance(receipt.guidance);
-  if(receipt.guidance!==undefined&&(!guidance||(guidance.nextPath&&(input.kind!=='meulocal.customer.lifecycle'||guidance.nextPath!==input.nextPath))))return {status:'receipt_unverified',httpStatus:res.status} as const;
-  return {status:'decision_saved',eventId:input.eventId,action:String(receipt.action),dispatched:0,httpStatus:res.status,...(guidance?{guidance}:{})} as const;
+  if(receipt.guidance!==undefined&&(!guidance||(guidance.nextPath&&(input.kind!=='meulocal.customer.lifecycle'||guidance.nextPath!==input.nextPath))))return {status:'receipt_unverified',httpStatus:res.status};
+  return {status:'decision_saved',eventId:input.eventId,action:String(receipt.action),dispatched:receipt.dispatched===1?1:0,httpStatus:res.status,...(guidance?{guidance}:{})} as const;
  }catch{return {status:'unavailable'} as const}
 }
 
