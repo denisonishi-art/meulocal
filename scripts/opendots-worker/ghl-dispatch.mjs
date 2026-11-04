@@ -56,7 +56,10 @@ export async function sendGhlResponse({token,contactId,channel,message,subject,f
   }
   const res=await fetchImpl(API+'/conversations/messages',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',Version:'2021-07-28'},body:JSON.stringify(payload)});
   const data=await res.json().catch(()=>({}));
-  if(!res.ok)throw Error('ghl_send_'+res.status);
+  // An HTTP error response means the provider definitively rejected the send (no side
+  // effect). A network/timeout throw (fetchImpl rejecting) propagates WITHOUT `definitive`
+  // — that outcome is UNCERTAIN and must be reconciled, never marked failed.
+  if(!res.ok)throw Object.assign(new Error('ghl_send_'+res.status),{definitive:true});
   return {messageId:data?.messageId||data?.id||null,conversationId:data?.conversationId||null};
 }
 
@@ -64,25 +67,41 @@ export async function sendGhlResponse({token,contactId,channel,message,subject,f
  * the ledger holds an 'intent'. Query the contact's conversation history for an OUTBOUND
  * message matching the exact content at-or-after the intent timestamp. Returns {found,...}
  * or {found:false}; "not found" is never treated as "sent". */
-export async function reconcileSentMessage({token,locationId,contactId,message,since,fetchImpl=fetch}){
+export async function reconcileSentMessage({token,locationId,contactId,message,since,fetchImpl=fetch,maxPages=10}){
   const v3={Authorization:'Bearer '+token,Accept:'application/json',Version:'v3'};
   const convRes=await fetchImpl(API+'/conversations/search?'+new URLSearchParams({locationId,contactId,limit:'20',sort:'desc'}).toString(),{headers:v3});
   if(!convRes.ok)throw Error('ghl_conv_search_'+convRes.status);
   const convData=await convRes.json().catch(()=>({}));
   const conversations=Array.isArray(convData?.conversations)?convData.conversations:[];
+  const total=convData?.total;
+  // The conversation list must be complete (total===length); a truncated list means we
+  // cannot prove absence across all conversations.
+  let complete=Number.isSafeInteger(total)&&total===conversations.length;
   const sinceMs=since?Date.parse(since):null;
   for(const conv of conversations){
-    const msgsRes=await fetchImpl(API+'/conversations/'+encodeURIComponent(conv.id)+'/messages?limit=50',{headers:v3});
-    if(!msgsRes.ok)continue;
-    const msgsData=await msgsRes.json().catch(()=>({}));
-    const messages=Array.isArray(msgsData?.messages?.messages)?msgsData.messages.messages:[];
-    for(const m of messages){
-      const outbound=m?.direction==='outbound';
-      const at=Date.parse(m?.dateAdded);
-      if(outbound&&typeof m?.id==='string'&&String(m.body||'')===String(message)&&Number.isFinite(at)&&(sinceMs===null||at>=sinceMs)){
-        return {found:true,messageId:m.id,conversationId:conv.id};
+    let cursor;let exhausted=false;let convComplete=true;
+    for(let page=0;page<maxPages;page++){
+      const q=new URLSearchParams({limit:'50',...(cursor?{lastMessageId:cursor}:{})});
+      const msgsRes=await fetchImpl(API+'/conversations/'+encodeURIComponent(conv.id)+'/messages?'+q.toString(),{headers:v3});
+      if(!msgsRes.ok){convComplete=false;break;}
+      const batch=(await msgsRes.json().catch(()=>({})))?.messages;
+      const messages=Array.isArray(batch?.messages)?batch.messages:[];
+      for(const m of messages){
+        const outbound=m?.direction==='outbound';
+        const at=Date.parse(m?.dateAdded);
+        if(outbound&&typeof m?.id==='string'&&String(m.body||'')===String(message)&&Number.isFinite(at)&&(sinceMs===null||at>=sinceMs)){
+          return {found:true,messageId:m.id,conversationId:conv.id};
+        }
       }
+      // Pagination must be verifiable. nextPage false = exhausted (complete). Missing
+      // nextPage or a stuck cursor = cannot prove we reached the end → incomplete.
+      if(typeof batch?.nextPage!=='boolean'){convComplete=false;break;}
+      if(batch.nextPage===false){exhausted=true;break;}
+      if(!batch.lastMessageId||batch.lastMessageId===cursor){convComplete=false;break;}
+      cursor=batch.lastMessageId;
     }
+    if(!exhausted)convComplete=false;
+    if(!convComplete)complete=false;
   }
-  return {found:false};
+  return {found:false,complete};
 }

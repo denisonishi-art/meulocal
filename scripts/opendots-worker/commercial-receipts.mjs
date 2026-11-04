@@ -15,7 +15,13 @@ export function createReceiptStore(directory,secret){
    (d.nextPath!==undefined&&(event.kind!=='meulocal.customer.lifecycle'||!['/onboarding','/dashboard'].includes(d.nextPath)||d.nextPath!==event.nextPath)))throw Error('saved_guidance_invalid');
   const guidance={message:d.message,rationale:d.rationale,requiresHumanReview:true,...(d.nextPath?{nextPath:d.nextPath}:{})};
   const dispatch=d.dispatch&&d.dispatch.status==='sent'?d.dispatch:null;
-  return {status:'decision_saved',eventId:saved.eventId,action:d.action,dispatched:dispatch?1:0,guidance,...(dispatch?{dispatch}:{})};
+  const pendingDispatch=d.dispatch&&d.dispatch.status==='pending_reconciliation'?true:undefined;
+  return {status:'decision_saved',eventId:saved.eventId,action:d.action,dispatched:dispatch?1:0,guidance,...(dispatch?{dispatch}:{}),...(pendingDispatch?{pendingDispatch}:{})};
+ };
+ const readDecision=event=>{
+  let saved;try{saved=JSON.parse(fs.readFileSync(fileFor(event),'utf8'))}catch(error){if(error.code==='ENOENT')return null;throw error}
+  if(saved.eventId!==event.eventId||saved.fingerprint!==fingerprint(event))throw Error('saved_event_payload_conflict');
+  return saved.decision;
  };
  const save=(decision,event)=>{
   const target=fileFor(event),temporary=target+'.'+randomUUID()+'.tmp';
@@ -28,5 +34,19 @@ export function createReceiptStore(directory,secret){
   }finally{if(fs.existsSync(temporary))fs.unlinkSync(temporary)}
   return read(event);
  };
- return {read,save,fingerprint};
+ // Update (atomic overwrite) for the pending → terminal dispatch transition. `save` above
+ // is write-once on purpose (immutable decision + dedup); a pending receipt must be able to
+ // be superseded by its reconciled terminal outcome.
+ const update=(decision,event)=>{
+  const target=fileFor(event),temporary=target+'.'+randomUUID()+'.tmp';
+  const record={decision,eventId:event.eventId,contactId:event.contactId||null,businessId:event.businessId||null,accountId:event.accountId||null,fingerprint:fingerprint(event),event,createdAt:new Date().toISOString()};
+  try{
+   const fd=fs.openSync(temporary,'wx',0o600);
+   try{fs.writeFileSync(fd,JSON.stringify(record)+'\n');fs.fsyncSync(fd)}finally{fs.closeSync(fd)}
+   fs.renameSync(temporary,target);
+   const dir=fs.openSync(directory,'r');try{fs.fsyncSync(dir)}finally{fs.closeSync(dir)}
+  }finally{if(fs.existsSync(temporary))fs.unlinkSync(temporary)}
+  return read(event);
+ };
+ return {read,save,update,fingerprint,readDecision};
 }

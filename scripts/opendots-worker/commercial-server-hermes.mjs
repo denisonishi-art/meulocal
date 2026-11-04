@@ -45,7 +45,11 @@ export function createDispatcher(deps){
           ledger.markSent(event.eventId,{messageId:rec.messageId,conversationId:rec.conversationId});
           return {...decision,dispatch:{status:'sent',messageId:rec.messageId,conversationId:rec.conversationId}};
         }
-        // not found → the previous send never landed → safe to (re)send below
+        // not found → only re-send if the scan was COMPLETE (proof of absence).
+        if(rec.complete!==true){
+          return {...decision,dispatch:{status:'pending_reconciliation',reason:'reconcile_incomplete'}};
+        }
+        // rec.complete===true and not found → definitively absent → safe to (re)send below
       }catch(err){
         // reconciliation unavailable → outcome uncertain; do NOT re-send. Defer.
         return {...decision,dispatch:{status:'pending_reconciliation',error:String(err?.message||err).slice(0,120)}};
@@ -63,8 +67,13 @@ export function createDispatcher(deps){
       if(ledger)ledger.markSent(event.eventId,{messageId:sent.messageId,conversationId:sent.conversationId});
       return {...decision,dispatch:{status:'sent',messageId:sent.messageId,conversationId:sent.conversationId}};
     }catch(err){
-      if(ledger)ledger.markFailed(event.eventId,{error:String(err?.message||err).slice(0,160)});
-      return {...decision,dispatch:{status:'error',error:String(err?.message||err).slice(0,160)}};
+      if(err?.definitive===true){
+        // Provider definitively rejected the send (no side effect) → safe to mark failed.
+        if(ledger)ledger.markFailed(event.eventId,{error:String(err?.message||err).slice(0,160)});
+        return {...decision,dispatch:{status:'error',error:String(err?.message||err).slice(0,160)}};
+      }
+      // Timeout/network → the send may have landed. Leave the intent in place and defer.
+      return {...decision,dispatch:{status:'pending_reconciliation',error:String(err?.message||err).slice(0,120)}};
     }
   };
 }

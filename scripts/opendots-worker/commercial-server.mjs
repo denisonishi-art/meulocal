@@ -28,19 +28,24 @@ function createReceiver({secret,modelTurn,receipts,onDecision,health}){
   try{
    validateEvent(event);
    const saved=receipts.read(event);
-   if(saved)return reply(200,saved);
+   // A terminal receipt short-circuits; a PENDING dispatch must resume reconciliation.
+   if(saved&&!saved.pendingDispatch)return reply(200,saved);
    // A timeout does not cancel the model or let concurrent retries start another turn.
    const fingerprint=receipts.fingerprint(event),pending=inFlight.get(event.eventId);
    if(pending&&pending.fingerprint!==fingerprint)return reply(409,{error:'event_payload_conflict'});
    let promise=pending?.promise;
    if(!promise){
     promise=(async()=>{
-    const decision=await decideCommercialEvent(event,{modelTurn});
+    // Pending dispatch: reuse the persisted decision (skip the model re-run) and
+    // re-run only the dispatch to complete reconciliation. Same inFlight key guards
+    // concurrent retries so the send/reconcile never runs twice for one event.
+    const resuming=saved&&saved.pendingDispatch;
+    const decision=resuming?receipts.readDecision(event):await decideCommercialEvent(event,{modelTurn});
     let final=decision;
     if(typeof onDecision==='function'){
      try{final=(await onDecision(decision,event))||decision;}catch(err){console.error(JSON.stringify({stage:'dispatch_error',eventId:event.eventId,error:String(err?.message||err).slice(0,160)}));}
     }
-    return receipts.save(final,event);
+    return resuming?receipts.update(final,event):receipts.save(final,event);
    })();
     inFlight.set(event.eventId,{fingerprint,promise});
    }

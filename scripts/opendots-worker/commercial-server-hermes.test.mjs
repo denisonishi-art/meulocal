@@ -77,9 +77,18 @@ test('dispatch reconciles an intent that actually landed and does not re-send',a
 test('dispatch re-sends when reconciliation finds nothing (send never landed)',async()=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ml-ledger-'));const ledger=createDispatchLedger(dir,LEDGER_SECRET);
   ledger.recordIntent('e',{channel:'whatsapp',contactId:'c',message:'Olá'});
-  let sends=0;const d=makeDispatcher({ledger,reconcileSentMessage:async()=>({found:false}),sendGhlResponse:async()=>{sends++;return {messageId:'m-2'}}});
+  let sends=0;const d=makeDispatcher({ledger,reconcileSentMessage:async()=>({found:false,complete:true}),sendGhlResponse:async()=>{sends++;return {messageId:'m-2'}}});
   const r=await d(decision,ev);
   assert.equal(r.dispatch.status,'sent');assert.equal(r.dispatch.messageId,'m-2');assert.equal(sends,1);
+  fs.rmSync(dir,{recursive:true,force:true});
+});
+test('dispatch defers on incomplete reconciliation (no proof of absence)',async()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ml-ledger-'));const ledger=createDispatchLedger(dir,LEDGER_SECRET);
+  ledger.recordIntent('e',{channel:'whatsapp',contactId:'c',message:'Olá'});
+  let sends=0;const d=makeDispatcher({ledger,reconcileSentMessage:async()=>({found:false,complete:false}),sendGhlResponse:async()=>{sends++;return {messageId:'m'}}});
+  const r=await d(decision,ev);
+  assert.equal(r.dispatch.status,'pending_reconciliation');assert.equal(r.dispatch.reason,'reconcile_incomplete');assert.equal(sends,0);
+  assert.equal(ledger.read('e').state,'intent');
   fs.rmSync(dir,{recursive:true,force:true});
 });
 test('dispatch defers (no re-send) when reconciliation is unavailable',async()=>{
@@ -90,11 +99,18 @@ test('dispatch defers (no re-send) when reconciliation is unavailable',async()=>
   assert.equal(r.dispatch.status,'pending_reconciliation');assert.equal(sends,0);
   assert.equal(ledger.read('e').state,'intent');fs.rmSync(dir,{recursive:true,force:true});
 });
-test('dispatch marks ledger failed when the send fails',async()=>{
+test('dispatch marks ledger failed on a definitive send rejection',async()=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ml-ledger-'));const ledger=createDispatchLedger(dir,LEDGER_SECRET);
-  const d=makeDispatcher({ledger,sendGhlResponse:async()=>{throw Error('ghl_send_500')}});
+  const d=makeDispatcher({ledger,sendGhlResponse:async()=>{throw Object.assign(new Error('ghl_send_500'),{definitive:true})}});
   const r=await d(decision,ev);
   assert.equal(r.dispatch.status,'error');assert.equal(ledger.read('e').state,'failed');
+  fs.rmSync(dir,{recursive:true,force:true});
+});
+test('dispatch defers on uncertain send failure (timeout) and keeps intent',async()=>{
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ml-ledger-'));const ledger=createDispatchLedger(dir,LEDGER_SECRET);
+  const d=makeDispatcher({ledger,sendGhlResponse:async()=>{throw Error('fetch_timeout')}});
+  const r=await d(decision,ev);
+  assert.equal(r.dispatch.status,'pending_reconciliation');assert.equal(ledger.read('e').state,'intent');
   fs.rmSync(dir,{recursive:true,force:true});
 });
 
@@ -170,6 +186,34 @@ test('receiver runs onDecision exactly once per event (dedup by saved receipt)',
   }finally{await new Promise(r=>server.close(r));fs.rmSync(dir,{recursive:true,force:true})}
 });
 
+// ---- Fix 3: pending receipt recovery on replay ----
+test('a pending receipt (uncertain timeout) is resumed on replay via reconciliation',async()=>{
+  const secret='synthetic-integration-secret-with-24-chars';const dir=fs.mkdtempSync(path.join(os.tmpdir(),'ml-pending-'));const receipts=createReceiptStore(dir,secret);
+  const ledger=createDispatchLedger(path.join(dir,'ledger'),LEDGER_SECRET);
+  const event={kind:'meulocal.acquisition.inbound',eventId:'pending-e2e-1',leadId:'l',contactId:'c',message:'Como funciona?',channel:'whatsapp',permissions:{initialSend:false,autoReply:true,crmWrite:false}};
+  let sends=0;let reconcileCalls=0;let modelCalls=0;
+  const dispatcher=createDispatcher({
+    canDispatch:()=>true,contactAllowedForDispatch:()=>true,contactIsolatedForHermes:()=>true,
+    readContactForSend:async()=>({id:'c',locationId:'loc',dnd:false,phone:'+5511',tags:['meulocal:hermes-auto']}),
+    contactBlocked,
+    sendGhlResponse:async()=>{sends++;throw Error('fetch_timeout')}, // uncertain timeout
+    reconcileSentMessage:async()=>{reconcileCalls++;return {found:true,messageId:'m-reconciled',conversationId:'conv'}},
+    ledger,token:'t',locationId:'loc',
+  });
+  const server=createReceiver({secret,receipts,modelTurn:async()=>{modelCalls++;return JSON.stringify({action:'answer',channel:'whatsapp',message:'Olá',rationale:'x',requiresHumanReview:true})},onDecision:dispatcher});
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  try{
+    const send=()=>fetch('http://127.0.0.1:'+server.address().port+'/commercial/inbound',{method:'POST',body:JSON.stringify(event),headers:{'X-MeuLocal-Signature':'sha256='+createHmac('sha256',secret).update(JSON.stringify(event)).digest('hex')}});
+    const first=await (await send()).json();
+    assert.equal(first.pendingDispatch,true);assert.equal(first.dispatched,0); // uncertain → pending, not failed
+    const second=await (await send()).json();
+    assert.equal(second.dispatched,1);assert.equal(second.dispatch.messageId,'m-reconciled'); // resumed via reconcile
+    assert.equal(modelCalls,1); // decision reused — model NOT re-run on replay
+    assert.equal(sends,1); // the timeout send was never blindly retried
+    assert.equal(reconcileCalls,1);
+  }finally{await new Promise(r=>server.close(r));fs.rmSync(dir,{recursive:true,force:true})}
+});
+
 // ---- reconciliation primitive (mocked) ----
 test('reconcileSentMessage finds a matching outbound message and returns its id',async()=>{
   const fetchImpl=async(url)=>{String(url);
@@ -179,8 +223,18 @@ test('reconcileSentMessage finds a matching outbound message and returns its id'
   const r=await reconcileSentMessage({token:'t',locationId:'loc',contactId:'c',message:'Olá',since:new Date(Date.now()-60000).toISOString(),fetchImpl});
   assert.equal(r.found,true);assert.equal(r.messageId,'msg-1');
 });
-test('reconcileSentMessage returns not-found when no outbound match',async()=>{
-  const fetchImpl=async(url)=>String(url).includes('/conversations/search')?{ok:true,json:async()=>({conversations:[{id:'conv-1'}]})}:{ok:true,json:async()=>({messages:{messages:[{id:'m',direction:'inbound',body:'Olá',dateAdded:new Date().toISOString()}]}})};
+test('reconcileSentMessage: a complete scan that finds nothing proves absence',async()=>{
+  const fetchImpl=async(url)=>String(url).includes('/conversations/search')?{ok:true,json:async()=>({conversations:[{id:'conv-1'}],total:1})}:{ok:true,json:async()=>({messages:{messages:[{id:'m',direction:'inbound',body:'Olá',dateAdded:new Date().toISOString()}],nextPage:false}})};
   const r=await reconcileSentMessage({token:'t',locationId:'loc',contactId:'c',message:'Olá',since:null,fetchImpl});
-  assert.equal(r.found,false);
+  assert.equal(r.found,false);assert.equal(r.complete,true);
+});
+test('reconcileSentMessage: truncated pagination is incomplete (no proof of absence)',async()=>{
+  const fetchImpl=async(url)=>String(url).includes('/conversations/search')?{ok:true,json:async()=>({conversations:[{id:'conv-1'}],total:1})}:{ok:true,json:async()=>({messages:{messages:[{id:'m',direction:'inbound',body:'Olá',dateAdded:new Date().toISOString()}],nextPage:true,lastMessageId:'cur'}})};
+  const r=await reconcileSentMessage({token:'t',locationId:'loc',contactId:'c',message:'Olá',since:null,fetchImpl});
+  assert.equal(r.found,false);assert.equal(r.complete,false);
+});
+test('reconcileSentMessage: a truncated conversation list is incomplete',async()=>{
+  const fetchImpl=async(url)=>String(url).includes('/conversations/search')?{ok:true,json:async()=>({conversations:[{id:'conv-1'}],total:2})}:{ok:true,json:async()=>({messages:{messages:[],nextPage:false}})};
+  const r=await reconcileSentMessage({token:'t',locationId:'loc',contactId:'c',message:'Olá',since:null,fetchImpl});
+  assert.equal(r.found,false);assert.equal(r.complete,false);
 });
