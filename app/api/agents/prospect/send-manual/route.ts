@@ -5,6 +5,7 @@ import {isAdminRequest} from '@/lib/admin-auth';
 import {deliverAcquisitionMessage} from '@/lib/acquisition/delivery';
 import {verifyRecipient,manualRecipientReadiness,findExactRecipient,MANUAL_LOCATION} from '@/lib/acquisition/manual-prospect';
 import {getLocationAccessToken,getOperationalContact} from '@/lib/highlevel-operational';
+import {syncOperationalOpportunity} from '@/lib/ghl-opportunity';
 export const runtime='nodejs';export const maxDuration=120;
 const schema=z.object({sendToken:z.string().min(10).max(4000),requestId:z.string().uuid(),message:z.string().min(50).max(1800),confirmed:z.literal(true)}).strict();
 const json=(body:unknown,status=200)=>NextResponse.json(body,{status,headers:{'Cache-Control':'private, no-store'}});
@@ -42,6 +43,10 @@ export async function POST(req:Request){
    if(!same||contact?.locationId!==MANUAL_LOCATION||!contact.id)throw Error('contact_identity_unconfirmed');
    const bound=await db.rpc('bind_manual_prospect',{p_request_id:parsed.data.requestId,p_lease:job.lease,p_contact_id:contact.id});
    if(bound.error||bound.data?.leadId!==job.leadId)throw Error('contact_binding_unconfirmed');
+   // Link the bound contact to a pipeline opportunity (dedup by contact). Best-effort:
+   // a skipped/failed opportunity never blocks the primary send path.
+   const opportunity=await syncOperationalOpportunity({locationId:MANUAL_LOCATION,contactId:contact.id,name:target.name});
+   console.info(JSON.stringify({stage:'highlevel_opportunity',locationId:MANUAL_LOCATION,contactId:contact.id,opportunity}));
   }else if(job.state!=='ready')throw Error('manual_state_invalid');
   const result=await deliverAcquisitionMessage(db,{leadId:job.leadId,kind:'manual',step:null,requestId:parsed.data.requestId,channel:target.channel,message:parsed.data.message,subject:'Uma pergunta para '+target.name});
   return json(result,result.ok&&!('stopped' in result)?200:409);

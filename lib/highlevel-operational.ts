@@ -146,3 +146,35 @@ export async function getOperationalConversations(args:{token:string;locationId:
  if(!Array.isArray(data?.conversations)||!Number.isSafeInteger(data.total)||data.total!==data.conversations.length)throw Error('conversation_scope_incomplete');
  return data.conversations as any[];
 }
+
+/** Find the opportunity already bound to a contact in this location (dedup guard).
+ * Filter field is snake_case `contact_id` on the v3 search contract. */
+export async function findOperationalOpportunity(args:{token:string;locationId:string;contactId:string;timeoutMs?:number}){
+ const res=await fetch(API+'/opportunities/search',{
+  method:'POST',
+  headers:{Authorization:'Bearer '+args.token,'Content-Type':'application/json',Accept:'application/json',Version:'v3'},
+  body:JSON.stringify({locationId:args.locationId,filters:[{field:'contact_id',operator:'eq',value:args.contactId}],limit:10}),
+  cache:'no-store',signal:args.timeoutMs?AbortSignal.timeout(args.timeoutMs):undefined
+ });
+ const data=await parse(res);
+ const opps=Array.isArray(data?.opportunities)?data.opportunities:[];
+ const id=opps.find((o:any)=>o?.contactId===args.contactId||o?.id)?.id;
+ return id?String(id):null;
+}
+
+/** Create an opportunity linked to a contact + pipeline + stage, or return the existing one.
+ * Status is always 'open' on creation; stage movement is a separate, explicit transition. */
+export async function createOperationalOpportunity(args:{token:string;locationId:string;contactId:string;name:string;pipelineId:string;pipelineStageId?:string;monetaryValue?:number;timeoutMs?:number}){
+ const existing=await findOperationalOpportunity(args);
+ if(existing)return {id:existing,created:false};
+ const res=await fetch(API+'/opportunities/',{
+  method:'POST',
+  headers:{Authorization:'Bearer '+args.token,'Content-Type':'application/json',Accept:'application/json',Version:'2021-07-28'},
+  body:JSON.stringify({locationId:args.locationId,contactId:args.contactId,name:args.name,pipelineId:args.pipelineId,pipelineStageId:args.pipelineStageId||undefined,monetaryValue:args.monetaryValue??0,status:'open'}),
+  cache:'no-store',signal:args.timeoutMs?AbortSignal.timeout(args.timeoutMs):undefined
+ });
+ const data=await parse(res);
+ const id=data?.opportunity?.id;
+ if(!id)throw new Error('opportunity_not_returned');
+ return {id:String(id),created:true};
+}
