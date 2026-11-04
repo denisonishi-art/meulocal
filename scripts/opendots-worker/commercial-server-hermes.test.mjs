@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
 import {createHmac} from 'node:crypto';
 import {dispatchDecision,createDeepSeekModelTurn} from './commercial-server-hermes.mjs';
-import {canDispatch,contactBlocked,sendGhlResponse} from './ghl-dispatch.mjs';
+import {canDispatch,contactBlocked,sendGhlResponse,contactAllowedForDispatch} from './ghl-dispatch.mjs';
 import {createReceiver} from './commercial-server.mjs';
 import {createReceiptStore} from './commercial-receipts.mjs';
 
@@ -21,6 +21,15 @@ test('contactBlocked detects DND and the opt-out tag',()=>{
  assert.equal(contactBlocked({dnd:true}).blocked,true);
  assert.equal(contactBlocked({tags:['meulocal:opt-out']}).blocked,true);
  assert.equal(contactBlocked({dnd:false}).blocked,false);
+});
+test('contactAllowedForDispatch: unset allowlist allows everyone; a set allowlist restricts to listed IDs',()=>{
+ setEnv({MEULOCAL_E2E_ALLOWED_CONTACTS:undefined});
+ assert.equal(contactAllowedForDispatch('anything'),true);
+ setEnv({MEULOCAL_E2E_ALLOWED_CONTACTS:' c-approved-1 , c-approved-2 '});
+ assert.equal(contactAllowedForDispatch('c-approved-1'),true);
+ assert.equal(contactAllowedForDispatch('c-approved-2'),true);
+ assert.equal(contactAllowedForDispatch('c-random'),false);
+ setEnv({MEULOCAL_E2E_ALLOWED_CONTACTS:undefined});
 });
 test('sendGhlResponse posts the correct WhatsApp payload',async()=>{
  const calls=[];const fetchImpl=async(url,init)=>{calls.push({url:String(url),body:JSON.parse(init.body),headers:init.headers});return {ok:true,json:async()=>({messageId:'msg-1'})}};
@@ -46,6 +55,14 @@ test('dispatchDecision blocks a DND or opt-out contact before sending',async()=>
   const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c'});
   assert.equal(r.dispatch.status,'blocked');assert.equal(sends,0);
  }finally{restoreFetch();setEnv({MEULOCAL_AUTO_REPLY_ENABLED:undefined,GHL_API_KEY:undefined})}
+});
+test('dispatchDecision skips a contact outside the E2E allowlist even when enabled',async()=>{
+ setEnv({MEULOCAL_AUTO_REPLY_ENABLED:'true',GHL_API_KEY:'synthetic',GHL_LOCATION_ID:'loc',MEULOCAL_E2E_ALLOWED_CONTACTS:'c-approved-only'});
+ let sends=0;globalThis.fetch=async()=>{sends++;return {ok:true,json:async()=>({})}};
+ try{
+  const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c-not-approved'});
+  assert.equal(r.dispatch.status,'skipped');assert.equal(r.dispatch.reason,'contact_not_in_e2e_allowlist');assert.equal(sends,0);
+ }finally{restoreFetch();setEnv({MEULOCAL_AUTO_REPLY_ENABLED:undefined,GHL_API_KEY:undefined,MEULOCAL_E2E_ALLOWED_CONTACTS:undefined})}
 });
 test('dispatchDecision never sends for handoff/stop/none and surfaces provider errors',async()=>{
  setEnv({MEULOCAL_AUTO_REPLY_ENABLED:'true',GHL_API_KEY:'synthetic',GHL_LOCATION_ID:'loc'});

@@ -3,7 +3,7 @@ import path from 'node:path';
 import {createReceiver} from './commercial-server.mjs';
 import {createReceiptStore} from './commercial-receipts.mjs';
 import {createDeepSeekModelTurn} from './deepseek-model-turn.mjs';
-import {canDispatch,readContactForSend,contactBlocked,sendGhlResponse} from './ghl-dispatch.mjs';
+import {canDispatch,readContactForSend,contactBlocked,sendGhlResponse,contactAllowedForDispatch} from './ghl-dispatch.mjs';
 
 /** Gated dispatch: sends the Hermes decision via GHL only when explicitly enabled.
  * Keeps the decision's status/requiresHumanReview contract intact so the receipt store
@@ -15,6 +15,7 @@ async function dispatchDecision(decision,event){
   const token=process.env.GHL_API_KEY;
   const locationId=process.env.GHL_LOCATION_ID;
   if(!locationId||!event.contactId)return {...decision,dispatch:{status:'skipped',reason:'missing_context'}};
+  if(!contactAllowedForDispatch(event.contactId))return {...decision,dispatch:{status:'skipped',reason:'contact_not_in_e2e_allowlist'}};
   try{
     const contact=await readContactForSend({token,locationId,contactId:event.contactId});
     const blocked=contactBlocked(contact);

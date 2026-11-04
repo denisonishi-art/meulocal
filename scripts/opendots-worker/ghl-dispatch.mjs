@@ -7,6 +7,17 @@ export function canDispatch(){
   return process.env.MEULOCAL_AUTO_REPLY_ENABLED==='true' && Boolean(process.env.GHL_API_KEY);
 }
 
+/** Controlled-E2E allowlist: when MEULOCAL_E2E_ALLOWED_CONTACTS is set (comma-separated GHL
+ * contact IDs), dispatch is restricted to ONLY those contacts, independent of canDispatch().
+ * This lets the whole pipe be enabled for a single authorized test contact without opening
+ * commercial sends to any other prospect. Unset = no additional restriction (normal operation). */
+export function contactAllowedForDispatch(contactId){
+  const raw=process.env.MEULOCAL_E2E_ALLOWED_CONTACTS;
+  if(!raw||!raw.trim())return true;
+  const allowed=raw.split(',').map(s=>s.trim()).filter(Boolean);
+  return allowed.includes(String(contactId));
+}
+
 export async function readContactForSend({token,locationId,contactId,fetchImpl=fetch}){
   const res=await fetchImpl(API+'/contacts/'+encodeURIComponent(contactId),{headers:{Authorization:'Bearer '+token,Accept:'application/json',Version:'2021-07-28'}});
   if(!res.ok)throw Error('ghl_contact_read_'+res.status);
