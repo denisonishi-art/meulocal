@@ -56,11 +56,19 @@ export function createDispatcher(deps){
       }
     }
 
+    // Read + validate the contact first. A contact-read/validation failure is a DEFINITIVE
+    // block (no side effect happened), never an "uncertain send" that needs reconciliation.
+    let contact;
     try{
-      const contact = await readContact({token,locationId,contactId:event.contactId});
-      const blocked = blockedFn(contact, decision.channel);
-      if(blocked.blocked)return {...decision,dispatch:{status:'blocked',reason:blocked.reason}};
-      if(!isolated(contact))return {...decision,dispatch:{status:'skipped',reason:'contact_not_isolated_for_hermes'}};
+      contact = await readContact({token,locationId,contactId:event.contactId});
+    }catch(err){
+      return {...decision,dispatch:{status:'blocked',reason:String(err?.message||err).slice(0,80)}};
+    }
+    const blocked = blockedFn(contact, decision.channel);
+    if(blocked.blocked)return {...decision,dispatch:{status:'blocked',reason:blocked.reason}};
+    if(!isolated(contact))return {...decision,dispatch:{status:'skipped',reason:'contact_not_isolated_for_hermes'}};
+
+    try{
       // Persist the intent BEFORE the send to close the crash window.
       if(ledger)ledger.recordIntent(event.eventId,{channel:decision.channel,contactId:event.contactId,message:decision.message});
       const sent = await send({token,contactId:event.contactId,channel:decision.channel,message:decision.message});

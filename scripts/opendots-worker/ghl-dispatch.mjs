@@ -33,7 +33,18 @@ export async function readContactForSend({token,locationId,contactId,fetchImpl=f
   const data=await res.json();
   const contact=data?.contact;
   if(!contact||contact.locationId!==locationId||contact.id!==contactId)throw Error('contact_identity_unverified');
-  return contact;
+  if(typeof contact.dnd==='boolean')return contact;
+  // Some contact-detail projections omit suppression fields. Verify via the exact contact
+  // search instead; absence never implies DND=false.
+  const field=contact.email?'email':contact.phone?'phone':null;
+  if(!field)return contact; // no searchable field → dnd stays undefined (contactBlocked fails closed)
+  const value=String(contact[field]).trim();
+  const search=await fetchImpl(API+'/contacts/search',{method:'POST',headers:{Authorization:'Bearer '+token,Accept:'application/json','Content-Type':'application/json',Version:'2021-07-28'},body:JSON.stringify({locationId,filters:[{field,operator:'eq',value}],page:1,pageLimit:100})});
+  if(!search.ok)throw Error('ghl_contact_search_'+search.status);
+  const result=await search.json();
+  const matches=result?.contacts;
+  if(!Array.isArray(matches)||matches.length!==1||matches[0]?.id!==contactId||matches[0]?.locationId!==locationId)throw Error('contact_dnd_unverified');
+  return {...contact,...(typeof matches[0].dnd==='boolean'?{dnd:matches[0].dnd}:{})};
 }
 
 /** Fail-closed consent + channel-eligibility gate. An absent or non-boolean DND flag, a DND
