@@ -14,13 +14,13 @@ function sameSignature(payload,provided,secret){
  const actual=Buffer.from(provided||'');return expected.length===actual.length&&timingSafeEqual(expected,actual);
 }
 async function bodyText(req){let s='';for await(const part of req){s+=part;if(Buffer.byteLength(s)>32768)throw Error('payload_too_large')}return s}
-function createReceiver({secret,modelTurn,receipts,onDecision}){
+function createReceiver({secret,modelTurn,receipts,onDecision,health}){
  const inFlight=new Map();
  if(!receipts)throw Error('durable_receipts_required');
  if(!secret||secret.length<24)throw Error('OPENDOTS_COMMERCIAL_SECRET_required');
  return http.createServer(async(req,res)=>{
   const reply=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data))};
-  if(req.method==='GET'&&req.url==='/health')return reply(200,{status:'ready',runtime:'opendots',dispatch:false});
+  if(req.method==='GET'&&req.url==='/health')return reply(200,health||{status:'ready',runtime:'opendots',dispatch:false});
   if(req.method!=='POST'||req.url!=='/commercial/inbound'||req.headers.origin)return reply(404,{error:'not_found'});
   let raw;try{raw=await bodyText(req)}catch{return reply(413,{error:'payload_too_large'})}
   if(!sameSignature(raw,req.headers['x-meulocal-signature'],secret))return reply(401,{error:'invalid_signature'});
