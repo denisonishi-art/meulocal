@@ -23,7 +23,7 @@ function validateEvent(event){
  if(event.kind==='meulocal.acquisition.inbound'&&(!event.leadId||!event.contactId||typeof event.message!=='string'||event.message.length>4000))throw Error('invalid_inbound');
  if(event.kind==='meulocal.acquisition.draft'&&(!event.prospect||typeof event.prospect.name!=='string'))throw Error('invalid_prospect');
  if(event.kind==='meulocal.customer.lifecycle'&&(!event.accountId||!event.businessId||event.paymentStatus!=='active'||!['pending','in_progress','completed'].includes(event.onboardingStatus)||!['payment.confirmed','onboarding.pending','onboarding.in_progress','onboarding.completed'].includes(event.transition)||!['/onboarding','/dashboard'].includes(event.nextPath)))throw Error('invalid_lifecycle');
- if(event.permissions?.initialSend||event.permissions?.crmWrite||event.permissions?.autoReply)throw Error('external_side_effects_forbidden');
+ if(event.permissions?.initialSend||event.permissions?.crmWrite)throw Error('external_side_effects_forbidden');
  return event;
 }
 function promptFor(event){

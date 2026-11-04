@@ -4,7 +4,17 @@
  */
 import {createHmac} from 'node:crypto';
 import {readOpenDotsGuidance} from './opendots-guidance';
-export type OpenDotsEvent={eventId:string;kind:string;version:number;occurredAt:string;permissions:{initialSend:false;autoReply:false;crmWrite:false};[key:string]:unknown};
+export type OpenDotsEvent={eventId:string;kind:string;version:number;occurredAt:string;permissions:{initialSend:false;autoReply:boolean;crmWrite:false};[key:string]:unknown};
+
+/** autoReply is granted ONLY for contacts explicitly allowlisted in
+ * MEULOCAL_E2E_ALLOWED_CONTACTS (comma-separated GHL contact IDs). Empty allowlist =
+ * never auto-reply. This binds the send permission to the authorized test contact,
+ * never a blanket grant. DND/opt-out/dedup are still enforced worker-side. */
+function autoReplyAuthorizedFor(input:OpenDotsEvent):boolean{
+ const allowlist=(process.env.MEULOCAL_E2E_ALLOWED_CONTACTS||'').split(',').map(s=>s.trim()).filter(Boolean);
+ if(allowlist.length===0)return false;
+ return typeof input.contactId==='string'&&allowlist.includes(input.contactId);
+}
 export async function deliverOpenDotsEvent(input:OpenDotsEvent){
  const endpoint=process.env.OPENDOTS_COMMERCIAL_URL;
  const secret=process.env.OPENDOTS_COMMERCIAL_SECRET;
@@ -13,7 +23,7 @@ export async function deliverOpenDotsEvent(input:OpenDotsEvent){
  try{url=new URL(endpoint)}catch{return {status:'invalid_endpoint'} as const}
  // No arbitrary remote destinations, no loopback or redirects.
  if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash||!url.hostname.endsWith('.meulocal.ia.br'))return {status:'invalid_endpoint'} as const;
- const body=JSON.stringify({...input,permissions:{initialSend:false,autoReply:false,crmWrite:false}});
+ const body=JSON.stringify({...input,permissions:{initialSend:false,autoReply:autoReplyAuthorizedFor(input),crmWrite:false}});
  const signature=createHmac('sha256',secret).update(body).digest('hex');
  try{
   const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-MeuLocal-Signature':'sha256='+signature,'X-MeuLocal-Event-Id':input.eventId},body,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});

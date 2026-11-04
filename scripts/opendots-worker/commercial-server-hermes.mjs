@@ -10,6 +10,9 @@ import {canDispatch,readContactForSend,contactBlocked,sendGhlResponse,contactAll
  * stays compatible; the dispatch outcome is recorded in a separate `dispatch` field. */
 async function dispatchDecision(decision,event){
   if(!canDispatch())return decision;
+  // autoReply must be authorized PER EVENT (per contact, set by the bridge only for the
+  // authorized test contact) — never a blanket grant. Defense in depth below: allowlist + DND.
+  if(event.permissions?.autoReply!==true)return decision;
   if(!['answer','follow_up'].includes(decision.action))return decision;
   if(!['whatsapp','email'].includes(decision.channel)||!decision.message.trim())return decision;
   const token=process.env.GHL_API_KEY;

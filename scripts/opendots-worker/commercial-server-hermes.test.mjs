@@ -38,13 +38,21 @@ test('sendGhlResponse posts the correct WhatsApp payload',async()=>{
 });
 test('dispatchDecision is inert when disabled',async()=>{
  setEnv({MEULOCAL_AUTO_REPLY_ENABLED:undefined,GHL_API_KEY:undefined});
- const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c'});assert.equal(r.dispatch,undefined);
+ const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c',permissions:{autoReply:true}});assert.equal(r.dispatch,undefined);
+});
+test('dispatchDecision does not send when the event does not authorize autoReply',async()=>{
+ setEnv({MEULOCAL_AUTO_REPLY_ENABLED:'true',GHL_API_KEY:'synthetic',GHL_LOCATION_ID:'loc'});
+ let sends=0;globalThis.fetch=async()=>{sends++;return {ok:true,json:async()=>({})}};
+ try{
+  const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c',permissions:{autoReply:false}});
+  assert.equal(r.dispatch,undefined);assert.equal(sends,0);
+ }finally{restoreFetch();setEnv({MEULOCAL_AUTO_REPLY_ENABLED:undefined,GHL_API_KEY:undefined})}
 });
 test('dispatchDecision sends an answer when enabled and preserves the decision contract',async()=>{
  setEnv({MEULOCAL_AUTO_REPLY_ENABLED:'true',GHL_API_KEY:'synthetic',GHL_LOCATION_ID:'loc'});
  const calls=[];globalThis.fetch=async(url,init)=>{calls.push({url:String(url),body:init?.body?JSON.parse(init.body):undefined});if(String(url).includes('/contacts/'))return {ok:true,json:async()=>({contact:{id:'c',locationId:'loc',dnd:false}})};return {ok:true,json:async()=>({messageId:'sent-1'})}};
  try{
-  const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c'});
+  const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c',permissions:{autoReply:true}});
   assert.equal(r.dispatch.status,'sent');assert.equal(r.dispatch.messageId,'sent-1');assert.equal(r.status,'suggestion_only');assert.equal(r.requiresHumanReview,true);assert.equal(calls.length,2);
  }finally{restoreFetch();setEnv({MEULOCAL_AUTO_REPLY_ENABLED:undefined,GHL_API_KEY:undefined})}
 });
@@ -52,7 +60,7 @@ test('dispatchDecision blocks a DND or opt-out contact before sending',async()=>
  setEnv({MEULOCAL_AUTO_REPLY_ENABLED:'true',GHL_API_KEY:'synthetic',GHL_LOCATION_ID:'loc'});
  let sends=0;globalThis.fetch=async url=>{if(String(url).includes('/contacts/'))return {ok:true,json:async()=>({contact:{id:'c',locationId:'loc',dnd:true}})};sends++;return {ok:true,json:async()=>({})}};
  try{
-  const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c'});
+  const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c',permissions:{autoReply:true}});
   assert.equal(r.dispatch.status,'blocked');assert.equal(sends,0);
  }finally{restoreFetch();setEnv({MEULOCAL_AUTO_REPLY_ENABLED:undefined,GHL_API_KEY:undefined})}
 });
@@ -60,7 +68,7 @@ test('dispatchDecision skips a contact outside the E2E allowlist even when enabl
  setEnv({MEULOCAL_AUTO_REPLY_ENABLED:'true',GHL_API_KEY:'synthetic',GHL_LOCATION_ID:'loc',MEULOCAL_E2E_ALLOWED_CONTACTS:'c-approved-only'});
  let sends=0;globalThis.fetch=async()=>{sends++;return {ok:true,json:async()=>({})}};
  try{
-  const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c-not-approved'});
+  const r=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c-not-approved',permissions:{autoReply:true}});
   assert.equal(r.dispatch.status,'skipped');assert.equal(r.dispatch.reason,'contact_not_in_e2e_allowlist');assert.equal(sends,0);
  }finally{restoreFetch();setEnv({MEULOCAL_AUTO_REPLY_ENABLED:undefined,GHL_API_KEY:undefined,MEULOCAL_E2E_ALLOWED_CONTACTS:undefined})}
 });
@@ -68,8 +76,8 @@ test('dispatchDecision never sends for handoff/stop/none and surfaces provider e
  setEnv({MEULOCAL_AUTO_REPLY_ENABLED:'true',GHL_API_KEY:'synthetic',GHL_LOCATION_ID:'loc'});
  let calls=0;globalThis.fetch=async()=>{calls++;throw Error('synthetic_provider_down')};
  try{
-  for(const action of ['handoff','stop']){const r=await dispatchDecision({action,channel:'none',message:'',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c'});assert.equal(r.dispatch,undefined)}
-  const err=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c'});
+  for(const action of ['handoff','stop']){const r=await dispatchDecision({action,channel:'none',message:'',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c',permissions:{autoReply:true}});assert.equal(r.dispatch,undefined)}
+  const err=await dispatchDecision({action:'answer',channel:'whatsapp',message:'Olá',status:'suggestion_only',requiresHumanReview:true,eventId:'e'},{contactId:'c',permissions:{autoReply:true}});
   assert.equal(err.dispatch.status,'error');assert.ok(calls>0);
  }finally{restoreFetch();setEnv({MEULOCAL_AUTO_REPLY_ENABLED:undefined,GHL_API_KEY:undefined})}
 });
