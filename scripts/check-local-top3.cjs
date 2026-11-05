@@ -52,6 +52,22 @@ test('incomplete, duplicates and irrelevant profiles do not fabricate a third co
  assert.ok(!found.some(x=>x.name.includes('missing')));
 });
 
+test('5km extension changes only the radius, not the reputation ranking or 3km default',()=>{
+ const places=[p('within3km',4.7,80,-23.616),p('within5km',4.9,200,-23.636),p('outside5km',5,900,-23.651)];
+ const basic=selectTopLocalCompetitors({businessId:'target',center,businessCategory:'school',places});
+ assert.deepEqual(Array.from(basic,x=>x.id),['within3km']);
+ const extended=selectTopLocalCompetitors({businessId:'target',center,businessCategory:'school',places,radiusMeters:5000});
+ assert.deepEqual(Array.from(extended,x=>x.id),['within5km','within3km']);
+ assert.ok(extended.every(x=>x.distanceKm<=5));
+});
+test('language school name validated separately can be eligible with general Google category',()=>{
+ const generic=p('Fisk idiomas',4.8,250,-23.610,'educational_institution');
+ const strict=selectTopLocalCompetitors({businessId:'target',center,businessCategory:'school',places:[generic]});
+ assert.equal(strict.length,0);
+ const language=selectTopLocalCompetitors({businessId:'target',center,businessCategory:'school',places:[generic],requireCategory:false});
+ assert.equal(language.length,1);
+});
+
 test('missing/invalid location is never treated as permission to broaden radius',()=>{
  const candidates=[p('valid',4.8,100)];
  assert.equal(selectTopLocalCompetitors({businessId:'target',center:{latitude:null,longitude:-46.6},businessCategory:'school',places:candidates}).length,0);
