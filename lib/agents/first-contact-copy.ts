@@ -63,9 +63,7 @@ export function buildFirstContactDraft(p:FirstContactProspect){
   const message=[
     'Olá, tudo bem?',
     FIRST_CONTACT_INTRO,
-    context.decision,
-    evidence,
-    opportunity,
+    evidence+' '+opportunity,
     cta,
     FIRST_CONTACT_OPTOUT
   ].join('\n\n');
@@ -75,7 +73,7 @@ export function buildFirstContactDraft(p:FirstContactProspect){
 
 /** Fail closed if the model alters any fixed fact, invents a number or guarantees an outcome. */
 export function isSafeFirstContactDraft(message:unknown,reference:ReturnType<typeof buildFirstContactDraft>){
-  if(typeof message!=='string'||message.length<320||message.length>1400)return false;
+  if(typeof message!=='string'||message.length<320||message.length>Math.min(800,reference.message.length+90))return false;
   if(![reference.identity,reference.evidence,reference.cta,reference.optout].every(s=>message.includes(s)))return false;
   const freeText=message
     .replace(reference.identity,'')
