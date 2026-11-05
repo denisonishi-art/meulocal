@@ -4,6 +4,7 @@
  * Missing rating, count or geometry disqualifies a place from a "top" claim.
  */
 export const LOCAL_COMPETITOR_RADIUS_METERS=3000;
+export const EXTENDED_COMPETITOR_RADIUS_METERS=5000;
 export const LOCAL_COMPETITOR_LIMIT=3;
 export const MIN_RELIABLE_REVIEWS=5;
 const PRIOR_RATING=4;
@@ -56,7 +57,7 @@ export function weightedReputationRating(rating:number,reviews:number){
 }
 
 /**
- * Picks up to 3 strongest comparable results WITHIN 3 km, using a volume-adjusted rating.
+ * Picks up to 3 strongest comparable results within the configured capped radius, using a volume-adjusted rating.
  * Google Nearby Search is capped at 20 results per request, so these are top candidates
  * among returned places, not a claim of an exhaustive market ranking.
  */
@@ -65,20 +66,22 @@ export function selectTopLocalCompetitors(args:{
  center:GeoPoint;
  businessCategory:string;
  places:LocalGooglePlace[];
+ radiusMeters?:3000|5000;
+ requireCategory?:boolean;
 }):RankedLocalCompetitor[]{
- const {businessId,center,businessCategory,places}=args;
+ const {businessId,center,businessCategory,places,radiusMeters=LOCAL_COMPETITOR_RADIUS_METERS,requireCategory=true}=args;
  if(!isGeoPoint(center))return [];
  const byId=new Map<string,RankedLocalCompetitor>();
  for(const place of places){
   if(!place.id||place.id===businessId||!place.displayName?.text?.trim()||!isGeoPoint(place.location))continue;
   if(place.businessStatus&&place.businessStatus!=='OPERATIONAL')continue;
-  if(place.primaryType!==businessCategory&&!place.types?.includes(businessCategory))continue;
+  if(requireCategory&&place.primaryType!==businessCategory&&!place.types?.includes(businessCategory))continue;
   const rating=place.rating;
   const reviewCount=place.userRatingCount;
   if(typeof rating!=='number'||!Number.isFinite(rating)||rating<=0||rating>5||
     typeof reviewCount!=='number'||!Number.isInteger(reviewCount)||reviewCount<MIN_RELIABLE_REVIEWS)continue;
   const distance=distanceMeters(center,place.location);
-  if(distance>LOCAL_COMPETITOR_RADIUS_METERS)continue;
+  if(distance>radiusMeters)continue;
   byId.set(place.id,{
    id:place.id,name:place.displayName.text.trim(),address:place.formattedAddress||'',
    rating,reviewCount,website:place.websiteUri||null,category:place.primaryType||null,

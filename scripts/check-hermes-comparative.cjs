@@ -61,17 +61,75 @@ test('explicit positive replies are recognized, negatives and vague questions ar
 test('report uses three relevant Google Places within hard 3km and never invents a benchmark',async()=>{
  const calls=[];
  const report=await builder.buildTop3Report({placeId:googleId,niche:'escola de ingles',apiKey:'synthetic',fetchImpl:googleFetch(calls),now:new Date('2026-11-05T14:00:00Z')});
- assert.equal(calls.length,2);
+ assert.equal(calls.length,3);
  assert.match(String(calls[1].url),/places:searchText$/);
+ assert.match(String(calls[2].url),/places:searchText$/);
  assert.equal(JSON.parse(calls[1].options.body).locationBias.circle.radius,3000);
+ assert.equal(JSON.parse(calls[2].options.body).locationBias.circle.radius,3000);
+ assert.equal(JSON.parse(calls[1].options.body).pageSize,20);
  assert.deepEqual(report.competitors.map(c=>c.id),['ChIJfiskCursino','ChIJculturaCursino','ChIJCCAA']);
  assert.equal(report.business.reviewCount,5);
  assert.equal(report.radiusMeters,3000);
+ assert.equal(report.version,'meulocal_top3_v2');
  assert.ok(report.reviewGap>0);
  assert.equal(report.competitors.length,3);
  assert.equal(report.expiresAt,'2026-12-05T14:00:00.000Z');
  assert.ok(report.competitors.every(c=>c.distanceKm<=3));
 });
+test('if 3km returns only one language school, expand to 5km and rank the 3 strongest verified profiles',async()=>{
+ const calls=[];
+ const first=p('ChIJculturaSaude','Cultura Inglesa Saúde',4.5,84,-23.608);
+ const second=p('ChIJfiskOutside','Fisk Saúde',4.8,300,-23.632);
+ const third=p('ChIJwiseneighbor','Wise Up Aclimação',4.7,140,-23.639);
+ const outside=p('ChIJfiskTooFar','Fisk Fora da Área',5,900,-23.650);
+ const irrelevant=p('ChIJschoolK12','Colégio Fundamental',5,500,-23.605);
+ const restaurant=p('ChIJrestaurantFisk','Restaurante Fisk',5,700,-23.61,'restaurant');
+ const fetchImpl=async(url,options)=>{
+  calls.push({url,options});
+  if(options?.method!=='POST')return {ok:true,json:async()=>detail};
+  const radius=JSON.parse(options.body).locationBias.circle.radius;
+  return {ok:true,json:async()=>({places:radius===3000?
+   [first,irrelevant,restaurant,outside]:[first,second,third,outside,irrelevant,restaurant]})};
+ };
+ const report=await builder.buildTop3Report({placeId:googleId,niche:'escola de ingles',apiKey:'synthetic',fetchImpl});
+ assert.equal(calls.length,5,'1 details + 2 targeted queries at 3km + 2 queries at 5km');
+ assert.equal(report.version,'meulocal_top3_v2');
+ assert.equal(report.radiusMeters,5000);
+ assert.deepEqual(report.competitors.map(x=>x.id),[second.id,third.id,first.id]);
+ assert.ok(report.competitors.every(c=>c.distanceKm<=5));
+ assert.ok(report.warnings.some(w=>w.includes('ampliamos para 5 km')));
+ assert.ok(report.averageCompetitorReviews>0);
+ assert.ok(!report.competitors.some(x=>x.id===outside.id||x.id===irrelevant.id||x.id===restaurant.id));
+ assert.equal(JSON.parse(calls[3].options.body).locationBias.circle.radius,5000);
+ assert.equal(JSON.parse(calls[4].options.body).locationBias.circle.radius,5000);
+});
+test('if extension still finds one valid school, report labels scope and does not fabricate mean or gap',async()=>{
+ const near=p('ChIJfiskNear','Fisk Saúde',4.7,84,-23.606);
+ const far=p('ChIJtooFar','Fisk Outra Cidade',5,900,-23.652);
+ const calls=[];
+ const fetchImpl=async(url,options)=>{
+  calls.push({url,options});
+  return {ok:true,json:async()=>options?.method==='POST'?{places:[near,far]}:detail};
+ };
+ const report=await builder.buildTop3Report({placeId:googleId,niche:'escola de inglês',apiKey:'synthetic',fetchImpl});
+ assert.equal(report.radiusMeters,5000);
+ assert.equal(report.competitors.length,1);
+ assert.equal(report.averageCompetitorReviews,null);
+ assert.equal(report.reviewGap,null);
+ assert.ok(report.warnings.some(w=>w.includes('Apenas um concorrente')));
+});
+test('Google text search failures never cause invented competitors or an unrestricted request',async()=>{
+ const calls=[];
+ const fetchImpl=async(url,options)=>{
+  calls.push({url,options});
+  if(options?.method!=='POST')return {ok:true,json:async()=>detail};
+  return {ok:false,json:async()=>({error:'quota'})};
+ };
+ await assert.rejects(builder.buildTop3Report({placeId:googleId,niche:'escola de ingles',apiKey:'synthetic',fetchImpl}),/google_competitors_unavailable/);
+ assert.equal(calls.length,3);
+ assert.ok(calls.slice(1).every(x=>JSON.parse(x.options.body).locationBias?.circle?.radius===3000));
+});
+
 test('insufficient actual competitors causes a hard failure, not a fabricated report',async()=>{
  await assert.rejects(builder.buildTop3Report({placeId:googleId,niche:'escola de idiomas',apiKey:'synthetic',fetchImpl:googleFetch([],results.filter(x=>x.id==='ChIJprimaryschool'))}),/no_reliable_local_competitors/);
 });
@@ -106,6 +164,7 @@ test('approved manual reply prepares one durable report and returns the correct 
  assert.equal(result.status,'ready');
  assert.equal(result.url,'https://meulocal.ia.br/d/'+uuid);
  assert.equal(result.competitorCount,3);
+ assert.equal(result.radiusKm,3);
  assert.ok(f.calls.some(c=>c.name==='prospect_comparison_reports'&&c.op==='write'));
 });
 test('out-of-scope GHL contact, negative reply or non-analysis original offer cannot generate a link',async()=>{
@@ -121,6 +180,18 @@ test('uncertain Google results remain unavailable and never produce a link',asyn
  const result=await delivery.prepareAnalysisForApprovedReply(f.db,{leadId,contactId:'contact123',message:'Sim'},{apiKey:'synthetic',fetchImpl:googleFetch([],[])});
  assert.deepEqual(result,{status:'unavailable'});
  assert.ok(!f.calls.some(c=>c.op==='write'));
+});
+test('legacy 3km report does not block upgrade and explicit admin refresh overwrites cached report',async()=>{
+ const snapshot=await builder.buildTop3Report({placeId:googleId,niche:'escola de idiomas',apiKey:'synthetic',fetchImpl:googleFetch([])});
+ const legacy={...snapshot,version:'meulocal_top3_v1',radiusMeters:3000};
+ const f=fixture({readyReport:legacy});
+ const result=await delivery.prepareVerifiedComparison(f.db,baseDiagnostic,{apiKey:'synthetic',fetchImpl:googleFetch([])});
+ assert.equal(result.status,'ready');
+ assert.ok(f.calls.some(c=>c.name==='prospect_comparison_reports'&&c.op==='write'));
+ const already=fixture({readyReport:snapshot});
+ const forced=await delivery.prepareVerifiedComparison(already.db,baseDiagnostic,{apiKey:'synthetic',fetchImpl:googleFetch([]),forceRefresh:true});
+ assert.equal(forced.status,'ready');
+ assert.ok(already.calls.some(c=>c.name==='prospect_comparison_reports'&&c.op==='write'));
 });
 test('fresh stored report is reused without new Google request or DB writes',async()=>{
  const snapshot=await builder.buildTop3Report({placeId:googleId,niche:'escola de idiomas',apiKey:'synthetic',fetchImpl:googleFetch([])});
@@ -144,6 +215,15 @@ test('Hermes responds with exact verified link without re-calling the LLM',async
  assert.equal(modelCalls,0);
  assert.equal(result.requiresHumanReview,true);
  assert.equal(result.status,'suggestion_only');
+});
+test('Hermes reports the actual 5km radius when the benchmark was expanded',async()=>{
+ const event={...hermesEvent,analysis:{status:'ready',url:'https://meulocal.ia.br/d/'+uuid,businessName:'Wizard by Pearson Cursino',competitorCount:3,radiusKm:5}};
+ const result=await hermes.decideCommercialEvent(event,{modelTurn:async()=>{throw Error('no_model_expected')}});
+ assert.equal(result.action,'answer');
+ assert.match(result.message,/em até 5 km/);
+ assert.doesNotMatch(result.message,/em até 3 km/);
+ const invalid=await hermes.decideCommercialEvent({...event,analysis:{...event.analysis,radiusKm:20}},{modelTurn:async()=>{throw Error('no_model_expected')}});
+ assert.equal(invalid.action,'handoff');
 });
 test('Hermes fails closed for unavailable or malformed reports, with no accidental link',async()=>{
  for(const analysis of [{status:'unavailable'},{status:'ready',url:'https://evil.invalid/d/'+uuid,businessName:'Wizard',competitorCount:3}]){

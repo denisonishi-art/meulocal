@@ -62,8 +62,8 @@ export async function GET(req:Request){
    const report=reportByDiagnostic.get(d.id);
    const snapshot=report?.snapshot;
    const reportReady=Boolean(report&&report.google_place_id===d.place_id
-    &&Date.parse(report.expires_at)>Date.now()&&snapshot?.version==='meulocal_top3_v1'
-    &&snapshot?.radiusMeters===3000&&Array.isArray(snapshot?.competitors)
+    &&Date.parse(report.expires_at)>Date.now()&&['meulocal_top3_v1','meulocal_top3_v2'].includes(snapshot?.version)
+    &&[3000,5000].includes(snapshot?.radiusMeters)&&Array.isArray(snapshot?.competitors)
     &&snapshot.competitors.length>=1&&snapshot.competitors.length<=3);
    return {
     id:d.id,business_name:d.business_name,niche:d.niche,region:d.region,status:d.status,

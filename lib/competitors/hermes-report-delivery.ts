@@ -1,21 +1,21 @@
 import {buildTop3Report,fetchGooglePlaceDetail,verifiedReportLink,asksForComparativeAnalysis,languageSchoolCandidate,LocalComparison} from './hermes-comparative-report';
 
-export type ReportReady={status:'ready';url:string;businessName:string;competitorCount:number;observedAt:string};
+export type ReportReady={status:'ready';url:string;businessName:string;competitorCount:number;observedAt:string;radiusKm:3|5};
 export type ReportUnavailable={status:'unavailable'};
 export type ReportDecision=ReportReady|ReportUnavailable|null;
 const uuid=/^[0-9a-f-]{36}$/i;
 const DAY=86400000;
 
 function snapshotValid(snapshot:any):snapshot is LocalComparison{
- return snapshot?.version==='meulocal_top3_v1'&&snapshot?.radiusMeters===3000&&
+ return snapshot?.version==='meulocal_top3_v2'&&[3000,5000].includes(snapshot?.radiusMeters)&&
  typeof snapshot?.business?.id==='string'&&Array.isArray(snapshot?.competitors)&&
  snapshot.competitors.length>=1&&snapshot.competitors.length<=3&&
  Number.isFinite(Date.parse(snapshot?.expiresAt))&&Date.parse(snapshot.expiresAt)>Date.now()&&
- snapshot.competitors.every((c:any)=>typeof c.id==='string'&&Number.isFinite(c.distanceKm)&&c.distanceKm<=3);
+ snapshot.competitors.every((c:any)=>typeof c.id==='string'&&Number.isFinite(c.distanceKm)&&c.distanceKm<=snapshot.radiusMeters/1000);
 }
 function ready(token:string,snapshot:LocalComparison):ReportReady{
  return {status:'ready',url:verifiedReportLink(token),businessName:snapshot.business.name,
-  competitorCount:snapshot.competitors.length,observedAt:snapshot.observedAt};
+  competitorCount:snapshot.competitors.length,observedAt:snapshot.observedAt,radiusKm:snapshot.radiusMeters/1000 as 3|5};
 }
 async function storedReport(db:any,diagnosticId:string,placeId:string){
  const {data,error}=await db.from('prospect_comparison_reports')
@@ -26,10 +26,12 @@ async function storedReport(db:any,diagnosticId:string,placeId:string){
 }
 export async function prepareVerifiedComparison(db:any,diagnostic:{
  id:string;place_id:string;business_name:string;public_token:string;niche?:string|null
-},options:{apiKey?:string;fetchImpl?:typeof fetch;details?:any;now?:Date}={}):Promise<ReportReady>{
+},options:{apiKey?:string;fetchImpl?:typeof fetch;details?:any;now?:Date;forceRefresh?:boolean}={}):Promise<ReportReady>{
  if(!uuid.test(diagnostic.id)||!uuid.test(diagnostic.public_token))throw Error('invalid_diagnostic_identity');
- const existing=await storedReport(db,diagnostic.id,diagnostic.place_id);
- if(existing)return ready(diagnostic.public_token,existing);
+ if(!options.forceRefresh){
+  const existing=await storedReport(db,diagnostic.id,diagnostic.place_id);
+  if(existing)return ready(diagnostic.public_token,existing);
+ }
  const apiKey=options.apiKey||process.env.GOOGLE_PLACES_API_KEY;
  if(!apiKey)throw Error('google_api_not_configured');
  const snapshot=await buildTop3Report({placeId:diagnostic.place_id,niche:diagnostic.niche||diagnostic.business_name,
