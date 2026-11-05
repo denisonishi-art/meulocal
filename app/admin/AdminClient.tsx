@@ -11,6 +11,7 @@ import OpenDotsSupervision from './OpenDotsSupervision';
 
 type Candidate={id:string;name:string;address:string;rating:number|null;reviews:number|null;website:string|null;phone:string|null;score:number|null;priority:string;competitorAverageReviews?:number|null;competitionMode?:'local_radius'|'city_region'|'search_market';competitionLabel?:string|null;searchIntent?:string|null};
 type View='overview'|'prospecting'|'leads'|'diagnostics'|'customers'|'automations'|'agents'|'supervision';
+type DiagnosticCatalogRow={id:string;business_name:string;url:string;niche?:string|null;region?:string|null;created_at?:string;status?:string;reportReady:boolean;reportCount:number;contact:{state:string;label:string;evidenceAt:string|null;channel:string|null}};
 type Overview={
   kpis:{leads:number;conversations:number;customers:number;onboardingPending:number;automationsActive:number;diagnosticsOpen:number;diagnosticConversions:number;paidCheckouts:number};
   leads:any[];diagnostics:any[];customers:any[];automations:any[];activity:any[];agents:any[];
@@ -28,10 +29,12 @@ function statusLabel(v?:string|null){
   return map[v||'']||String(v||'—').replaceAll('_',' ');
 }
 function Pill({value}:{value?:string|null}){const key=(value||'').replaceAll('_','-');return <span className={'statusPill '+key}>{statusLabel(value)}</span>}
-function DeliveryPill({delivery}:{delivery?:any}){const state=delivery?.state||'pending';const label=state==='contacted'?`Na régua${delivery?.channel?` · ${delivery.channel}`:''}`:state==='error'?`Erro${delivery?.channel?` · ${delivery.channel}`:''}`:state==='converted'?'Convertido':'Pendente';return <span className={'statusPill '+(state==='contacted'?'active':state==='error'?'error':state==='converted'?'converted':'pending')} title={delivery?.reason||label}>{label}</span>}
-
 export default function AdminClient(){
- const[savedDiagnostics,setSavedDiagnostics]=useState<Array<{id:string;business_name:string;url:string;lead_id?:string}>>([]);
+ const[catalog,setCatalog]=useState<DiagnosticCatalogRow[]>([]);
+ const[catalogLoading,setCatalogLoading]=useState(true);
+ const[catalogError,setCatalogError]=useState('');
+ const[diagnosticQuery,setDiagnosticQuery]=useState('');
+ const[diagnosticStateFilter,setDiagnosticStateFilter]=useState('all');
  const[generatedReports,setGeneratedReports]=useState<Record<string,{url:string;count:number}>>({});
  const[prepared,setPrepared]=useState<Array<{id:string;name:string;message:string}>>([]);
  const[manualRetryable,setManualRetryable]=useState<Record<string,boolean>>({});
@@ -42,19 +45,35 @@ export default function AdminClient(){
  const[data,setData]=useState<Overview|null>(null);const[loadingData,setLoadingData]=useState(true);const[dataError,setDataError]=useState('');
  const[niche,setNiche]=useState('');const[region,setRegion]=useState('');const[rows,setRows]=useState<Candidate[]>([]);const[selected,setSelected]=useState<string[]>([]);const[busy,setBusy]=useState(false);const[msg,setMsg]=useState('');const[diagMsg,setDiagMsg]=useState('');const[deliveryPeriod,setDeliveryPeriod]=useState<'all'|'week'|'month'>('all');const[replyingTo,setReplyingTo]=useState<string|null>(null);const[replyText,setReplyText]=useState('');
 
+ async function loadCatalog(){
+  setCatalogLoading(true);setCatalogError('');
+  try{
+   const response=await fetch('/api/admin/prospects/diagnostics',{cache:'no-store'});
+   const body=await response.json();
+   if(!response.ok||!Array.isArray(body.diagnostics))throw Error(body.error||'Histórico indisponível.');
+   setCatalog(body.diagnostics);
+  }catch(e:any){setCatalogError(String(e.message||e))}
+  finally{setCatalogLoading(false)}
+ }
  async function loadOverview(){setLoadingData(true);setDataError('');try{const r=await fetch('/api/admin/overview',{cache:'no-store'});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha ao carregar operação');setData(j)}catch(e:any){setDataError(e.message)}finally{setLoadingData(false)}}
- useEffect(()=>{loadOverview();try{const saved=JSON.parse(window.localStorage.getItem('meulocal-acquisition-drafts-v3')||'null');if(saved&&Array.isArray(saved.drafts)&&saved.drafts.length){setPrepared(saved.drafts);setNiche(saved.niche||'');setRegion(saved.region||'');setMsg('Campanha recuperada. As mensagens foram preservadas; nenhum envio realizado.')}}catch{}},[]);
+ useEffect(()=>{loadOverview();loadCatalog();try{const saved=JSON.parse(window.localStorage.getItem('meulocal-acquisition-drafts-v3')||'null');if(saved&&Array.isArray(saved.drafts)&&saved.drafts.length){setPrepared(saved.drafts);setNiche(saved.niche||'');setRegion(saved.region||'');setMsg('Campanha recuperada. As mensagens foram preservadas; nenhum envio realizado.')}}catch{}},[]);
  const attention=useMemo(()=>data?data.kpis.onboardingPending+(data.infrastructure.ghlJobs||[]).filter((x:any)=>x.status==='failed').length+(data.infrastructure.syncLogs||[]).filter((x:any)=>x.status==='failed').length:0,[data]);
- const filteredDiagnostics=useMemo(()=>{const rows=data?.diagnostics||[];if(deliveryPeriod==='all')return rows;const since=new Date();if(deliveryPeriod==='week')since.setDate(since.getDate()-7);else since.setMonth(since.getMonth()-1);return rows.filter((d:any)=>new Date(d.first_contact_at||d.approved_at||d.created_at)>=since)},[data,deliveryPeriod]);
-
- // Approved diagnostics live in Supabase, not in the current React tab.
- // On refresh the recent persisted records remain reviewable without selecting
- // prospects again or starting any contact.
+ const catalogById=useMemo(()=>new Map(catalog.map(d=>[d.id,d])),[catalog]);
+ const filteredDiagnostics=useMemo(()=>{
+  const overviewRows=data?.diagnostics||[];
+  const overviewById=new Map(overviewRows.map((d:any)=>[d.id,d]));
+  const rows=catalog.length?catalog.map(d=>({...overviewById.get(d.id),...d})):overviewRows;
+  if(deliveryPeriod==='all')return rows;
+  const since=new Date();
+  if(deliveryPeriod==='week')since.setDate(since.getDate()-7);else since.setMonth(since.getMonth()-1);
+  return rows.filter((d:any)=>new Date(d.first_contact_at||d.approved_at||d.created_at)>=since);
+ },[data,catalog,deliveryPeriod]);
  const reviewableDiagnostics=useMemo(()=>{
-  if(savedDiagnostics.length)return savedDiagnostics;
-  return (data?.diagnostics||[]).filter((d:any)=>d?.id&&d?.public_token)
-   .slice(0,15).map((d:any)=>({id:d.id,business_name:d.business_name,url:'/d/'+d.public_token}));
- },[savedDiagnostics,data]);
+  const q=diagnosticQuery.trim().toLocaleLowerCase('pt-BR');
+  return catalog.filter(d=>(diagnosticStateFilter==='all'||d.contact.state===diagnosticStateFilter)&&
+   (!q||(d.business_name+' '+(d.niche||'')+' '+(d.region||'')).toLocaleLowerCase('pt-BR').includes(q)));
+ },[catalog,diagnosticQuery,diagnosticStateFilter]);
+
  async function search(e:FormEvent){e.preventDefault();setBusy(true);setMsg('');setSelected([]);setContactCheck([]);setRows([]);setPrepared([]);setDispatchPreview([]);setManualResults({});window.localStorage.removeItem('meulocal-acquisition-drafts-v3');try{const r=await fetch('/api/agents/prospect/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({niche,location:region})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na busca');setRows(j.candidates||[])}catch(e:any){setMsg(e.message)}finally{setBusy(false)}}
  async function prepareApproaches(){
   const companies=rows.filter(x=>selected.includes(x.id)).slice(0,10).map(x=>({id:x.id,name:x.name,address:x.address,rating:x.rating,reviews:x.reviews,score:x.score}));
@@ -107,14 +126,14 @@ export default function AdminClient(){
 if(!selected.length)return;setBusy(true);setMsg('');try{
    const approved=rows.filter(x=>selected.includes(x.id)).map(x=>({id:x.id,name:x.name,address:x.address,rating:x.rating,reviews:x.reviews??undefined,score:x.score,website:x.website,phone:x.phone,competitorAverageReviews:x.competitorAverageReviews,niche,region,competitionMode:x.competitionMode,competitionLabel:x.competitionLabel,searchIntent:x.searchIntent}));
    const r=await fetch('/api/agents/prospect/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approved,niche,location:region})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na aprovação');
-   setSavedDiagnostics(j.diagnostics||[]);setMsg((j.diagnostics?.length||0)+' diagnóstico(s) salvo(s) para revisão. Nenhum contato iniciado.');setSelected([]);await loadOverview();
+   setMsg((j.diagnostics?.length||0)+' diagnóstico(s) salvo(s) para revisão. Nenhum contato iniciado.');setSelected([]);await loadCatalog();await loadOverview();
  }catch(e:any){setMsg(e.message)}finally{setBusy(false)}}
  async function prepareComparison(d:{id:string;business_name:string}){
   setBusy(true);setMsg('Preparando a análise comparativa de '+d.business_name+' sem enviar mensagens...');
   try{
    const r=await fetch('/api/admin/prospects/prepare-report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({diagnosticId:d.id})});
    const j=await r.json();if(!r.ok)throw Error(j.error||'Falha na análise');
-   setGeneratedReports(items=>({...items,[d.id]:{url:j.report.url,count:j.report.competitorCount}}));
+   setGeneratedReports(items=>({...items,[d.id]:{url:j.report.url,count:j.report.competitorCount}}));await loadCatalog();
    setMsg('Análise da '+d.business_name+' pronta: '+j.report.competitorCount+' concorrente(s) válido(s) em até 3 km. Nenhuma mensagem enviada.');
   }catch(e:any){setMsg(String(e.message||e))}
   finally{setBusy(false)}
@@ -199,13 +218,55 @@ if(!selected.length)return;setBusy(true);setMsg('');try{
      {view==='prospecting'&&<>
        <form className="commandCard" onSubmit={search}><div className="commandIcon"><Bot/></div><div className="commandFields"><label>O que você quer prospectar?<input value={niche} onChange={e=>setNiche(e.target.value)} placeholder="Ex.: empresas que alugam geradores" required/></label><label>Onde?<input value={region} onChange={e=>setRegion(e.target.value)} placeholder="Ex.: Moema, São Paulo, SP" required/></label></div><button disabled={busy}>{busy?'Pesquisando...':'Buscar oportunidades'} <ArrowUpRight/></button></form>
        {msg&&<div className="adminMessage">{msg}</div>}
-       {reviewableDiagnostics.length>0&&<section className="adminPanel"><h3>Diagnósticos salvos para revisão</h3>{reviewableDiagnostics.map(d=><p key={d.id}><a href={d.url}>{d.business_name}</a>{' '}<button className="textBtn" type="button" disabled={busy} onClick={()=>prepareComparison(d)}>Gerar análise (sem enviar)</button>{generatedReports[d.id]&&<a href={generatedReports[d.id].url} target="_blank" rel="noopener noreferrer">Ver comparação ({generatedReports[d.id].count})</a>}</p>)}<p>Diagnósticos recuperados do banco após atualizar a página (até 15 mais recentes). A análise não envia mensagens nem ativa régua.</p></section>}
+       <section className="adminPanel" style={{marginBottom:18,padding:20}}>
+        <div className="panelHead"><div><span>HISTÓRICO DE PROSPECÇÃO</span><h2>Diagnósticos salvos e situação de contato</h2></div><b>{catalog.length}</b></div>
+        <p style={{fontSize:13,color:'#617068',marginBottom:14}}>Salvar uma empresa não envia mensagem. “Envio registrado” indica um evento no HighLevel, mas não comprova entrega ao destinatário.</p>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:12,alignItems:'flex-end'}}>
+         <label style={{flex:'1 1 250px',fontSize:12,fontWeight:600}}>Buscar empresa salva
+          <input aria-label="Buscar diagnóstico por nome" type="search" value={diagnosticQuery} onChange={e=>setDiagnosticQuery(e.target.value)} placeholder="Ex.: Wizard Cursino" style={{display:'block',width:'100%',padding:10,border:'1px solid #d4ddd4',borderRadius:7,marginTop:4}}/>
+         </label>
+         <label style={{flex:'1 1 230px',fontSize:12,fontWeight:600}}>Situação do contato
+          <select aria-label="Filtrar situação de contato" value={diagnosticStateFilter} onChange={e=>setDiagnosticStateFilter(e.target.value)} style={{display:'block',width:'100%',padding:10,border:'1px solid #d4ddd4',borderRadius:7,marginTop:4}}>
+           <option value="all">Todas as situações</option><option value="saved">Salvo, sem envio registrado</option>
+           <option value="queued">Na fila, envio não confirmado</option><option value="sent">Envio registrado</option>
+           <option value="delivered">Entrega registrada</option><option value="replied">Resposta registrada</option><option value="failed">Falha registrada</option>
+          </select>
+         </label>
+         <button type="button" className="textBtn" disabled={busy||catalogLoading} onClick={()=>loadCatalog()}>Atualizar histórico</button>
+        </div>
+        {catalogLoading&&<p role="status">Conferindo diagnósticos e registros de contato...</p>}
+        {catalogError&&<p role="alert" style={{color:'#92400e'}}>Não foi possível verificar os registros: {catalogError}. O status do envio permanece desconhecido.</p>}
+        {!catalogLoading&&!catalogError&&<>
+         <p style={{fontSize:12,color:'#5c6a5f'}}>Exibindo {Math.min(reviewableDiagnostics.length,20)} de {reviewableDiagnostics.length} diagnóstico(s) encontrado(s). Use a busca para localizar qualquer um dos {catalog.length} salvos.</p>
+         <div style={{display:'grid'}}>
+          {reviewableDiagnostics.slice(0,20).map(d=>{
+           const report=generatedReports[d.id];
+           const valid=Boolean(report||d.reportReady);
+           const count=report?.count||d.reportCount;
+           return <div key={d.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap',padding:'12px 0',borderBottom:'1px solid #e8ece7'}}>
+            <div style={{flex:'1 1 230px',minWidth:0}}>
+             <strong style={{display:'block',fontSize:14}}>{d.business_name}</strong>
+             <small style={{display:'block',color:'#7a867c'}}>{d.niche||d.region||'Negócio local'}</small>
+             <small style={{display:'block',fontWeight:600,color:d.contact.state==='saved'?'#68736a':'#405b45'}}>{d.contact.label}{d.contact.evidenceAt?' · '+fmtDate(d.contact.evidenceAt):''}</small>
+            </div>
+            <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+             <a href={d.url} target="_blank" rel="noopener noreferrer">Ver diagnóstico</a>
+             <button className="approveBtn" type="button" disabled={busy||['converted','closed'].includes(d.status||'')} onClick={()=>prepareComparison(d)}>{valid?'Atualizar análise':'Gerar análise (sem enviar)'}</button>
+             {valid&&<a href={report?.url||d.url} target="_blank" rel="noopener noreferrer">Ver comparação ({count})</a>}
+            </div>
+           </div>;
+          })}
+          {!reviewableDiagnostics.length&&<p className="empty">Nenhum diagnóstico corresponde à busca.</p>}
+         </div>
+        </>}
+        <p style={{fontSize:12,color:'#68746a',marginTop:12}}>Gerar a análise consulta dados públicos do Google. Nenhum contato, régua ou mensagem é iniciado por esta ação.</p>
+       </section>
        {(rows.length>0||prepared.length>0)&&<><div className="resultHeader"><div><span>OPORTUNIDADES ENCONTRADAS</span><h2>Empresas encontradas — você escolhe</h2><p>Nenhuma empresa é selecionada automaticamente. Escolha quais deseja abordar e revise os rascunhos.</p></div><button className="textBtn" type="button" onClick={approve} disabled={!selected.length||busy}>Salvar diagnósticos {selected.length||''}</button><button className="approveBtn" onClick={prepareApproaches} disabled={!selected.length||busy}><Check/> Preparar abordagens {selected.length||''}</button></div>{prepared.length>0&&<div style={{marginBottom:12,display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}><button className="approveBtn" type="button" onClick={checkChannels} disabled={busy}>Verificar e-mail / WhatsApp (sem enviar)</button> {dispatchPreview.length>0&&<section className="adminPanel" style={{padding:16,flexBasis:'100%'}}><h3>Resultado da simulação — zero envios</h3>{dispatchPreview.map((x,i)=><p key={i}><strong>{x.name}:</strong> {x.status} — {x.reasons.join(', ')}</p>)}</section>}{contactCheck.length>0&&<section className="adminPanel" style={{padding:16,marginTop:12}}><h3>Canais para envio manual</h3><p>{contactCheck.filter(c=>c.canSend).length} aptos ao envio pelo HighLevel de {contactCheck.length} verificados. Sem liberação, o envio permanece bloqueado, inclusive por WhatsApp manual. Um telefone público não comprova WhatsApp válido nem autorização de contato.</p>{contactCheck.map(c=><p key={c.id}><strong>{c.name}:</strong> <span style={{color:c.canSend&&(!manualResults[c.id]||manualRetryable[c.id])?'#166534':'#92400e',fontWeight:600}}>{c.canSend&&(!manualResults[c.id]||manualRetryable[c.id])?'● Pode enviar':'● Não pode enviar'}</span> — {c.recipient||c.email||c.phone||'Sem canal confirmado'} — {c.reason}</p>)}<p>O cadastro necessário no HighLevel é preparado ao confirmar o envio. Nenhuma mensagem ou cadência é disparada nesta verificação.</p></section>}</div>}{prepared.length>0&&<section className="adminPanel" style={{marginBottom:16,padding:20}}><h3>Abordagens para revisão — sem envio</h3><p>Confira o destinatário e a mensagem. Cada envio depende da sua confirmação; não há prospecção autônoma.</p>{prepared.map((p,i)=><article key={i} style={{marginTop:12,padding:12,border:'1px solid #ddd',borderRadius:8}}><strong>{p.name}</strong><p style={{whiteSpace:'pre-wrap'}}>{p.message}</p>{(() => {const c=contactCheck.find(x=>x.id===p.id);return <><p style={{fontSize:13,fontWeight:600,color:c?.canSend&&(!manualResults[p.id]||manualRetryable[p.id])?'#166534':'#92400e'}}>{c?.canSend&&(!manualResults[p.id]||manualRetryable[p.id])?'● Pode enviar — '+(c.channel==='email'?'E-mail':'WhatsApp'):'● Não pode enviar — '+(manualResults[p.id]?'Confira o resultado da tentativa abaixo.':(c?.reason||'Verifique o e-mail / WhatsApp primeiro.'))}</p>{c?.recipient&&<p>{c.recipient}</p>}{manualResults[p.id]&&<p role="status">{manualResults[p.id]}</p>}<button type="button" onClick={()=>navigator.clipboard.writeText(p.message)}>Copiar mensagem</button>{' '}<button type="button" disabled={busy||!c?.canSend||!!manualResults[p.id]&&!manualRetryable[p.id]} onClick={()=>sendManualProspect(p)}>Enviar {c?.channel==='whatsapp'?'WhatsApp':'e-mail'} pelo HighLevel</button></>})()}</article>)}</section>}<div className="prospectList">{rows.map((r,i)=><article key={r.id} className={selected.includes(r.id)?'selected':''} onClick={()=>toggle(r.id)}><div className="selectBox">{selected.includes(r.id)&&<Check/>}</div><div className="rank">#{i+1}</div><div className="prospectInfo"><strong>{r.name}</strong><span>{r.address}</span><small>{r.rating?'★ '+r.rating:'Sem nota'} · {r.reviews===null?'Quantidade de avaliações não informada':r.reviews+' avaliações'}</small></div><div className="scoreBox"><span>Score MeuLocal</span><strong>{r.reviews===null?'—':r.score}<small>{r.reviews===null?'':'/100'}</small></strong><em>{r.reviews===null?'dados insuficientes':r.priority.replaceAll('_',' ')}</em></div></article>)}</div></>}
      </>}
 
      {view==='leads'&&data&&<section className="adminPanel tablePanel"><div className="panelHead"><div><span>FUNIL COMERCIAL</span><h2>Leads</h2></div><b>{data.leads.length}</b></div><div className="adminTable"><div className="tableRow tableHead"><span>Empresa / contato</span><span>Etapa</span><span>Automação</span><span>Próxima ação</span></div>{data.leads.map((l:any)=><div className="tableRow" key={l.id}><span><strong>{l.business?.name||l.name||'Sem empresa'}</strong><small>{l.email||l.whatsapp||'Sem contato'}</small></span><span><Pill value={l.lifecycle_stage}/></span><span>{l.automation_track||'—'}</span><span>{fmtDate(l.next_action_at)}</span></div>)}</div>{!data.leads.length&&<p className="empty">Nenhum lead ainda.</p>}</section>}
 
-     {view==='diagnostics'&&data&&<><section className="adminPanel repliesPanel"><div className="panelHead"><div><span>CAIXA DE ENTRADA</span><h2>Respostas recebidas</h2></div><b>{filteredDiagnostics.filter((d:any)=>d.reply).length}</b></div>{filteredDiagnostics.filter((d:any)=>d.reply).length?filteredDiagnostics.filter((d:any)=>d.reply).map((d:any)=><article className="replyCard" key={d.id}><div><strong>{d.business_name}</strong><small><Pill value="conversation"/> · {d.reply.channel==='whatsapp'?'WhatsApp':'E-mail'} · {fmtDate(d.reply.at)}</small><p>{d.reply.preview||'Resposta recebida. O conteúdo ainda não foi disponibilizado pelo canal.'}</p></div>{replyingTo===d.id?<div className="replyComposer"><textarea value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder="Escreva a resposta..."/><div><button className="textBtn" onClick={()=>{setReplyingTo(null);setReplyText('')}}>Cancelar</button><button className="replySend" disabled={busy||!replyText.trim()} onClick={()=>sendReply(d)}><Send/>Enviar</button></div></div>:<button className="textBtn" disabled={!d.leadId} onClick={()=>{setReplyingTo(d.id);setReplyText('')}}>Responder</button>}</article>):<p className="empty">Nenhuma resposta ainda. Assim que alguém responder, ela aparecerá aqui.</p>}</section><section className="adminPanel tablePanel"><div className="panelHead"><div><span>DIAGNÓSTICOS</span><h2>Histórico de oportunidades</h2></div><div className="diagnosticActions"><select aria-label="Período dos diagnósticos" value={deliveryPeriod} onChange={e=>setDeliveryPeriod(e.target.value as 'all'|'week'|'month')}><option value="all">Todos (até hoje)</option><option value="week">Últimos 7 dias</option><option value="month">Últimos 30 dias</option></select><button className="textBtn" type="button" disabled={busy||!data.diagnostics.some((d:any)=>d.status==='approved')} onClick={()=>dispatchApproved(data.diagnostics.filter((d:any)=>d.status==='approved'))}>Disparar próximo aprovado</button></div></div>{diagMsg&&<div className="adminMessage">{diagMsg}</div>}<div className="adminTable"><div className="tableRow tableHead diagCols"><span>Empresa</span><span>Score</span><span>Envio</span><span>Etapa da régua</span><span>Contato em</span><span>Abertura confirmada</span><span>CTA</span></div>{filteredDiagnostics.map((d:any)=><div className="tableRow diagCols" key={d.id}><span><strong>{d.business_name}</strong><small>{d.niche||d.region||'—'}</small>{d.delivery?.reason&&<small className="deliveryReason">{d.delivery.reason}</small>}{d.status==='approved'&&<button className="textBtn acquisitionBtn" type="button" disabled={busy} onClick={()=>dispatchApproved([d])}>Revisar contato inicial</button>}{d.public_token&&<><a href={'/d/'+d.public_token} target="_blank" rel="noopener noreferrer">Ver diagnóstico</a>{' '}<button className="textBtn acquisitionBtn" type="button" disabled={busy} onClick={()=>prepareComparison({id:d.id,business_name:d.business_name})}>Gerar análise (sem enviar)</button>{generatedReports[d.id]&&<a href={generatedReports[d.id].url} target="_blank" rel="noopener noreferrer">Ver comparação ({generatedReports[d.id].count})</a>}</>}</span><span><b>{d.score}/100</b></span><span><DeliveryPill delivery={d.delivery}/></span><span><Pill value={d.cadence}/></span><span>{fmtDate(d.delivery?.at||d.first_contact_at)}</span><span>{fmtDate(d.diagnostic_opened_at)}</span><span>{fmtDate(d.cta_clicked_at)}</span></div>)}</div>{!filteredDiagnostics.length&&<p className="empty">Nenhum diagnóstico neste período.</p>}</section></>}
+     {view==='diagnostics'&&data&&<><section className="adminPanel repliesPanel"><div className="panelHead"><div><span>CAIXA DE ENTRADA</span><h2>Respostas recebidas</h2></div><b>{filteredDiagnostics.filter((d:any)=>d.reply).length}</b></div>{filteredDiagnostics.filter((d:any)=>d.reply).length?filteredDiagnostics.filter((d:any)=>d.reply).map((d:any)=><article className="replyCard" key={d.id}><div><strong>{d.business_name}</strong><small><Pill value="conversation"/> · {d.reply.channel==='whatsapp'?'WhatsApp':'E-mail'} · {fmtDate(d.reply.at)}</small><p>{d.reply.preview||'Resposta recebida. O conteúdo ainda não foi disponibilizado pelo canal.'}</p></div>{replyingTo===d.id?<div className="replyComposer"><textarea value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder="Escreva a resposta..."/><div><button className="textBtn" onClick={()=>{setReplyingTo(null);setReplyText('')}}>Cancelar</button><button className="replySend" disabled={busy||!replyText.trim()} onClick={()=>sendReply(d)}><Send/>Enviar</button></div></div>:<button className="textBtn" disabled={!d.leadId} onClick={()=>{setReplyingTo(d.id);setReplyText('')}}>Responder</button>}</article>):<p className="empty">Nenhuma resposta ainda. Assim que alguém responder, ela aparecerá aqui.</p>}</section><section className="adminPanel tablePanel"><div className="panelHead"><div><span>DIAGNÓSTICOS</span><h2>Histórico de oportunidades</h2></div><div className="diagnosticActions"><select aria-label="Período dos diagnósticos" value={deliveryPeriod} onChange={e=>setDeliveryPeriod(e.target.value as 'all'|'week'|'month')}><option value="all">Todos (até hoje)</option><option value="week">Últimos 7 dias</option><option value="month">Últimos 30 dias</option></select><button className="textBtn" type="button" disabled={busy||!data.diagnostics.some((d:any)=>d.status==='approved')} onClick={()=>dispatchApproved(data.diagnostics.filter((d:any)=>d.status==='approved'))}>Disparar próximo aprovado</button></div></div>{diagMsg&&<div className="adminMessage">{diagMsg}</div>}<div className="adminTable"><div className="tableRow tableHead diagCols"><span>Empresa</span><span>Score</span><span>Envio</span><span>Etapa da régua</span><span>Contato em</span><span>Abertura confirmada</span><span>CTA</span></div>{filteredDiagnostics.map((d:any)=><div className="tableRow diagCols" key={d.id}><span><strong>{d.business_name}</strong><small>{d.niche||d.region||'—'}</small>{d.delivery?.reason&&<small className="deliveryReason">{d.delivery.reason}</small>}{d.status==='approved'&&<button className="textBtn acquisitionBtn" type="button" disabled={busy} onClick={()=>dispatchApproved([d])}>Revisar contato inicial</button>}{d.public_token&&<><a href={'/d/'+d.public_token} target="_blank" rel="noopener noreferrer">Ver diagnóstico</a>{' '}<button className="textBtn acquisitionBtn" type="button" disabled={busy} onClick={()=>prepareComparison({id:d.id,business_name:d.business_name})}>Gerar análise (sem enviar)</button>{generatedReports[d.id]&&<a href={generatedReports[d.id].url} target="_blank" rel="noopener noreferrer">Ver comparação ({generatedReports[d.id].count})</a>}</>}</span><span><b>{d.score}/100</b></span><span>{catalogById.get(d.id)?.contact?<span title="Registro de contato vinculado a este diagnóstico; não implica confirmação de entrega">{catalogById.get(d.id)!.contact.label}</span>:<span>Não verificado</span>}</span><span><Pill value={d.cadence}/></span><span>{fmtDate(d.delivery?.at||d.first_contact_at)}</span><span>{fmtDate(d.diagnostic_opened_at)}</span><span>{fmtDate(d.cta_clicked_at)}</span></div>)}</div>{!filteredDiagnostics.length&&<p className="empty">Nenhum diagnóstico neste período.</p>}</section></>}
 
      {view==='customers'&&data&&<section className="adminPanel tablePanel"><div className="panelHead"><div><span>CARTEIRA</span><h2>Clientes</h2></div><b>{data.customers.length}</b></div><div className="adminTable"><div className="tableRow tableHead customerCols"><span>Empresa</span><span>Pagamento</span><span>Onboarding</span><span>Google</span><span>GHL</span></div>{data.customers.map((c:any)=><div className="tableRow customerCols" key={c.id}><span><strong>{c.business?.name||'Empresa'}</strong><small>{c.business?.city||c.business?.address||'—'}</small></span><span><Pill value={c.payment_status}/></span><span><Pill value={c.onboarding_status}/></span><span>{c.google?<Pill value={c.google.status}/>:<span className="muted">Não conectado</span>}</span><span>{c.ghl?<Pill value={c.ghl.lifecycle_status}/>:<span className="muted">Não provisionado</span>}</span></div>)}</div>{!data.customers.length&&<p className="empty">Nenhum cliente ativado ainda.</p>}</section>}
 

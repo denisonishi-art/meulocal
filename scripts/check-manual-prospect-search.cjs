@@ -21,17 +21,18 @@ test('unknown review count cannot be persisted as a zero-review diagnostic',asyn
 
 test('geography resolution requires a geographic place in the requested state, not a business with the same name',async()=>{for(const geometry of [{places:[{...geo.places[0],types:['school']}]},{places:[{...geo.places[0],addressComponents:[{types:['administrative_area_level_1'],shortText:'MG'}]}]},{places:[geo.places[0],geo.places[0]]}]){const f=search({geometry});assert.equal((await f.post()).status,422);assert.equal(f.calls.length,1)}});
 
-test('saved diagnostics and comparative action survive browser reload from Supabase overview',()=>{
+test('catalog retrieves all persisted diagnostics and keeps report action searchable after reload',()=>{
  const ui=fs.readFileSync('app/admin/AdminClient.tsx','utf8');
- const api=fs.readFileSync('app/api/admin/overview/route.ts','utf8');
+ const api=fs.readFileSync('app/api/admin/prospects/diagnostics/route.ts','utf8');
  assert.ok(api.includes("db.from('prospect_diagnostics')"));
  assert.ok(api.includes('public_token'));
  assert.ok(ui.includes('reviewableDiagnostics=useMemo'));
- assert.ok(ui.includes("return (data?.diagnostics||[])"));
- assert.ok(ui.includes("slice(0,15).map((d:any)=>({id:d.id"));
- assert.ok(ui.includes('reviewableDiagnostics.map(d=>'));
+ assert.ok(ui.includes('catalog.filter(d=>'));
+ assert.ok(ui.includes('reviewableDiagnostics.slice(0,20)'));
+ assert.ok(ui.includes('Buscar diagnóstico por nome'));
  assert.ok(ui.includes('Gerar análise (sem enviar)'));
+ assert.ok(ui.includes('loadCatalog();'));
  assert.ok(ui.includes("href={'/d/'+d.public_token}"));
  assert.ok(ui.includes('setGeneratedReports(items=>'));
- assert.ok(!ui.includes('savedDiagnostics.length>0&&<section className="adminPanel"'));
+ assert.ok(!ui.includes('slice(0,15).map'));
 });
