@@ -18,22 +18,26 @@ function segmentContext(niche:string){
   if(/escola|ingles|idioma|curso de lingua|cursos de lingua/.test(normalized))return {
     decision:'Quando alguém procura uma escola de idiomas, as avaliações de outros alunos podem ajudar na decisão de matrícula.',
     peers:'outras escolas que disputam a atenção dos mesmos alunos',
-    benefit:'atrair novos alunos e gerar mais oportunidades de matrícula'
+    benefit:'atrair novos alunos e gerar mais oportunidades de matrícula',
+    reviewAuthors:'alunos satisfeitos'
   };
   if(/clinica|medic|dentista|odontolog|fisioterap|psicolog/.test(normalized))return {
     decision:'Ao buscar uma clínica, as avaliações ajudam pacientes a avaliar confiança antes do agendamento.',
     peers:'outras clínicas que atendem o mesmo público',
-    benefit:'atrair novos pacientes e oportunidades de agendamento'
+    benefit:'atrair novos pacientes e oportunidades de agendamento',
+    reviewAuthors:'pacientes satisfeitos'
   };
   if(/restaurante|bar|cafe|pizzaria|hamburguer/.test(normalized))return {
     decision:'Quem escolhe onde comer costuma consultar as avaliações no Google antes de decidir.',
     peers:'outros estabelecimentos que disputam o mesmo público',
-    benefit:'atrair mais clientes e oportunidades de reservas'
+    benefit:'atrair mais clientes e oportunidades de reservas',
+    reviewAuthors:'clientes satisfeitos'
   };
   return {
     decision:'Quem procura um negócio local costuma comparar as avaliações no Google antes de escolher.',
     peers:'outros negócios que disputam o mesmo público',
-    benefit:'fortalecer a confiança e gerar novas oportunidades comerciais'
+    benefit:'fortalecer a confiança e gerar novas oportunidades comerciais',
+    reviewAuthors:'clientes satisfeitos'
   };
 }
 
@@ -53,7 +57,7 @@ export function buildFirstContactDraft(p:FirstContactProspect){
   const context=segmentContext(p.niche);
   const evidence=observation(p);
   const opportunity=p.reviews!==null&&p.reviews<15
-    ? 'Existe uma oportunidade de potencializar a presença de experiências positivas de clientes satisfeitos e, com isso, '+context.benefit+'.'
+    ? 'Há uma oportunidade de dar mais visibilidade às experiências de '+context.reviewAuthors+' para ajudar a '+context.benefit+'.'
     : 'Uma gestão consistente das avaliações pode reforçar essa confiança e ajudar a '+context.benefit+'.';
   const cta='Posso preparar e enviar uma análise gratuita comparando a presença de '+p.name+' no Google com '+context.peers+', incluindo oportunidades práticas de melhoria?';
   const message=[
