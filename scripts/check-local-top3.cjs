@@ -24,7 +24,7 @@ test('radius is a hard 3 km limit and correct geographic distance is used',()=>{
   p('within',4.8,500,-23.626),
   p('outside',5,1500,-23.630)
  ]});
- assert.deepEqual(found.map(x=>x.id),['within']);
+ assert.deepEqual(Array.from(found,x=>x.id),['within']);
  assert.ok(found[0].distanceKm<3);
 });
 
@@ -35,7 +35,7 @@ test('three strongest credible profiles are selected by rating adjusted for revi
   p('five_one',5,1),p('different_segment',5,900,-23.6,'gym'),
   p('outside',5,900,-23.635)
  ]});
- assert.deepEqual(found.map(x=>x.id),['high_confidence','second','third']);
+ assert.deepEqual(Array.from(found,x=>x.id),['high_confidence','second','third']);
  assert.ok(weightedReputationRating(4.8,400)>weightedReputationRating(5,5));
  assert.ok(found.every(x=>x.reviewDataReliable===true&&x.distanceKm<=3));
 });
@@ -48,7 +48,7 @@ test('incomplete, duplicates and irrelevant profiles do not fabricate a third co
   p('legitimate',4.8,60),p('legitimate',4.8,60),invalid,noLocation,closed,
   p('unrated',null,100),p('different',4.8,200,-23.6,'restaurant')
  ]});
- assert.deepEqual(found.map(x=>x.id),['legitimate']);
+ assert.deepEqual(Array.from(found,x=>x.id),['legitimate']);
  assert.ok(!found.some(x=>x.name.includes('missing')));
 });
 
