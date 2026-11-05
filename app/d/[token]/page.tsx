@@ -6,18 +6,25 @@ import OpenTracker from './OpenTracker';
 import type {LocalComparison} from '@/lib/competitors/hermes-comparative-report';
 
 export const dynamic='force-dynamic';
+export const revalidate=0;
+export const fetchCache='force-no-store';
+
+// A report can be regenerated after a prospect's initial visit. Never reuse
+// Next.js Data Cache for the service-role PostgREST reads on this public page.
+const freshSupabaseFetch:typeof fetch=(input,init)=>fetch(input,{...init,cache:'no-store'});
+
 
 export default async function ProspectDiagnosticPage({params}:{params:{token:string}}){
   const supabaseUrl=process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!supabaseUrl||!serviceKey)notFound();
-  const admin=createClient(supabaseUrl,serviceKey);
+  const admin=createClient(supabaseUrl,serviceKey,{global:{fetch:freshSupabaseFetch},auth:{persistSession:false}});
   const {data}=await admin.from('prospect_diagnostics').select('*').eq('public_token',params.token).maybeSingle();
   if(!data)notFound();
 
   // Reports are scoped to the unguessable diagnostic token and expire after 30 days.
   const {data:comparison}=await admin.from('prospect_comparison_reports')
-   .select('google_place_id,snapshot,expires_at').eq('diagnostic_id',data.id).maybeSingle();
+   .select('google_place_id,snapshot,expires_at,observed_at,updated_at').eq('diagnostic_id',data.id).maybeSingle();
   const current=Boolean(comparison?.google_place_id===data.place_id&&
    typeof comparison?.expires_at==='string'&&Date.parse(comparison.expires_at)>Date.now()&&
    ['meulocal_top3_v1','meulocal_top3_v2'].includes(comparison?.snapshot?.version)&&[3000,5000].includes(comparison.snapshot.radiusMeters)&&

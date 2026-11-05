@@ -1,4 +1,5 @@
 import {NextResponse} from 'next/server';
+import {revalidatePath} from 'next/cache';
 import {createClient} from '@supabase/supabase-js';
 import {z} from 'zod';
 import {isAdminRequest} from '@/lib/admin-auth';
@@ -22,6 +23,9 @@ export async function POST(req:Request){
  if(!diagnostic||['closed','converted'].includes(diagnostic.status))return response({error:'Diagnóstico não elegível.'},409);
  try{
   const report=await prepareVerifiedComparison(db,diagnostic,{forceRefresh:true});
+  // Refresh the public diagnostic after the committed report snapshot is saved.
+  // This is cache invalidation only: no prospect receives a message.
+  revalidatePath('/d/'+diagnostic.public_token,'page');
   return response({ok:true,report,status:'ready',dispatched:0,contactStarted:0});
  }catch(error){
   const cause=error instanceof Error?error.message:'';
