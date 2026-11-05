@@ -21,11 +21,11 @@ export async function POST(req:Request){
  if(error)return response({error:'Não foi possível verificar o diagnóstico.'},503);
  if(!diagnostic||['closed','converted'].includes(diagnostic.status))return response({error:'Diagnóstico não elegível.'},409);
  try{
-  const report=await prepareVerifiedComparison(db,diagnostic);
+  const report=await prepareVerifiedComparison(db,diagnostic,{forceRefresh:true});
   return response({ok:true,report,status:'ready',dispatched:0,contactStarted:0});
  }catch(error){
   const cause=error instanceof Error?error.message:'';
   const incomplete=['no_reliable_local_competitors','google_business_data_incomplete','invalid_google_category'].includes(cause);
-  return response({error:incomplete?'Dados insuficientes para comparar concorrentes válidos em até 3 km. Nenhum relatório foi enviado.':'Não foi possível preparar a análise agora. Nenhum contato foi enviado.'},incomplete?422:503);
+  return response({error:incomplete?'Dados insuficientes para comparar concorrentes válidos em até 5 km. Nenhum relatório foi enviado.':'Não foi possível preparar a análise agora. Nenhum contato foi enviado.'},incomplete?422:503);
  }
 }
