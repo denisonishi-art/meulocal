@@ -20,3 +20,18 @@ test('browser keeps manual selection and invalidates stale drafts on a new searc
 test('unknown review count cannot be persisted as a zero-review diagnostic',async()=>{let writes=0;const api=load('app/api/agents/prospect/approve/route.ts',{...server,'@/supabase/supabase-js':{},'@supabase/supabase-js':{createClient:()=>{writes++;throw Error('unexpected database access')}}});const r=await api.POST(request({approved:[{id:'synthetic',name:'Synthetic',score:15,reviews:null}]}));assert.equal(r.status,400);assert.equal(writes,0)});
 
 test('geography resolution requires a geographic place in the requested state, not a business with the same name',async()=>{for(const geometry of [{places:[{...geo.places[0],types:['school']}]},{places:[{...geo.places[0],addressComponents:[{types:['administrative_area_level_1'],shortText:'MG'}]}]},{places:[geo.places[0],geo.places[0]]}]){const f=search({geometry});assert.equal((await f.post()).status,422);assert.equal(f.calls.length,1)}});
+
+test('saved diagnostics and comparative action survive browser reload from Supabase overview',()=>{
+ const ui=fs.readFileSync('app/admin/AdminClient.tsx','utf8');
+ const api=fs.readFileSync('app/api/admin/overview/route.ts','utf8');
+ assert.ok(api.includes("db.from('prospect_diagnostics')"));
+ assert.ok(api.includes('public_token'));
+ assert.ok(ui.includes('reviewableDiagnostics=useMemo'));
+ assert.ok(ui.includes("return (data?.diagnostics||[])"));
+ assert.ok(ui.includes("slice(0,15).map((d:any)=>({id:d.id"));
+ assert.ok(ui.includes('reviewableDiagnostics.map(d=>'));
+ assert.ok(ui.includes('Gerar análise (sem enviar)'));
+ assert.ok(ui.includes("href={'/d/'+d.public_token}"));
+ assert.ok(ui.includes('setGeneratedReports(items=>'));
+ assert.ok(!ui.includes('savedDiagnostics.length>0&&<section className="adminPanel"'));
+});
