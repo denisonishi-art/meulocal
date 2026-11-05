@@ -4,6 +4,7 @@
  */
 import {createHmac} from 'node:crypto';
 import {readOpenDotsGuidance} from './opendots-guidance';
+import type {ReportDecision} from '@/lib/competitors/hermes-report-delivery';
 export type OpenDotsEvent={eventId:string;kind:string;version:number;occurredAt:string;permissions:{initialSend:false;autoReply:boolean;crmWrite:false};[key:string]:unknown};
 
 /** autoReply is granted ONLY for contacts explicitly allowlisted in
@@ -40,6 +41,6 @@ export async function deliverOpenDotsEvent(input:OpenDotsEvent){
  }catch{return {status:'unavailable'} as const}
 }
 
-export async function forwardInboundToOpenDots(input:{eventId:string;leadId:string;contactId:string;locationId:string;conversationId:string|null;messageId:string|null;message:string;channel:string|null;occurredAt?:string}){
+export async function forwardInboundToOpenDots(input:{eventId:string;leadId:string;contactId:string;locationId:string;conversationId:string|null;messageId:string|null;message:string;channel:string|null;occurredAt?:string;analysis?:Exclude<ReportDecision,null>}){
  return deliverOpenDotsEvent({version:1,kind:'meulocal.acquisition.inbound',...input,occurredAt:input.occurredAt||new Date().toISOString(),permissions:{initialSend:false,autoReply:false,crmWrite:false}});
 }

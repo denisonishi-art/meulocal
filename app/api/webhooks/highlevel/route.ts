@@ -5,6 +5,7 @@ import {createClient} from '@supabase/supabase-js';
 import {createHash,verify as verifySignature} from 'crypto';
 import {getLocationAccessToken,removeOperationalTags} from '@/lib/highlevel-operational';
 import {forwardInboundToOpenDots} from '@/lib/agents/opendots-commercial-bridge';
+import {prepareAnalysisForApprovedReply} from '@/lib/competitors/hermes-report-delivery';
 import {CONTROLLED_WORKFLOW_ID,CONTROLLED_LOCATION_ID,CONTROLLED_CONTACT_ID,ControlledInboundError,resolveControlledInbound} from '@/lib/ghl-controlled-inbound';
 
 function eventId(body:any){
@@ -132,7 +133,9 @@ export async function POST(request:Request){
           try{const token=await getLocationAccessToken(row.ghl_location_id);await removeOperationalTags({token,contactId:row.contact_id,tags:['meulocal:prospectar','follow-up']})}catch{}
           // Offer this inbound event to OpenDots after the existing stop-on-reply logic.
           // The bridge is disabled without explicit runtime configuration; no message is sent.
-          const openDots=await forwardInboundToOpenDots({eventId:row.external_event_id,leadId:lead.id,contactId:row.contact_id,locationId:row.ghl_location_id,conversationId:row.conversation_id,messageId:row.message_id,message:String(body?.body||body?.message?.body||'').slice(0,2000),channel:row.channel}).catch(()=>({status:'unavailable'} as const));
+          const inboundText=String(body?.body||body?.message?.body||'').slice(0,2000);
+          const analysis=await prepareAnalysisForApprovedReply(db,{leadId:lead.id,contactId:row.contact_id,message:inboundText});
+          const openDots=await forwardInboundToOpenDots({eventId:row.external_event_id,leadId:lead.id,contactId:row.contact_id,locationId:row.ghl_location_id,conversationId:row.conversation_id,messageId:row.message_id,message:inboundText,channel:row.channel,...(analysis?{analysis}:{})}).catch(()=>({status:'unavailable'} as const));
           const {error:receiptError}=await db.from('ghl_events').update({payload_meta:{...row.payload_meta,openDots}}).eq('external_event_id',row.external_event_id).eq('ghl_location_id',row.ghl_location_id).eq('contact_id',row.contact_id).select('id').single();
           console.info(JSON.stringify({stage:'highlevel_opendots',eventId:row.external_event_id,messageId:row.message_id,openDots:openDots.status,receiptSaved:!receiptError}));
         }
