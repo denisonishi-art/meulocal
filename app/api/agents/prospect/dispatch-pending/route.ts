@@ -29,7 +29,7 @@ export async function POST(req:Request){
   const l=lead.data,d=diagnostic.data,channel=l.email&&l.consent_email?'email':l.whatsapp&&l.consent_whatsapp?'whatsapp':null;
   if(!channel)return NextResponse.json({error:'Não há canal autorizado para este lead.'},{status:409});
   const message=initialAcquisitionMessage(d.business_name,d.public_token);
-  const result=await deliverAcquisitionMessage(db,{leadId:l.id,kind:'initial',step:1,channel,message,subject:'Análise inicial de '+d.business_name});
+  const result=await deliverAcquisitionMessage(db,{leadId:l.id,kind:'initial',step:1,channel,message,subject:'Uma oportunidade para '+d.business_name+' no Google'});
   return NextResponse.json({...result,contactStarted:result.processed},{status:result.ok&&!('stopped' in result)?200:409,headers:{'Cache-Control':'private, no-store'}});
  }catch{return unavailable()}
 }
