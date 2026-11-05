@@ -54,6 +54,6 @@ test('incomplete, duplicates and irrelevant profiles do not fabricate a third co
 
 test('missing/invalid location is never treated as permission to broaden radius',()=>{
  const candidates=[p('valid',4.8,100)];
- assert.deepEqual(selectTopLocalCompetitors({businessId:'target',center:{latitude:null,longitude:-46.6},businessCategory:'school',places:candidates}),[]);
- assert.deepEqual(selectTopLocalCompetitors({businessId:'target',center:{latitude:91,longitude:-46.6},businessCategory:'school',places:candidates}),[]);
+ assert.equal(selectTopLocalCompetitors({businessId:'target',center:{latitude:null,longitude:-46.6},businessCategory:'school',places:candidates}).length,0);
+ assert.equal(selectTopLocalCompetitors({businessId:'target',center:{latitude:91,longitude:-46.6},businessCategory:'school',places:candidates}).length,0);
 });
