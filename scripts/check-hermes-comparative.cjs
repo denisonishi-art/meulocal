@@ -79,8 +79,8 @@ const baseDiagnostic={id:diagId,public_token:uuid,place_id:googleId,business_nam
 function fixture({permissionMessage='Sou Denis, fundador do MeuLocal. Posso preparar e enviar uma análise gratuita?',contactId='contact123',readyReport=null,reportEnabled=true}={}){
  const calls=[],rows={
   leads:{id:leadId,business_id:diagId,prospect_diagnostic_id:diagId,ghl_contact_id:contactId,opt_out_at:null,lifecycle_stage:'conversation'},
-  manual_prospect_permissions:{place_id:googleId,name:detail.displayName.text,message:permissionMessage,contact_id:contactId,stage:'ready',created_at:'2026-11-05T13:00:00Z'},
-  outreach_events:{id:'outbound',created_at:'2026-11-05T13:15:00Z'},
+  manual_prospect_permissions:{place_id:googleId,name:detail.displayName.text,message:permissionMessage,contact_id:contactId,stage:'ready',created_at:new Date(Date.now()-40*60000).toISOString()},
+  outreach_events:{id:'outbound',created_at:new Date(Date.now()-25*60000).toISOString()},
   businesses:{id:diagId,name:detail.displayName.text,google_place_id:googleId,address:'São Paulo'},
   prospect_diagnostics:baseDiagnostic,
   prospect_comparison_reports:readyReport&&{google_place_id:googleId,snapshot:readyReport,expires_at:readyReport.expiresAt}
