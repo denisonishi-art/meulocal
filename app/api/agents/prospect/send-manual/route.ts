@@ -16,6 +16,11 @@ export async function POST(req:Request){
  let parsed;try{parsed=schema.safeParse(JSON.parse(raw))}catch{return json({error:'Confira a mensagem e o destinatário.'},400)}
  if(!parsed.success)return json({error:'Confira a mensagem e o destinatário.'},400);
  let target;try{target=verifyRecipient(parsed.data.sendToken)}catch{return json({error:'Verifique novamente os canais antes de enviar.'},409)}
+ // Signed proof from an operator-confirmed LC Email verification is required.
+ // Syntax/MX or a matching website domain alone do not prove mailbox existence.
+ if(target.channel==='email'&&(!Number.isSafeInteger(target.mailboxVerifiedAt)||
+    !target.mailboxVerifiedAt||target.mailboxVerifiedAt>Date.now()||
+    Date.now()-target.mailboxVerifiedAt>15*60*1000))return json({error:'Valide a caixa postal pelo HighLevel antes do envio. Uma confirmação anterior expirou ou não foi registrada.'},409);
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)return json({error:'Operação indisponível.'},503);
  const db=createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(6000)})}});
