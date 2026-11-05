@@ -31,7 +31,7 @@ function verifiedComparisonDecision(event){
  const analysis=event.analysis;
  const kind=String(event.channel||'').toLowerCase();
  const channel=kind.includes('whatsapp')?'whatsapp':kind.includes('email')?'email':'none';
- const positive=/^(?:sim|pode (?:mandar|enviar|preparar)|manda|envia|quero (?:a an[aá]lise|receber|ver|sim)|me (?:manda|envia)|claro|por favor|pode sim)(?:[ ,]+(?:por favor|a an[aá]lise|o comparativo|a avalia[cç][aã]o|sim|obrigad[oa]|pode mandar|pode enviar))*[!.?]*$/i.test(String(event.message||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+ const positive=/^(?:sim|pode (?:me )?(?:mandar|enviar|preparar)|manda|envia|quero (?:a an[aá]lise|receber|ver|sim)|gostaria de receber(?: a an[aá]lise)?|me (?:manda|envia)|claro|por favor|pode sim)(?:[ ,]+(?:por favor|a an[aá]lise|o comparativo|a avalia[cç][aã]o|sim|obrigad[oa]|pode mandar|pode enviar))*[!.?]*$/i.test(String(event.message||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
  if(!positive)return null;
  const handoff=()=>({eventId:event.eventId,action:'handoff',channel:'none',message:'',rationale:'Análise solicitada, mas ainda não validada. Encaminhar para revisão humana; nenhum link inventado.',requiresHumanReview:true,status:'suggestion_only'});
  if(analysis.status!=='ready'||channel==='none')return handoff();
