@@ -22,33 +22,51 @@ export async function POST(req:Request){
  const ready=await manualRecipientReadiness(db,target);
  if(!ready.canSend)return json({error:ready.reason},409);
  let preparing=false;
+ let stage='reserve';
  try{
+  stage='reserve';
   const reserved=await db.rpc('prepare_manual_prospect',{p_request_id:parsed.data.requestId,p_place_id:target.id.replace(/^places\//,''),p_name:target.name,p_address:target.address||null,p_channel:target.channel,p_recipient:target.recipient,p_message:parsed.data.message});
   if(reserved.error||!reserved.data?.leadId)return json({error:'Não foi possível preparar um vínculo único. Confira histórico e destinatário; nenhuma mensagem foi enviada.'},409);
   const job=reserved.data;
   if(job.state==='reconciliation_required')return json({error:'Preparação anterior com resultado incerto. Confira o vínculo no HighLevel antes de tentar outro envio.'},409);
   if(job.state==='prepare'){
    preparing=true;
+   stage='ghl_token';
    const token=await getLocationAccessToken(MANUAL_LOCATION,6000);
+   stage='ghl_contact_search';
    let contact=await findExactRecipient(token,target);
    if(!contact){
     if(target.channel!=='email')throw Error('unverified_whatsapp');
     // Create only after the operator confirms this exact recipient and message.
     // No tags, form submissions, workflow enrollment or contact upsert.
+    stage='ghl_contact_creation';
     const r=await fetch('https://services.leadconnectorhq.com/contacts/',{method:'POST',headers:{Authorization:'Bearer '+token,Version:'2021-07-28','Content-Type':'application/json'},body:JSON.stringify({locationId:MANUAL_LOCATION,name:target.name,email:target.recipient,source:'MeuLocal — envio manual'}),cache:'no-store',redirect:'error',signal:AbortSignal.timeout(8000)});
     const body=await r.json();if(!r.ok||!body.contact?.id)throw Error('contact_creation_unconfirmed');
+    stage='ghl_contact_confirmation';
     contact=await getOperationalContact({token,contactId:body.contact.id,timeoutMs:6000});
    }
+   stage='ghl_identity_validation';
    const same=target.channel==='email'?String(contact?.email||'').trim().toLowerCase()===target.recipient:String(contact?.phone||'').replace(/\D/g,'')===target.recipient.replace(/\D/g,'');
    if(!same||contact?.locationId!==MANUAL_LOCATION||!contact.id)throw Error('contact_identity_unconfirmed');
+   stage='supabase_contact_binding';
    const bound=await db.rpc('bind_manual_prospect',{p_request_id:parsed.data.requestId,p_lease:job.lease,p_contact_id:contact.id});
    if(bound.error||bound.data?.leadId!==job.leadId)throw Error('contact_binding_unconfirmed');
    // Link the bound contact to a pipeline opportunity (dedup by contact). Best-effort:
    // a skipped/failed opportunity never blocks the primary send path.
+   stage='ghl_opportunity_sync';
    const opportunity=await syncOperationalOpportunity({locationId:MANUAL_LOCATION,contactId:contact.id,name:target.name});
    console.info(JSON.stringify({stage:'highlevel_opportunity',locationId:MANUAL_LOCATION,contactId:contact.id,opportunity}));
   }else if(job.state!=='ready')throw Error('manual_state_invalid');
+  stage='message_delivery';
   const result=await deliverAcquisitionMessage(db,{leadId:job.leadId,kind:'manual',step:null,requestId:parsed.data.requestId,channel:target.channel,message:parsed.data.message,subject:'Uma oportunidade de reputação no Google para '+target.name});
   return json(result,result.ok&&!('stopped' in result)?200:409);
- }catch{return json({error:preparing?'Preparação com resultado não confirmado. Confira o vínculo no HighLevel; não repita com outra tentativa.':'Não foi possível confirmar o envio. Confira os registros antes de tentar novamente.'},503)}
+ }catch(error){
+  // Never expose raw provider responses, credentials, contact contents or stack.
+  // A provisioning lease may have created a contact even when the response was
+  // lost. Preserve idempotency: this handler MUST NOT retry provisioning.
+  const rawCode=error instanceof Error?error.message:'unknown';
+  const safeCode=/^(?:contact_creation_unconfirmed|contact_identity_unconfirmed|contact_binding_unconfirmed|unverified_whatsapp|manual_state_invalid|acquisition_dnd_unverified|acquisition_dnd_missing|acquisition_identity_unverified|acquisition_history_unverified|highlevel_http_(?:400|401|403|404|409|422)|HighLevel history page invalid)$/.test(rawCode)?rawCode:'provider_or_binding_unavailable';
+  console.error(JSON.stringify({component:'manual_prospect',operation:'prepare_or_dispatch',stage,code:safeCode,requestId:parsed.data.requestId,preparing}));
+  return json({error:preparing?'Preparação com resultado não confirmado. Confira o vínculo no HighLevel; não repita com outra tentativa.':'Não foi possível confirmar o envio. Confira os registros antes de tentar novamente.',failureStage:stage,errorCode:safeCode,retryAllowed:false},503);
+ }
 }

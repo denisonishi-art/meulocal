@@ -4,6 +4,7 @@ import {isAdminRequest} from '@/lib/admin-auth';
 import {findBusinessEmail} from '@/lib/ghl-prospecting';
 import {createClient} from '@supabase/supabase-js';
 import {manualRecipientReadiness} from '@/lib/acquisition/manual-prospect';
+import {evaluateBusinessEmailAttribution} from '@/lib/acquisition/recipient-attribution';
 export const runtime='nodejs';
 export const maxDuration=60;
 const schema=z.object({companies:z.array(z.object({id:z.string().min(5).max(180),name:z.string().min(2).max(180)}).strict()).min(1).max(5)}).strict();
@@ -22,10 +23,13 @@ export async function POST(req:Request){
    const p=await r.json();
    if(p.businessStatus&&p.businessStatus!=='OPERATIONAL'){results.push({id:business.id,name:business.name,channel:'blocked',reason:'business_not_operational'});continue}
    const email=p.websiteUri?(await findBusinessEmail(p.websiteUri))?.trim().toLowerCase():null;
+   const attribution=email?evaluateBusinessEmailAttribution(email,p.websiteUri):null;
    const national=String(p.nationalPhoneNumber||'').replace(/\D/g,'');
    const phone=String(p.internationalPhoneNumber||'').replace(/\D/g,'')||((national.length===10||national.length===11)?'55'+national:'');
-   const channel=email?'email':phone.length>=10?'whatsapp':'blocked';
-   results.push({id:business.id,name:business.name,channel,email:email||null,phoneFound:phone.length>=10,lookupPhone:phone,address:p.formattedAddress||'',reason:channel==='blocked'?'contact_not_found':'eligibility_and_delivery_NOT_VERIFIED'});
+   // A scraped email is NOT attributable to the local business merely because
+   // it has an MX record. Stop here rather than falling back to a guessed channel.
+   const channel=email?(attribution?.allowed?'email':'blocked'):phone.length>=10?'whatsapp':'blocked';
+   results.push({id:business.id,name:business.name,channel,email:email||null,phoneFound:phone.length>=10,lookupPhone:phone,address:p.formattedAddress||'',reason:channel==='blocked'?(attribution?.reason||'contact_not_found'):'eligibility_and_delivery_NOT_VERIFIED'});
   }catch{results.push({id:business.id,name:business.name,channel:'blocked',reason:'contact_lookup_failed'})}
  }
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -34,7 +38,7 @@ export async function POST(req:Request){
   const lookupPhone='lookupPhone' in row?String(row.lookupPhone||''):'';
   const safeRow={...row};delete (safeRow as {lookupPhone?:string}).lookupPhone;
   const recipient=row.channel==='email'&&'email' in row?String(row.email):lookupPhone?'+'+lookupPhone:'';
-  const readiness=db&&recipient&&row.channel!=='blocked'?await manualRecipientReadiness(db,{id:row.id,name:row.name,address:'address' in row?String(row.address||''):'',channel:row.channel==='email'?'email':'whatsapp',recipient}):{canSend:false,reason:row.channel==='blocked'?'Nenhum canal encontrado.':'Não foi possível conferir a operação.',sendToken:null};
+  const readiness=db&&recipient&&row.channel!=='blocked'?await manualRecipientReadiness(db,{id:row.id,name:row.name,address:'address' in row?String(row.address||''):'',channel:row.channel==='email'?'email':'whatsapp',recipient}):{canSend:false,reason:row.channel==='blocked'?(row.reason||'Nenhum canal encontrado.'):'Não foi possível conferir a operação.',sendToken:null};
   return {...safeRow,phone:lookupPhone?'+'+lookupPhone:null,...readiness,contactAllowed:readiness.canSend};
  }));
  return NextResponse.json({results:verified,contactAuthorized:false,dispatched:0},{headers:{'Cache-Control':'no-store'}});
