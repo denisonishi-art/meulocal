@@ -38,12 +38,15 @@ function verifiedComparisonDecision(event){
  const url=String(analysis.url||'');
  const name=String(analysis.businessName||'').trim();
  const count=Number(analysis.competitorCount);
+ // Legacy 3km events remain supported; new verified reports carry the exact
+ // radius so that Hermes never claims a 3km comparison for a 5km report.
+ const radiusKm=analysis.radiusKm===undefined?3:Number(analysis.radiusKm);
  if(!/^https:\/\/meulocal\.ia\.br\/d\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(url)||
-   name.length<2||name.length>240||!Number.isInteger(count)||count<1||count>3)return handoff();
+   name.length<2||name.length>240||!Number.isInteger(count)||count<1||count>3||![3,5].includes(radiusKm))return handoff();
  const label=count===1?'1 concorrente relevante':count+' concorrentes relevantes';
  const message='Claro! Aqui está a análise gratuita do MeuLocal para '+name+': '+url+
   '\n\nEla compara a reputação no Google com '+label+' encontrado'+(count===1?'':'s')+
-  ' em até 3 km, mostrando notas, volumes de avaliações e oportunidades práticas.'+
+  ' em até '+radiusKm+' km, mostrando notas, volumes de avaliações e oportunidades práticas.'+
   '\n\nÉ uma comparação dos perfis públicos encontrados, sem promessa de aumento de vendas. Se quiser, posso explicar os próximos passos.';
  return {eventId:event.eventId,action:'answer',channel,message,
   rationale:'Resposta positiva ao convite comprovado; link e benchmark verificados no banco. Sem nova consulta a modelo, ferramenta ou dado inventado.',
