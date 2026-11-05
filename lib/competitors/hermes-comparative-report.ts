@@ -22,7 +22,7 @@ function normalized(s:string){return s.normalize('NFD').replace(/[\u0300-\u036f]
 export function isLanguageSchoolNiche(niche:string){
  return /(ingles|idiomas|linguas|language|english|escola de idiomas|curso de idiomas)/.test(normalized(niche));
 }
-const LANGUAGE_BRANDS=/(wizard|fisk|wise\s*up|yazigi|cna\b|ccaa|knn\b|influx|red\s*balloon|cultura\s*inglesa|cel\s*lep|british\s*council|alumni|berlitz|number\s*one|uptime|skill|maple\s*bear)/i;
+const LANGUAGE_BRANDS=/(wizard|fisk|wise\s*up|yazigi|cna\b|ccaa|knn\b|influx|red\s*balloon|cultura\s*inglesa|cel\s*lep|british\s*council|alumni|berlitz|number\s*one|uptime|skill)/i;
 export function languageSchoolCandidate(name:string){
  const n=normalized(name);
  return /(idioma|ingles|english|lingua|language|espanhol|frances|alemao)/.test(n)||LANGUAGE_BRANDS.test(n);
@@ -30,7 +30,7 @@ export function languageSchoolCandidate(name:string){
 export function asksForComparativeAnalysis(message:string){
  const text=normalized(message).trim().replace(/[!.?]+$/,'').trim();
  if(!text||text.length>140||/\b(nao|nunca|pare|sair|cancel|stop|sem interesse)\b/.test(text))return false;
- return /^(sim|pode (?:mandar|enviar|preparar)|manda|envia|quero (?:a analise|receber|ver|sim)|me (?:manda|envia)|claro|por favor|pode sim)(?:[ ,]+(?:por favor|a analise|o comparativo|a avaliacao|sim|obrigad[oa]|pode mandar|pode enviar))*$/.test(text);
+ return /^(sim|pode (?:me )?(?:mandar|enviar|preparar)|manda|envia|quero (?:a analise|receber|ver|sim)|gostaria de receber(?: a analise)?|me (?:manda|envia)|claro|por favor|pode sim)(?:[ ,]+(?:por favor|a analise|o comparativo|a avaliacao|sim|obrigad[oa]|pode mandar|pode enviar))*$/.test(text);
 }
 function validatedGooglePlace(p:any){
  return typeof p?.id==='string'&&p.id.length>=8&&isGeoPoint(p.location)&&
