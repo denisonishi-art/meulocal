@@ -3,8 +3,9 @@ import {Resolver} from 'node:dns/promises';
 import {z} from 'zod';
 import {getLocationAccessToken,getOperationalContact,getOperationalConversations,getOperationalConversationHistoryPage} from '@/lib/highlevel-operational';
 import {providerGate} from './delivery';
+import {evaluateBusinessEmailAttribution} from './recipient-attribution';
 export const MANUAL_LOCATION='uNh3KsM7WFuLeTN8Q583';
-export type ProspectRecipient={id:string;name:string;address?:string;channel:'email'|'whatsapp';recipient:string};
+export type ProspectRecipient={id:string;name:string;address?:string;website?:string|null;mailboxVerifiedAt?:number;channel:'email'|'whatsapp';recipient:string};
 export function signRecipient(value:ProspectRecipient,now=Date.now()){
  const secret=process.env.ADMIN_ACCESS_KEY;if(!secret)throw Error('Configuração administrativa indisponível.');
  const payload=Buffer.from(JSON.stringify({...value,expiresAt:now+15*60*1000})).toString('base64url');
@@ -17,7 +18,8 @@ export function verifyRecipient(token:string,now=Date.now()):ProspectRecipient{
  if(actual.length!==expected.length||!timingSafeEqual(actual,expected))throw Error('Verifique novamente os canais.');
  const data=JSON.parse(Buffer.from(payload,'base64url').toString());
  if(!Number.isFinite(data.expiresAt)||data.expiresAt<=now||data.expiresAt>now+15*60*1000||!['email','whatsapp'].includes(data.channel)||typeof data.recipient!=='string'||typeof data.id!=='string'||typeof data.name!=='string')throw Error('Verifique novamente os canais.');
- return {id:data.id,name:data.name,address:data.address,channel:data.channel,recipient:data.recipient};
+ if(data.mailboxVerifiedAt!==undefined&&(!Number.isSafeInteger(data.mailboxVerifiedAt)||data.mailboxVerifiedAt>now||data.mailboxVerifiedAt<now-15*60*1000))throw Error('Verificação da caixa de e-mail expirada.');
+ return {id:data.id,name:data.name,address:data.address,website:data.website,mailboxVerifiedAt:data.mailboxVerifiedAt,channel:data.channel,recipient:data.recipient};
 }
 export async function findExactRecipient(token:string,target:ProspectRecipient){
  const value=target.recipient;
@@ -38,6 +40,8 @@ export async function manualRecipientReadiness(db:any,target:ProspectRecipient){
   if(process.env.GHL_LOCATION_ID!==MANUAL_LOCATION)return blocked('Unidade HighLevel não configurada.');
   if(target.channel==='email'){
    if(!z.string().email().safeParse(target.recipient).success)return blocked('E-mail com formato inválido.');
+   const attribution=evaluateBusinessEmailAttribution(target.recipient,target.website);
+   if(!attribution.allowed)return blocked(attribution.reason);
    const mx=await new Resolver({timeout:2000,tries:1}).resolveMx(target.recipient.split('@')[1]);if(!mx.some(x=>x.exchange&&x.exchange!=='.'))return blocked('Domínio sem recebimento de e-mail confirmado.');
   }
   const local=await db.rpc('check_manual_prospect_recipient',{p_place_id:target.id.replace(/^places\//,''),p_channel:target.channel,p_recipient:target.recipient});
@@ -56,7 +60,7 @@ export async function manualRecipientReadiness(db:any,target:ProspectRecipient){
    if(!valid)return blocked('WhatsApp exige conversa recente confirmada ou modelo aprovado.');
   }
   if(process.env.MEULOCAL_MANUAL_OUTREACH_ENABLED!=='true')return blocked('Canal identificado; envio manual ainda desativado.');
-  return {canSend:true,reason:target.channel==='email'?'E-mail e domínio verificados. Envio somente com sua confirmação.':'WhatsApp confirmado com conversa recente. Envio somente com sua confirmação.',sendToken:signRecipient(target),recipient:target.recipient,channel:target.channel};
+  return {canSend:true,reason:target.channel==='email'?'Formato, DNS/MX e vínculo de domínio conferidos; falta validar a caixa no HighLevel.':'WhatsApp confirmado com conversa recente. Envio somente com sua confirmação.',sendToken:signRecipient(target),recipient:target.recipient,channel:target.channel};
  }catch(error){
   const code=error instanceof Error?error.message:'';
   const reasons:Record<string,string>={
