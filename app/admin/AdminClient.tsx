@@ -110,7 +110,7 @@ export default function AdminClient(){
   try{
    const response=await fetch('/api/agents/prospect/inspect-manual',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({placeId:p.id.replace(/^places\\//,'')})
+    body:JSON.stringify({placeId:p.id.startsWith('places/')?p.id.slice(7):p.id})
    });
    const result=await response.json();
    if(!response.ok)throw Error(result.error||'Falha ao conferir a tentativa.');
