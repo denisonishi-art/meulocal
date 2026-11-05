@@ -61,7 +61,7 @@ export async function prepareAnalysisForApprovedReply(db:any,input:{
     .eq('lead_id',input.leadId).eq('contact_id',input.contactId)
     .order('created_at',{ascending:false}).limit(1).maybeSingle(),
    db.from('outreach_events').select('id,created_at').eq('lead_id',input.leadId)
-    .in('event_type',['sent','delivered']).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+    .eq('event_type','sent').order('created_at',{ascending:false}).limit(1).maybeSingle(),
    db.from('businesses').select('id,name,google_place_id,address').eq('id',lead.business_id).maybeSingle()
   ]);
   if(p.error||o.error||b.error||!p.data||!o.data||!b.data)return null;
@@ -71,6 +71,11 @@ export async function prepareAnalysisForApprovedReply(db:any,input:{
   if(permission.stage!=='ready'||!permission.message.includes('MeuLocal')||
     !/an[aá]lise gratuita/i.test(permission.message)||
     !permission.place_id||permission.place_id!==b.data.google_place_id)return null;
+  const sentAt=Date.parse(o.data.created_at),approvedAt=Date.parse(permission.created_at);
+  // The most recent outbound must belong to THIS specific approved offer.
+  // A generic 'sim' to a later/unrelated sales conversation cannot release a link.
+  if(!Number.isFinite(sentAt)||!Number.isFinite(approvedAt)||sentAt<approvedAt||
+    sentAt-approvedAt>3600000||Date.now()-sentAt>30*DAY||sentAt>Date.now()+120000)return null;
   const {data:existing,error:existingError}=await db.from('prospect_diagnostics')
    .select('id,place_id,business_name,public_token,niche').eq('place_id',permission.place_id).maybeSingle();
   if(existingError)return {status:'unavailable'};
