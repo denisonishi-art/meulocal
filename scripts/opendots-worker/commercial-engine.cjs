@@ -26,6 +26,30 @@ function validateEvent(event){
  if(event.permissions?.initialSend||event.permissions?.crmWrite)throw Error('external_side_effects_forbidden');
  return event;
 }
+function verifiedComparisonDecision(event){
+ if(event.kind!=='meulocal.acquisition.inbound'||!event.analysis)return null;
+ const analysis=event.analysis;
+ const kind=String(event.channel||'').toLowerCase();
+ const channel=kind.includes('whatsapp')?'whatsapp':kind.includes('email')?'email':'none';
+ const positive=/^(?:sim|pode (?:mandar|enviar|preparar)|manda|envia|quero (?:a an[aá]lise|receber|ver|sim)|me (?:manda|envia)|claro|por favor|pode sim)(?:[ ,]+(?:por favor|a an[aá]lise|o comparativo|a avalia[cç][aã]o|sim|obrigad[oa]|pode mandar|pode enviar))*[!.?]*$/i.test(String(event.message||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+ if(!positive)return null;
+ const handoff=()=>({eventId:event.eventId,action:'handoff',channel:'none',message:'',rationale:'Análise solicitada, mas ainda não validada. Encaminhar para revisão humana; nenhum link inventado.',requiresHumanReview:true,status:'suggestion_only'});
+ if(analysis.status!=='ready'||channel==='none')return handoff();
+ const url=String(analysis.url||'');
+ const name=String(analysis.businessName||'').trim();
+ const count=Number(analysis.competitorCount);
+ if(!/^https:\/\/meulocal\.ia\.br\/d\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(url)||
+   name.length<2||name.length>240||!Number.isInteger(count)||count<1||count>3)return handoff();
+ const label=count===1?'1 concorrente relevante':count+' concorrentes relevantes';
+ const message='Claro! Aqui está a análise gratuita do MeuLocal para '+name+': '+url+
+  '\n\nEla compara a reputação no Google com '+label+' encontrado'+(count===1?'':'s')+
+  ' em até 3 km, mostrando notas, volumes de avaliações e oportunidades práticas.'+
+  '\n\nÉ uma comparação dos perfis públicos encontrados, sem promessa de aumento de vendas. Se quiser, posso explicar os próximos passos.';
+ return {eventId:event.eventId,action:'answer',channel,message,
+  rationale:'Resposta positiva ao convite comprovado; link e benchmark verificados no banco. Sem nova consulta a modelo, ferramenta ou dado inventado.',
+  requiresHumanReview:true,status:'suggestion_only'};
+}
+
 function promptFor(event){
  const base=`${APPROVED_GUARDRAILS}
 
@@ -49,6 +73,8 @@ async function decideCommercialEvent(event,{modelTurn}){
  if(typeof modelTurn!=='function')throw Error('opendots_model_turn_required');
  const stop=/^(sair|stop|cancelar|unsubscribe|não me (?:contate|mande mensagens)|nao me (?:contate|mande mensagens))/i.test(String(event.message||'').trim());
  if(stop)return {eventId:event.eventId,action:'stop',channel:'none',message:'',rationale:'Opt-out explícito',requiresHumanReview:true,status:'suggestion_only'};
+ const analysis=verifiedComparisonDecision(event);
+ if(analysis)return analysis;
  const raw=await modelTurn(promptFor(event));
  return parseDecision(raw,event);
 }
