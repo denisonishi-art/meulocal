@@ -14,6 +14,7 @@ function loadTS(path,deps={}){
  return m.exports;
 }
 const path='app/api/agents/prospect/verify-email/route.ts';
+const interpretLCEmailVerification=loadTS('lib/acquisition/ghl-email-verification.ts').interpretLCEmailVerification;
 const keys=['GHL_LOCATION_ID','NEXT_PUBLIC_SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY'];
 const savedEnv=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
 const location='uNh3KsM7WFuLeTN8Q583';
@@ -39,6 +40,7 @@ function setup({authorized=true,readiness=true,status=201,result='deliverable',r
   '@supabase/supabase-js':{createClient:()=>db},
   '@/lib/admin-auth':{isAdminRequest:async()=>authorized},
   '@/lib/highlevel-operational':{getLocationAccessToken:async()=>{calls.tokens++;return 'synthetic-ghl-token'}},
+  '@/lib/acquisition/ghl-email-verification':{interpretLCEmailVerification},
   '@/lib/acquisition/manual-prospect':{
    MANUAL_LOCATION:location,
    verifyRecipient:()=>payload,
@@ -59,7 +61,7 @@ function setup({authorized=true,readiness=true,status=201,result='deliverable',r
  return {route,post,calls,payload};
 }
 test('HighLevel deliverable low risk and exact recipient are the only green outcome',()=>{
- const {interpretLCEmailVerification:interpret}=setup().route;
+ const interpret=interpretLCEmailVerification;
  const valid={result:'deliverable',risk:'low',address:'school@example.org',leadConnectorRecommendation:{isEmailValid:true}};
  assert.equal(interpret(valid,'school@example.org').deliverable,true);
  for(const x of [
