@@ -31,7 +31,7 @@ jobs:
           node scripts/check-payment-plans-database.cjs
       - name: Manual prospect search and draft contracts
         run: |
-          node --test scripts/check-prospect-first-contact.cjs scripts/check-local-top3.cjs scripts/check-local-top3-route.cjs scripts/check-hermes-comparative.cjs scripts/check-manual-prospect-search.cjs scripts/check-manual-prospect-send.cjs
+          node --test scripts/check-diagnostic-catalog.cjs scripts/check-prospect-first-contact.cjs scripts/check-local-top3.cjs scripts/check-local-top3-route.cjs scripts/check-hermes-comparative.cjs scripts/check-manual-prospect-search.cjs scripts/check-manual-prospect-send.cjs
           node scripts/check-manual-prospect-database.cjs
       - name: Typecheck
         run: npx tsc --noEmit
