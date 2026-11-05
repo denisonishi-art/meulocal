@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import { ArrowLeft, ArrowRight, Building2, Check, MapPin, Search } from 'lucide-react';
 
 type Place = { id:string; name:string; address:string; rating:number|null; reviewCount:number; category:string|null; latitude?:number|null; longitude?:number|null; website?:string|null; phone?:string|null };
-type Analysis = { business:Place; competitors:Place[]; metrics:{score:number; band:string; bandKey:string; gainPotential:string; avgCompetitorReviews:number|null; reviewGap:number|null; reviewScore?:number|null; ratingScore?:number|null}; gaps:string[] };
+type Analysis = { business:Place; competitors:Array<Place&{distanceKm?:number;reputationRankScore?:number}>; competition?:{radiusMeters:number;selection?:string;candidateCount?:number}; dataQuality?:{status:string;warnings:string[]}; metrics:{score:number; band:string; bandKey:string; gainPotential:string; avgCompetitorReviews:number|null; reviewGap:number|null; reviewScore?:number|null; ratingScore?:number|null}; gaps:string[] };
 
 export default function DiagnosticoPage() {
   const [query,setQuery]=useState('');
@@ -110,7 +110,7 @@ export default function DiagnosticoPage() {
         <div className="gainLine"><span>Potencial de ganho</span><strong>{analysis.metrics.gainPotential}</strong></div>
         <div className="analysisGrid"><div><small>Suas avaliações</small><strong>{analysis.business.reviewCount}</strong></div><div><small>Média comparável</small><strong>{analysis.metrics.avgCompetitorReviews??'—'}</strong></div><div><small>Gap de avaliações</small><strong>{analysis.metrics.reviewGap??'—'}</strong></div></div>
         {analysis.gaps.length>0&&<div className="gapBox"><span>O que encontramos</span>{analysis.gaps.map((g,i)=><p key={i}>• {g}</p>)}</div>}
-        <div className="competitorList"><span>Empresas usadas na comparação</span>{analysis.competitors.map((c,i)=><div key={c.id}><strong>{i+1}. {c.name}</strong><small>{c.reviewCount} avaliações · {c.rating?`★ ${c.rating}`:'sem nota'}</small></div>)}</div>
+        <div className="competitorList"><span>Até 3 concorrentes com melhor reputação encontrados em um raio máximo de 3 km</span>{analysis.competitors.map((c,i)=><div key={c.id}><strong>{i+1}. {c.name}</strong><small>{c.reviewCount} avaliações · {c.rating?`★ ${c.rating}`:'sem nota'}{typeof c.distanceKm==='number'?` · ${c.distanceKm.toFixed(2).replace('.',',')} km`:''}</small></div>)}{analysis.competitors.length<3&&<p>Foram encontrados apenas {analysis.competitors.length} concorrente(s) elegível(is). Não ampliamos o raio para completar a comparação.</p>}<small>Ranking MeuLocal por nota ajustada ao volume de avaliações, entre os perfis encontrados no Google; não representa um ranking exaustivo do mercado.</small></div>
 
         {!showLead?<div className="unlockBox"><h3>Quer ver como melhorar sua presença no Google?</h3><p>Receba sua análise e avance direto para ativar o MeuLocal — sem reunião.</p><button className="primary" type="button" onClick={()=>setShowLead(true)}>Quero melhorar minha presença <ArrowRight size={18}/></button></div>:
         <form className="leadCapture" onSubmit={saveLead}>
