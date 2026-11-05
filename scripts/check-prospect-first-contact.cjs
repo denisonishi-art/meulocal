@@ -25,6 +25,8 @@ test('all six selected schools receive a differentiated, evidence-backed value p
  for(const [name,rating,reviews] of selected){
   const draft=buildFirstContactDraft({name,niche:'escola de ingles',rating,reviews});
   assert.ok(isSafeFirstContactDraft(draft.message,draft),name);
+  assert.ok(draft.message.length<=800,'First contact too long: '+name);
+  assert.ok(draft.message.split('\\n\\n').length<=5,'Avoid repetitive paragraphs: '+name);
   assert.ok(draft.message.includes(FIRST_CONTACT_INTRO),name);
   assert.ok(draft.message.includes(name),name);
   assert.match(draft.message,/matr[ií]cula/i);
