@@ -15,7 +15,7 @@ export const FIRST_CONTACT_OPTOUT='Se preferir não receber contatos, é só me 
 
 function segmentContext(niche:string){
   const normalized=niche.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  if(/escola|ingles|idioma|curso de lingua|cursos de lingua/.test(normalized))return {
+  if(/escola|colegio|ingles|idioma|curso de lingua|cursos de lingua/.test(normalized))return {
     decision:'Quando alguém procura uma escola de idiomas, as avaliações de outros alunos podem ajudar na decisão de matrícula.',
     peers:'outras escolas que disputam a atenção dos mesmos alunos',
     benefit:'atrair novos alunos e gerar mais oportunidades de matrícula',
