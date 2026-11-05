@@ -29,7 +29,7 @@ export async function POST(req:Request){
    // A scraped email is NOT attributable to the local business merely because
    // it has an MX record. Stop here rather than falling back to a guessed channel.
    const channel=email?(attribution?.allowed?'email':'blocked'):phone.length>=10?'whatsapp':'blocked';
-   results.push({id:business.id,name:business.name,channel,email:email||null,phoneFound:phone.length>=10,lookupPhone:phone,address:p.formattedAddress||'',reason:channel==='blocked'?(attribution?.reason||'contact_not_found'):'eligibility_and_delivery_NOT_VERIFIED'});
+   results.push({id:business.id,name:business.name,channel,email:email||null,phoneFound:phone.length>=10,lookupPhone:phone,address:p.formattedAddress||'',website:p.websiteUri||null,reason:channel==='blocked'?(attribution?.reason||'contact_not_found'):'eligibility_and_delivery_NOT_VERIFIED'});
   }catch{results.push({id:business.id,name:business.name,channel:'blocked',reason:'contact_lookup_failed'})}
  }
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -38,8 +38,18 @@ export async function POST(req:Request){
   const lookupPhone='lookupPhone' in row?String(row.lookupPhone||''):'';
   const safeRow={...row};delete (safeRow as {lookupPhone?:string}).lookupPhone;
   const recipient=row.channel==='email'&&'email' in row?String(row.email):lookupPhone?'+'+lookupPhone:'';
-  const readiness=db&&recipient&&row.channel!=='blocked'?await manualRecipientReadiness(db,{id:row.id,name:row.name,address:'address' in row?String(row.address||''):'',channel:row.channel==='email'?'email':'whatsapp',recipient}):{canSend:false,reason:row.channel==='blocked'?(row.reason||'Nenhum canal encontrado.'):'Não foi possível conferir a operação.',sendToken:null};
-  return {...safeRow,phone:lookupPhone?'+'+lookupPhone:null,...readiness,contactAllowed:readiness.canSend};
+  const readiness=db&&recipient&&row.channel!=='blocked'?await manualRecipientReadiness(db,{id:row.id,name:row.name,address:'address' in row?String(row.address||''):'',website:'website' in row?String(row.website||''):null,channel:row.channel==='email'?'email':'whatsapp',recipient}):{canSend:false,reason:row.channel==='blocked'?(row.reason||'Nenhum canal encontrado.'):'Não foi possível conferir a operação.',sendToken:null};
+  // No automatic paid verification. An eligible email requires a *separate*,
+  // operator-confirmed LC Email check before its signed send credential exists.
+  const requiresEmailVerification=row.channel==='email'&&readiness.canSend===true&&Boolean(readiness.sendToken);
+  const emailVerifyToken=requiresEmailVerification?readiness.sendToken:null;
+  return {...safeRow,phone:lookupPhone?'+'+lookupPhone:null,...readiness,
+   canSend:requiresEmailVerification?false:readiness.canSend,
+   contactAllowed:requiresEmailVerification?false:readiness.canSend,
+   sendToken:requiresEmailVerification?null:readiness.sendToken,
+   emailVerifyToken,
+   emailVerificationStatus:requiresEmailVerification?'not_verified':row.channel==='blocked'&&'email' in row&&row.email?'needs_affiliation':'not_applicable',
+   reason:requiresEmailVerification?'Domínio e vínculo confirmados. Falta validar a caixa postal no HighLevel (cobrança por consulta).':readiness.reason};
  }));
  return NextResponse.json({results:verified,contactAuthorized:false,dispatched:0},{headers:{'Cache-Control':'no-store'}});
 }
