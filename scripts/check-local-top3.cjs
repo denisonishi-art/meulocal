@@ -5,10 +5,10 @@ const ts=require('typescript');
 const vm=require('node:vm');
 
 const source=fs.readFileSync('lib/competitors/top-local-reputation.ts','utf8');
-const module={exports:{}};
+const compiledModule={exports:{}};
 const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-vm.runInNewContext('(function(module,exports){'+js+'\n})',{console})(module,module.exports);
-const {selectTopLocalCompetitors,distanceMeters,weightedReputationRating,LOCAL_COMPETITOR_RADIUS_METERS}=module.exports;
+vm.runInNewContext('(function(module,exports){'+js+'\n})',{console})(compiledModule,compiledModule.exports);
+const {selectTopLocalCompetitors,distanceMeters,weightedReputationRating,LOCAL_COMPETITOR_RADIUS_METERS}=compiledModule.exports;
 const center={latitude:-23.6000,longitude:-46.6000};
 const p=(id,rating,counts,lat=-23.6000,category='school')=>({
  id,displayName:{text:id},location:{latitude:lat,longitude:-46.6},primaryType:category,
