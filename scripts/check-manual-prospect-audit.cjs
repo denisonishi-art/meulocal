@@ -69,7 +69,16 @@ function mockRoute({authorized=true,provider='found',stage='provisioning',events
   '@/lib/acquisition/manual-prospect':{MANUAL_LOCATION:'synthetic-location',findExactRecipient:async()=>provider==='found'?{id:'synthetic-contact'}:null}
  };
  const route=loadTs('app/api/agents/prospect/inspect-manual/route.ts',mocks);
- const post=()=>route.POST(new Request('https://test.invalid/api/agents/prospect/inspect-manual',{method:'POST',body:JSON.stringify({placeId:ATTEMPT.place_id})}));
+ const post=async()=>{
+  const oldUrl=process.env.NEXT_PUBLIC_SUPABASE_URL,oldKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  process.env.NEXT_PUBLIC_SUPABASE_URL='https://synthetic.supabase.invalid';
+  process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic';
+  try{return await route.POST(new Request('https://test.invalid/api/agents/prospect/inspect-manual',{method:'POST',body:JSON.stringify({placeId:ATTEMPT.place_id})}));}
+  finally{
+   if(oldUrl===undefined)delete process.env.NEXT_PUBLIC_SUPABASE_URL;else process.env.NEXT_PUBLIC_SUPABASE_URL=oldUrl;
+   if(oldKey===undefined)delete process.env.SUPABASE_SERVICE_ROLE_KEY;else process.env.SUPABASE_SERVICE_ROLE_KEY=oldKey;
+  }
+ };
  return {post,calls};
 }
 test('read-only audit shows provisioning and no send, provider contact found',async()=>{
