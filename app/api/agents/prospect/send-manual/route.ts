@@ -48,7 +48,7 @@ export async function POST(req:Request){
    const opportunity=await syncOperationalOpportunity({locationId:MANUAL_LOCATION,contactId:contact.id,name:target.name});
    console.info(JSON.stringify({stage:'highlevel_opportunity',locationId:MANUAL_LOCATION,contactId:contact.id,opportunity}));
   }else if(job.state!=='ready')throw Error('manual_state_invalid');
-  const result=await deliverAcquisitionMessage(db,{leadId:job.leadId,kind:'manual',step:null,requestId:parsed.data.requestId,channel:target.channel,message:parsed.data.message,subject:'Uma pergunta para '+target.name});
+  const result=await deliverAcquisitionMessage(db,{leadId:job.leadId,kind:'manual',step:null,requestId:parsed.data.requestId,channel:target.channel,message:parsed.data.message,subject:'Uma oportunidade de reputação no Google para '+target.name});
   return json(result,result.ok&&!('stopped' in result)?200:409);
  }catch{return json({error:preparing?'Preparação com resultado não confirmado. Confira o vínculo no HighLevel; não repita com outra tentativa.':'Não foi possível confirmar o envio. Confira os registros antes de tentar novamente.'},503)}
 }
