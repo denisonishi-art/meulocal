@@ -35,6 +35,7 @@ export default function AdminClient(){
  const[catalogError,setCatalogError]=useState('');
  const[diagnosticQuery,setDiagnosticQuery]=useState('');
  const[diagnosticStateFilter,setDiagnosticStateFilter]=useState('all');
+ const[sessionExpired,setSessionExpired]=useState(false);
  const[generatedReports,setGeneratedReports]=useState<Record<string,{url:string;count:number}>>({});
  const[prepared,setPrepared]=useState<Array<{id:string;name:string;message:string}>>([]);
  const[manualRetryable,setManualRetryable]=useState<Record<string,boolean>>({});
@@ -51,13 +52,14 @@ export default function AdminClient(){
   try{
    const response=await fetch('/api/admin/prospects/diagnostics',{cache:'no-store'});
    const body=await response.json();
+   if(response.status===401){setSessionExpired(true);throw Error('Sessão administrativa expirada. Entre novamente para continuar.');}
    if(!response.ok||!Array.isArray(body.diagnostics))throw Error(body.error||'Histórico indisponível.');
    setCatalog(body.diagnostics);
   }catch(e:any){setCatalogError(String(e.message||e))}
   finally{setCatalogLoading(false)}
  }
- async function loadOverview(){setLoadingData(true);setDataError('');try{const r=await fetch('/api/admin/overview',{cache:'no-store'});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha ao carregar operação');setData(j)}catch(e:any){setDataError(e.message)}finally{setLoadingData(false)}}
- useEffect(()=>{loadOverview();loadCatalog();try{const saved=JSON.parse(window.localStorage.getItem('meulocal-acquisition-drafts-v3')||'null');if(saved&&Array.isArray(saved.drafts)&&saved.drafts.length){setPrepared(saved.drafts);setNiche(saved.niche||'');setRegion(saved.region||'');setMsg('Campanha recuperada. As mensagens foram preservadas; nenhum envio realizado.')}}catch{}},[]);
+ async function loadOverview(){setLoadingData(true);setDataError('');try{const r=await fetch('/api/admin/overview',{cache:'no-store'});const j=await r.json();if(r.status===401){setSessionExpired(true);throw new Error('Sessão administrativa expirada. Entre novamente para continuar.');}if(!r.ok)throw new Error(j.error||'Falha ao carregar operação');setData(j)}catch(e:any){setDataError(e.message)}finally{setLoadingData(false)}}
+ useEffect(()=>{loadOverview();loadCatalog();try{const saved=JSON.parse(window.localStorage.getItem('meulocal-acquisition-drafts-v3')||'null');if(saved&&Array.isArray(saved.drafts)&&saved.drafts.length){setPrepared(saved.drafts);setNiche(saved.niche||'');setRegion(saved.region||'');setMsg('Campanha recuperada. As mensagens foram preservadas; nenhum envio realizado.')}}catch{}try{const pending=JSON.parse(window.sessionStorage.getItem('meulocal-prospect-search-resume-v1')||'null');if(pending&&typeof pending.niche==='string'&&typeof pending.region==='string'){setNiche(pending.niche);setRegion(pending.region);window.sessionStorage.removeItem('meulocal-prospect-search-resume-v1');}}catch{}},[]);
  const attention=useMemo(()=>data?data.kpis.onboardingPending+(data.infrastructure.ghlJobs||[]).filter((x:any)=>x.status==='failed').length+(data.infrastructure.syncLogs||[]).filter((x:any)=>x.status==='failed').length:0,[data]);
  const catalogById=useMemo(()=>new Map(catalog.map(d=>[d.id,d])),[catalog]);
  const filteredDiagnostics=useMemo(()=>{
@@ -75,7 +77,32 @@ export default function AdminClient(){
    (!q||(d.business_name+' '+(d.niche||'')+' '+(d.region||'')).toLocaleLowerCase('pt-BR').includes(q)));
  },[catalog,diagnosticQuery,diagnosticStateFilter]);
 
- async function search(e:FormEvent){e.preventDefault();setBusy(true);setMsg('');setSelected([]);setContactCheck([]);setRows([]);setPrepared([]);setDispatchPreview([]);setManualResults({});setManualAudit({});window.localStorage.removeItem('meulocal-acquisition-drafts-v3');try{const r=await fetch('/api/agents/prospect/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({niche,location:region})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Falha na busca');setRows(j.candidates||[])}catch(e:any){setMsg(e.message)}finally{setBusy(false)}}
+ async function search(e:FormEvent){
+  e.preventDefault();setBusy(true);setMsg('');
+  try{
+   const r=await fetch('/api/agents/prospect/search',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({niche,location:region})
+   });
+   const j=await r.json();
+   if(r.status===401){
+    // Reauthentication requires the actual admin key, never a bypass.
+    // Preserve the search inputs, and never clear existing selected businesses
+    // or locally reviewed drafts because of an expired session.
+    window.sessionStorage.setItem('meulocal-prospect-search-resume-v1',JSON.stringify({niche,region}));
+    setSessionExpired(true);
+    setMsg('Sua sessão administrativa expirou. Entre novamente para continuar a prospecção.');
+    return;
+   }
+   if(!r.ok)throw new Error(j.error||'Falha na busca');
+   setSessionExpired(false);
+   setSelected([]);setContactCheck([]);setRows([]);setPrepared([]);
+   setDispatchPreview([]);setManualResults({});setManualAudit({});
+   window.localStorage.removeItem('meulocal-acquisition-drafts-v3');
+   setRows(j.candidates||[]);
+  }catch(e:any){setMsg(String(e.message||'Falha na busca'))}
+  finally{setBusy(false)}
+ }
  async function prepareApproaches(){
   const companies=rows.filter(x=>selected.includes(x.id)).slice(0,10).map(x=>({id:x.id,name:x.name,address:x.address,rating:x.rating,reviews:x.reviews,score:x.score}));
   if(!companies.length)return;
@@ -241,6 +268,7 @@ if(!selected.length)return;setBusy(true);setMsg('');try{
        <div className="headerActions"><button className="refreshBtn" onClick={loadOverview} disabled={loadingData}><RefreshCw/>Atualizar</button><div className={attention?'agentOnline attention':'agentOnline'}><i/> {dataError?'Consulta indisponível':loadingData?'Consultando operação':!data?'Operação não verificada':attention?attention+' ponto(s) de atenção':'Sem alertas na amostra consultada'}</div></div>
      </header>
 
+     {sessionExpired&&<div className="adminMessage error" role="alert"><strong>Sessão administrativa expirada.</strong> Faça login novamente para retomar a prospecção. <a href="/admin-login?next=%2Fadmin" style={{fontWeight:700,textDecoration:'underline'}}>Entrar novamente no MeuLocal</a>. Nenhum envio foi realizado.</div>}
      {dataError&&<div className="adminMessage error">{dataError}</div>}
      {loadingData&&!data&&<div className="adminLoading">Carregando operação...</div>}
 
