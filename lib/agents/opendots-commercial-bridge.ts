@@ -26,7 +26,7 @@ export async function deliverOpenDotsEvent(input:OpenDotsEvent){
  const body=JSON.stringify({...input,permissions:{initialSend:false,autoReply:autoReplyAuthorizedFor(input),crmWrite:false}});
  const signature=createHmac('sha256',secret).update(body).digest('hex');
  try{
-  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-MeuLocal-Signature':'sha256='+signature,'X-MeuLocal-Event-Id':input.eventId},body,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-MeuLocal-Signature':'sha256='+signature,'X-MeuLocal-Event-Id':input.eventId},body,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(45000)}); // 45s: > DeepSeek latency (~15s) e < maxDuration=60 do webhook; erro/timeout vira 'unavailable' e o retry/dedup recupera
   if(!res.ok)return {status:'rejected',httpStatus:res.status} as const;
   const receipt=await res.json().catch(()=>null);
   // dispatched is 0 (suggestion only) or 1 (worker sent via GHL). Both are valid,
