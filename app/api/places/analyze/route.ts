@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {consumeRateLimit} from '@/lib/rate-limit';
+import {isGeoPoint,selectTopLocalCompetitors,LOCAL_COMPETITOR_RADIUS_METERS,LOCAL_COMPETITOR_LIMIT} from '@/lib/competitors/top-local-reputation';
 
 const fields = [
-  'places.id','places.displayName','places.formattedAddress','places.location','places.rating','places.userRatingCount','places.websiteUri','places.primaryType',
+  'places.id','places.displayName','places.formattedAddress','places.location','places.rating','places.userRatingCount','places.websiteUri','places.primaryType','places.types','places.businessStatus',
 ].join(',');
-
-const hyperlocalTypes=new Set(['barber_shop','beauty_salon','hair_salon','restaurant','cafe','bakery','gym','fitness_center','pet_store','veterinary_care','pharmacy','laundry','car_wash']);
 
 function clamp(value:number,min=0,max=100){return Math.max(min,Math.min(max,value))}
 function presenceBand(score:number){if(score<=30)return{key:'critical',label:'Crítica'};if(score<=50)return{key:'weak',label:'Fraca'};if(score<=70)return{key:'competitive',label:'Competitiva'};return{key:'strong',label:'Forte'}}
-function marketLabel(address?:string){const parts=String(address||'').split(',').map(x=>x.trim()).filter(Boolean);return parts.slice(-3).join(', ')||'mercado relevante'}
-
-type NearbyPlace={id?:string;displayName?:{text?:string};formattedAddress?:string;rating?:number;userRatingCount?:number;websiteUri?:string;primaryType?:string};
-type Competitor={id:string;name:string;address:string;rating:number|null;reviewCount:number;website:string|null;category:string|null;reviewDataReliable:boolean};
-
 export async function POST(req:NextRequest){
   const rate=await consumeRateLimit(req,'places_analyze',6,60);
   if(!rate.allowed)return NextResponse.json({error:'Muitas análises em pouco tempo. Aguarde um minuto e tente novamente.'},{status:429,headers:{'Retry-After':'60'}});
@@ -23,29 +17,26 @@ export async function POST(req:NextRequest){
     const apiKey=process.env.GOOGLE_PLACES_API_KEY;if(!apiKey)return NextResponse.json({error:'Google Places não configurado.'},{status:500});
 
     const category=String(place.category||'').toLowerCase();
-    const useRadius=hyperlocalTypes.has(category)&&place.latitude!=null&&place.longitude!=null;
-    const competitionMode=useRadius?'local_radius':'search_market';
-    let response:Response;
-    if(useRadius){
-      const body:Record<string,unknown>={languageCode:'pt-BR',regionCode:'BR',maxResultCount:20,rankPreference:'POPULARITY',locationRestriction:{circle:{center:{latitude:place.latitude,longitude:place.longitude},radius:3000}}};
-      if(place.category)body.includedTypes=[place.category];
-      response=await fetch('https://places.googleapis.com/v1/places:searchNearby',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':apiKey,'X-Goog-FieldMask':fields},body:JSON.stringify(body),cache:'no-store'});
-    }else{
-      const intent=String(place.category||place.name||'').replaceAll('_',' ');
-      const scope=marketLabel(place.address);
-      response=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':apiKey,'X-Goog-FieldMask':fields},body:JSON.stringify({textQuery:`${intent} ${scope}`,languageCode:'pt-BR',regionCode:'BR',maxResultCount:20}),cache:'no-store'});
-    }
+    const center={latitude:place.latitude,longitude:place.longitude};
+    if(!isGeoPoint(center)||!/^[a-z][a-z_]{1,79}$/.test(category))
+      return NextResponse.json({error:'Não foi possível confirmar a localização e a categoria da empresa. Não ampliaremos a busca além de 3 km.'},{status:422});
 
+    // Search one category in a strict 3 km circle. Re-rank the returned candidates
+    // by volume-adjusted Google rating: provider popularity is not the MeuLocal ranking.
+    const body={languageCode:'pt-BR',regionCode:'BR',maxResultCount:20,rankPreference:'POPULARITY',
+      includedTypes:[category],
+      locationRestriction:{circle:{center,radius:LOCAL_COMPETITOR_RADIUS_METERS}}};
+    const response=await fetch('https://places.googleapis.com/v1/places:searchNearby',{
+      method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':apiKey,'X-Goog-FieldMask':fields},
+      body:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(15000)
+    });
     const payload=await response.json();
     if(!response.ok)return NextResponse.json({error:payload?.error?.message||'Falha ao analisar concorrentes.'},{status:response.status});
-
-    const allCompetitors:Competitor[]=(payload.places||[]).filter((p:NearbyPlace)=>p.id&&p.id!==place.id).map((p:NearbyPlace)=>{
-      const reviewCount=typeof p.userRatingCount==='number'?p.userRatingCount:0;
-      return{id:p.id||'',name:p.displayName?.text||'',address:p.formattedAddress||'',rating:typeof p.rating==='number'?p.rating:null,reviewCount,website:p.websiteUri||null,category:p.primaryType||null,reviewDataReliable:reviewCount>0};
+    const searched=Array.isArray(payload.places)?payload.places:[];
+    const competitors=selectTopLocalCompetitors({
+      businessId:place.id,center,businessCategory:category,places:searched
     });
-
-    const reliableCompetitors=allCompetitors.filter(c=>c.reviewDataReliable).sort((a,b)=>b.reviewCount-a.reviewCount).slice(0,3);
-    const competitors=reliableCompetitors.length>=2?reliableCompetitors:allCompetitors.sort((a,b)=>b.reviewCount-a.reviewCount).slice(0,3);
+    const competitionMode='local_radius' as const;
     const scoringCompetitors=competitors.filter(c=>c.reviewDataReliable);
     const avgReviews=scoringCompetitors.length?scoringCompetitors.reduce((sum,c)=>sum+c.reviewCount,0)/scoringCompetitors.length:0;
     const businessReviewCount=typeof place.reviewCount==='number'?place.reviewCount:0;
@@ -59,11 +50,13 @@ export async function POST(req:NextRequest){
     const totalWeight=components.reduce((sum,c)=>sum+c.weight,0);const score=Math.round(components.reduce((sum,c)=>sum+c.value*c.weight,0)/totalWeight);
     const band=presenceBand(score);const gainPotential=score<=50?'Alto':score<=70?'Médio':'Baixo';const reviewGap=reviewComparisonReliable?Math.max(0,Math.round(avgReviews-businessReviewCount)):null;
     const dataWarnings:string[]=[];
+    if(competitors.length<LOCAL_COMPETITOR_LIMIT)dataWarnings.push('Identificamos apenas '+competitors.length+' concorrente(s) com nota, volume e localização válidos dentro de 3 km. Não ampliamos o raio.');
+    if(searched.length>=20)dataWarnings.push('A API do Google limita esta consulta a 20 perfis. Estes são os melhores dentre os resultados encontrados, não um ranking exaustivo de todo o mercado.');
     if(!businessReviewDataReliable)dataWarnings.push('O Google não retornou uma contagem confiável de avaliações para esta empresa. Esse dado foi excluído do cálculo.');
     if(!competitorReviewDataReliable)dataWarnings.push('Não encontramos pelo menos dois concorrentes com contagem confiável de avaliações. A comparação de reviews foi excluída do cálculo.');
-    const competitorPhrase=competitionMode==='local_radius'?'negócios próximos':'empresas que disputam buscas e clientes no mesmo mercado';
-    const gaps=[reviewGap!=null&&reviewGap>0?`${competitorPhrase} têm, em média, ${Math.round(avgReviews)} avaliações. Você tem ${businessReviewCount}.`:null,!place.website?'Seu perfil não apresenta um site associado, o que reduz sinais de autoridade e conversão.':null,typeof place.rating==='number'&&place.rating<4.5?`Sua nota média é ${place.rating}, abaixo do nível observado entre concorrentes fortes.`:null].filter((gap):gap is string=>Boolean(gap));
+    const competitorPhrase='concorrentes selecionados em até 3 km';
+    const gaps=[reviewGap!=null&&reviewGap>0?`${competitorPhrase} têm, em média, ${Math.round(avgReviews)} avaliações. Você tem ${businessReviewCount}.`:null,!place.website?'Seu perfil não apresenta um site associado, o que reduz sinais de autoridade e conversão.':null,typeof place.rating==='number'&&scoringCompetitors.length>=2&&place.rating<(scoringCompetitors.reduce((sum,c)=>sum+c.rating,0)/scoringCompetitors.length)?`Sua nota é ${place.rating}, abaixo da média observada entre os concorrentes selecionados.`:null].filter((gap):gap is string=>Boolean(gap));
 
-    return NextResponse.json({business:place,competitors,competition:{mode:competitionMode,label:competitionMode==='local_radius'?'raio hiperlocal de 3 km':marketLabel(place.address),radiusMeters:competitionMode==='local_radius'?3000:null,method:competitionMode==='local_radius'?'google_places_nearby':'google_places_text_search'},metrics:{score,band:band.label,bandKey:band.key,gainPotential,avgCompetitorReviews:reviewComparisonReliable?Math.round(avgReviews):null,reviewGap,reviewScore:reviewScore==null?null:Math.round(reviewScore),ratingScore:ratingScore==null?null:Math.round(ratingScore),reviewComparisonReliable},dataQuality:{status:dataWarnings.length?'partial':'reliable',warnings:dataWarnings,reliableCompetitors:scoringCompetitors.length},gaps});
+    return NextResponse.json({business:place,competitors,competition:{mode:competitionMode,label:'concorrentes da mesma categoria em até 3 km',radiusMeters:LOCAL_COMPETITOR_RADIUS_METERS,method:'google_places_nearby',selection:'top_3_volume_adjusted_rating',candidateCount:searched.length,maxResultsPerQuery:20},metrics:{score,band:band.label,bandKey:band.key,gainPotential,avgCompetitorReviews:reviewComparisonReliable?Math.round(avgReviews):null,reviewGap,reviewScore:reviewScore==null?null:Math.round(reviewScore),ratingScore:ratingScore==null?null:Math.round(ratingScore),reviewComparisonReliable},dataQuality:{status:dataWarnings.length?'partial':'reliable',warnings:dataWarnings,reliableCompetitors:scoringCompetitors.length},gaps});
   }catch{return NextResponse.json({error:'Não foi possível concluir a análise agora.'},{status:500})}
 }
