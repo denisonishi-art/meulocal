@@ -20,7 +20,7 @@ export default async function ProspectDiagnosticPage({params}:{params:{token:str
    .select('google_place_id,snapshot,expires_at').eq('diagnostic_id',data.id).maybeSingle();
   const current=Boolean(comparison?.google_place_id===data.place_id&&
    typeof comparison?.expires_at==='string'&&Date.parse(comparison.expires_at)>Date.now()&&
-   comparison?.snapshot?.version==='meulocal_top3_v1'&&comparison.snapshot.radiusMeters===3000&&
+   ['meulocal_top3_v1','meulocal_top3_v2'].includes(comparison?.snapshot?.version)&&[3000,5000].includes(comparison.snapshot.radiusMeters)&&
    Array.isArray(comparison.snapshot.competitors)&&comparison.snapshot.competitors.length>0);
   const report:LocalComparison|null=current?comparison!.snapshot as LocalComparison:null;
   const score=Number(data.score||0);
@@ -45,7 +45,7 @@ export default async function ProspectDiagnosticPage({params}:{params:{token:str
       <article><span>Média dos concorrentes</span><strong>{avg==null?'—':avg}</strong></article>
     </section>
     {report?<section className="pdComparison">
-      <span className="pdEyebrow">BENCHMARK LOCAL · ATÉ 3 KM</span>
+      <span className="pdEyebrow">BENCHMARK LOCAL · ATÉ {report.radiusMeters/1000} KM</span>
       <h2>Quem disputa os mesmos clientes na região?</h2>
       <p>Comparação com até três concorrentes relevantes encontrados no Google Maps, ordenados pelo critério MeuLocal de nota ajustada ao volume de avaliações. Pesquisa de {new Date(report.observedAt).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})}.</p>
       <div className="pdComparisonList">{report.competitors.map((c,i)=><article key={c.id}>
@@ -57,9 +57,9 @@ export default async function ProspectDiagnosticPage({params}:{params:{token:str
       <small>Fonte: perfis públicos do Google Places. A busca retorna uma amostra limitada e pode não incluir todos os negócios da região; os dados podem mudar. Nunca é uma classificação oficial do Google.</small>
       <h3>Três ações para fortalecer sua reputação</h3>
       <ol>{report.recommendations.map((r,i)=><li key={i}>{r}</li>)}</ol>
-    </section>:<section className="pdComparison"><h2>Comparação local em preparação</h2><p>Esta página mostra dados preliminares de reputação. A comparação com concorrentes de até 3 km será disponibilizada quando as evidências forem verificadas.</p></section>}
+    </section>:<section className="pdComparison"><h2>Comparação local em preparação</h2><p>Esta página mostra dados preliminares de reputação. A comparação com concorrentes da região (preferência por 3 km, limite de 5 km) será disponibilizada quando as evidências forem verificadas.</p></section>}
 
-    {gap!=null&&gap>0&&<section className="pdGap"><TrendingDown size={25}/><div><span>PRINCIPAL OPORTUNIDADE</span><h2>Você tem {gap} avaliações a menos que a média dos concorrentes selecionados em até 3 km.</h2><p>Quando clientes comparam negócios semelhantes no Google, volume, frequência e qualidade das avaliações ajudam a construir confiança antes mesmo do primeiro contato.</p></div></section>}
+    {gap!=null&&gap>0&&<section className="pdGap"><TrendingDown size={25}/><div><span>PRINCIPAL OPORTUNIDADE</span><h2>Você tem {gap} avaliações a menos que a média dos concorrentes selecionados em até {report?.radiusMeters?report.radiusMeters/1000:3} km.</h2><p>Quando clientes comparam negócios semelhantes no Google, volume, frequência e qualidade das avaliações ajudam a construir confiança antes mesmo do primeiro contato.</p></div></section>}
 
     <section className="pdCta"><span>PRÓXIMO PASSO</span><h2>Quer saber como melhorar suas avaliações?</h2><p>Veja como o MeuLocal ajuda negócios locais a fortalecer a reputação no Google sem depender de pedidos manuais.</p><a className="primary" href={cta}>Quero melhorar minhas avaliações <ArrowRight size={18}/></a></section>
     <footer className="pdFooter">Diagnóstico gerado pelo MeuLocal com dados públicos disponíveis no momento da análise.</footer>
