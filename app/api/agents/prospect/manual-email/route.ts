@@ -4,6 +4,7 @@ import {createClient} from '@supabase/supabase-js';
 import {isAdminRequest} from '@/lib/admin-auth';
 import {evaluateBusinessEmailAttribution} from '@/lib/acquisition/recipient-attribution';
 import {manualRecipientReadiness} from '@/lib/acquisition/manual-prospect';
+import {officialSourceMatches} from '@/lib/acquisition/official-email-source';
 
 export const runtime='nodejs';
 export const maxDuration=45;
@@ -14,18 +15,6 @@ const schema=z.object({
 }).strict();
 const json=(payload:unknown,status=200)=>NextResponse.json(payload,{status,headers:{'Cache-Control':'private, no-store'}});
 const normalId=(raw:string)=>raw.startsWith('places/')?raw.slice(7):raw;
-
-/** Same-host link to the business website returned by Google, not an arbitrary
- * URL chosen by the operator. No operator-supplied URL is fetched server-side. */
-export function officialSourceMatches(sourceUrl:string,website:string):boolean{
-  try{
-    const source=new URL(sourceUrl),official=new URL(website);
-    if(source.protocol!=='https:'||!['https:','http:'].includes(official.protocol))return false;
-    if(source.username||source.password||source.port||official.username||official.password||official.port)return false;
-    const host=(url:URL)=>url.hostname.toLowerCase().replace(/^www\./,'').replace(/\.$/,'');
-    return host(source)===host(official);
-  }catch{return false}
-}
 
 /** Operator submits only an address printed on the official unit site.
  * No provider writes, GHL contact creation, paid checks or sends occur here. */
