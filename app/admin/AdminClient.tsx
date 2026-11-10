@@ -41,6 +41,7 @@ export default function AdminClient(){
  const[manualRetryable,setManualRetryable]=useState<Record<string,boolean>>({});
  const[manualAudit,setManualAudit]=useState<Record<string,{message:string;provider:string;sendEvidence:string}>>({});
  const[manualResults,setManualResults]=useState<Record<string,string>>({});
+ const[manualEmails,setManualEmails]=useState<Record<string,{email:string;sourceUrl:string}>>({});
  const[dispatchPreview,setDispatchPreview]=useState<Array<{name:string;status:string;reasons:string[]}>>([]);
  const[contactCheck,setContactCheck]=useState<Array<{id:string;canSend?:boolean;sendToken?:string|null;emailVerifyToken?:string|null;emailVerificationStatus?:string;recipient?:string;name:string;channel:string;email?:string|null;phoneFound?:boolean;phone?:string|null;reason:string;ghlStatus?:string;eligibilityStatus?:string;eligibilityReasons?:string[];identifierStatus?:string;existingContact?:boolean;dnd?:boolean}>>([]);
  const[view,setView]=useState<View>('overview');
@@ -97,7 +98,7 @@ export default function AdminClient(){
    if(!r.ok)throw new Error(j.error||'Falha na busca');
    setSessionExpired(false);
    setSelected([]);setContactCheck([]);setRows([]);setPrepared([]);
-   setDispatchPreview([]);setManualResults({});setManualAudit({});
+   setDispatchPreview([]);setManualResults({});setManualAudit({});setManualEmails({});
    window.localStorage.removeItem('meulocal-acquisition-drafts-v3');
    setRows(j.candidates||[]);
   }catch(e:any){setMsg(String(e.message||'Falha na busca'))}
@@ -157,6 +158,41 @@ export default function AdminClient(){
    sendEvidence:'Nenhuma nova tentativa autorizada.'
   }}));setMsg(String(e.message||e))}
   finally{setBusy(false)}
+ }
+ async function checkOfficialEmail(p:{id:string;name:string}){
+  if(busy||manualResults[p.id])return;
+  const draft=manualEmails[p.id];
+  if(!draft?.email?.trim()||!draft?.sourceUrl?.trim()){
+   setMsg('Informe o e-mail e o link da página oficial da unidade onde o encontrou. Nenhum envio realizado.');return;
+  }
+  setBusy(true);
+  // Fail closed while rechecking identity; an old phone/recipient token must
+  // never survive a new manual e-mail check.
+  setContactCheck(rows=>rows.map(row=>row.id===p.id?{
+   ...row,canSend:false,contactAllowed:false,sendToken:null,emailVerifyToken:null
+  }:row));
+  setMsg('Conferindo a origem do e-mail de '+p.name+' e as restrições no HighLevel (sem envio)...');
+  try{
+   const res=await fetch('/api/agents/prospect/manual-email',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({placeId:p.id,email:draft.email.trim(),sourceUrl:draft.sourceUrl.trim()})
+   });
+   const j=await res.json();
+   if(!res.ok)throw Error(j.error||j.reason||'Endereço não confirmado.');
+   if(!j.emailVerifyToken||j.channel!=='email')throw Error('Validação incompleta; o envio continua bloqueado.');
+   const row={id:p.id,name:p.name,channel:'email',recipient:j.recipient,email:j.recipient,
+    website:j.website,reason:j.reason,canSend:false,contactAllowed:false,sendToken:null,
+    emailVerifyToken:j.emailVerifyToken,emailVerificationStatus:'not_verified'};
+   setContactCheck(rows=>[...rows.filter(x=>x.id!==p.id),row]);
+   setMsg('E-mail oficial de '+p.name+' conferido. Agora valide a caixa postal no HighLevel; nenhuma mensagem enviada.');
+  }catch(e:any){
+   const reason=String(e.message||'Não foi possível conferir o e-mail.');
+   setContactCheck(rows=>[...rows.filter(x=>x.id!==p.id),{
+    id:p.id,name:p.name,channel:'blocked',reason,canSend:false,
+    sendToken:null,emailVerifyToken:null,emailVerificationStatus:'needs_affiliation'
+   }]);
+   setMsg(p.name+': '+reason+' Nenhuma mensagem enviada.');
+  }finally{setBusy(false)}
  }
  async function verifyBusinessEmail(c:{id:string;name:string;emailVerifyToken?:string|null;recipient?:string}){
   if(busy||!c.emailVerifyToken)return;
@@ -346,7 +382,25 @@ if(!selected.length)return;setBusy(true);setMsg('');try{
         </>}
         <p style={{fontSize:12,color:'#68746a',marginTop:12}}>Gerar a análise consulta dados públicos do Google. Nenhum contato, régua ou mensagem é iniciado por esta ação.</p>
        </section>
-       {(rows.length>0||prepared.length>0)&&<><div className="resultHeader"><div><span>OPORTUNIDADES ENCONTRADAS</span><h2>Empresas encontradas — você escolhe</h2><p>Nenhuma empresa é selecionada automaticamente. Escolha quais deseja abordar e revise os rascunhos.</p></div><button className="textBtn" type="button" onClick={approve} disabled={!selected.length||busy}>Salvar diagnósticos {selected.length||''}</button><button className="approveBtn" onClick={prepareApproaches} disabled={!selected.length||busy}><Check/> Preparar abordagens {selected.length||''}</button></div>{prepared.length>0&&<div style={{marginBottom:12,display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}><button className="approveBtn" type="button" onClick={checkChannels} disabled={busy}>Verificar e-mail / WhatsApp (sem enviar)</button> {dispatchPreview.length>0&&<section className="adminPanel" style={{padding:16,flexBasis:'100%'}}><h3>Resultado da simulação — zero envios</h3>{dispatchPreview.map((x,i)=><p key={i}><strong>{x.name}:</strong> {x.status} — {x.reasons.join(', ')}</p>)}</section>}{contactCheck.length>0&&<section className="adminPanel" style={{padding:16,marginTop:12}}><h3>Canais para envio manual</h3><p>{contactCheck.filter(c=>c.canSend).length} aptos ao envio pelo HighLevel de {contactCheck.length} verificados. Sem liberação, o envio permanece bloqueado, inclusive por WhatsApp manual. Um telefone público não comprova WhatsApp válido nem autorização de contato.</p>{contactCheck.map(c=><p key={c.id}><strong>{c.name}:</strong> <span style={{color:c.canSend&&(!manualResults[c.id]||manualRetryable[c.id])?'#166534':'#92400e',fontWeight:600}}>{c.emailVerifyToken?'◐ Validar caixa postal':c.canSend&&(!manualResults[c.id]||manualRetryable[c.id])?'● Pode enviar':'● Não pode enviar'}</span> — {c.recipient||c.email||c.phone||'Sem canal confirmado'} — {c.reason}</p>)}<p>O cadastro necessário no HighLevel é preparado ao confirmar o envio. Nenhuma mensagem ou cadência é disparada nesta verificação.</p></section>}</div>}{prepared.length>0&&<section className="adminPanel" style={{marginBottom:16,padding:20}}><h3>Abordagens para revisão — sem envio</h3><p>Confira o destinatário e a mensagem. Cada envio depende da sua confirmação; não há prospecção autônoma.</p>{prepared.map((p,i)=><article key={i} style={{marginTop:12,padding:12,border:'1px solid #ddd',borderRadius:8}}><strong>{p.name}</strong><p style={{whiteSpace:'pre-wrap'}}>{p.message}</p>{(() => {const c=contactCheck.find(x=>x.id===p.id);return <><p style={{fontSize:13,fontWeight:600,color:c?.canSend&&(!manualResults[p.id]||manualRetryable[p.id])?'#166534':'#92400e'}}>{c?.canSend&&(!manualResults[p.id]||manualRetryable[p.id])?'● Pode enviar — '+(c.channel==='email'?'E-mail':'WhatsApp'):'● Não pode enviar — '+(manualResults[p.id]?'Confira o resultado da tentativa abaixo.':(c?.reason||'Verifique o e-mail / WhatsApp primeiro.'))}</p>{c?.recipient&&<p>{c.recipient}</p>}{c?.emailVerifyToken&&<div style={{margin:'8px 0'}}><button type="button" disabled={busy||!!manualResults[p.id]} onClick={()=>verifyBusinessEmail(c)}>Validar caixa de e-mail no HighLevel (sem enviar)</button><small style={{display:'block',marginTop:4}}>Consulta sob sua confirmação; custo estimado de US$ 0,0025 por e-mail. A verificação não garante entrega.</small></div>}{c?.emailVerificationStatus==='deliverable'&&<p style={{color:'#166534',fontSize:13}}>Caixa postal considerada entregável pelo HighLevel. Envio sujeito à sua confirmação.</p>}{manualResults[p.id]&&<p role="status">{manualResults[p.id]}</p>}{!manualResults[p.id]?.includes('Aceito pelo HighLevel')&&<button type="button" disabled={busy} onClick={()=>inspectManualAttempt(p)}>Conferir tentativa (sem enviar)</button>}{manualAudit[p.id]&&<div role="status" style={{fontSize:13,padding:12,border:'1px solid #d9a441',background:'#fffaf0',borderRadius:7,margin:'8px 0'}}><strong>{manualAudit[p.id].sendEvidence}</strong><p>{manualAudit[p.id].message}</p><small>{manualAudit[p.id].provider}. Não realize um novo envio sem confirmar o destinatário correto.</small></div>}<button type="button" onClick={()=>navigator.clipboard.writeText(p.message)}>Copiar mensagem</button>{' '}<button type="button" disabled={busy||!c?.canSend||!!manualResults[p.id]&&!manualRetryable[p.id]} onClick={()=>sendManualProspect(p)}>Enviar {c?.channel==='whatsapp'?'WhatsApp':'e-mail'} pelo HighLevel</button></>})()}</article>)}</section>}<div className="prospectList">{rows.map((r,i)=><article key={r.id} className={selected.includes(r.id)?'selected':''} onClick={()=>toggle(r.id)}><div className="selectBox">{selected.includes(r.id)&&<Check/>}</div><div className="rank">#{i+1}</div><div className="prospectInfo"><strong>{r.name}</strong><span>{r.address}</span><small>{r.rating?'★ '+r.rating:'Sem nota'} · {r.reviews===null?'Quantidade de avaliações não informada':r.reviews+' avaliações'}</small></div><div className="scoreBox"><span>Score MeuLocal</span><strong>{r.reviews===null?'—':r.score}<small>{r.reviews===null?'':'/100'}</small></strong><em>{r.reviews===null?'dados insuficientes':r.priority.replaceAll('_',' ')}</em></div></article>)}</div></>}
+       {(rows.length>0||prepared.length>0)&&<><div className="resultHeader"><div><span>OPORTUNIDADES ENCONTRADAS</span><h2>Empresas encontradas — você escolhe</h2><p>Nenhuma empresa é selecionada automaticamente. Escolha quais deseja abordar e revise os rascunhos.</p></div><button className="textBtn" type="button" onClick={approve} disabled={!selected.length||busy}>Salvar diagnósticos {selected.length||''}</button><button className="approveBtn" onClick={prepareApproaches} disabled={!selected.length||busy}><Check/> Preparar abordagens {selected.length||''}</button></div>{prepared.length>0&&<div style={{marginBottom:12,display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}><button className="approveBtn" type="button" onClick={checkChannels} disabled={busy}>Verificar e-mail / WhatsApp (sem enviar)</button> {dispatchPreview.length>0&&<section className="adminPanel" style={{padding:16,flexBasis:'100%'}}><h3>Resultado da simulação — zero envios</h3>{dispatchPreview.map((x,i)=><p key={i}><strong>{x.name}:</strong> {x.status} — {x.reasons.join(', ')}</p>)}</section>}{contactCheck.length>0&&<section className="adminPanel" style={{padding:16,marginTop:12}}><h3>Canais para envio manual</h3><p>{contactCheck.filter(c=>c.canSend).length} aptos ao envio pelo HighLevel de {contactCheck.length} verificados. Sem liberação, o envio permanece bloqueado, inclusive por WhatsApp manual. Um telefone público não comprova WhatsApp válido nem autorização de contato.</p>{contactCheck.map(c=><p key={c.id}><strong>{c.name}:</strong> <span style={{color:c.canSend&&(!manualResults[c.id]||manualRetryable[c.id])?'#166534':'#92400e',fontWeight:600}}>{c.emailVerifyToken?'◐ Validar caixa postal':c.canSend&&(!manualResults[c.id]||manualRetryable[c.id])?'● Pode enviar':'● Não pode enviar'}</span> — {c.recipient||c.email||c.phone||'Sem canal confirmado'} — {c.reason}</p>)}<p>O cadastro necessário no HighLevel é preparado ao confirmar o envio. Nenhuma mensagem ou cadência é disparada nesta verificação.</p></section>}</div>}{prepared.length>0&&<section className="adminPanel" style={{marginBottom:16,padding:20}}><h3>Abordagens para revisão — sem envio</h3><p>Confira o destinatário e a mensagem. Cada envio depende da sua confirmação; não há prospecção autônoma.</p>{prepared.map((p,i)=><article key={i} style={{marginTop:12,padding:12,border:'1px solid #ddd',borderRadius:8}}><strong>{p.name}</strong><p style={{whiteSpace:'pre-wrap'}}>{p.message}</p>{(() => {const c=contactCheck.find(x=>x.id===p.id);return <><p style={{fontSize:13,fontWeight:600,color:c?.canSend&&(!manualResults[p.id]||manualRetryable[p.id])?'#166534':'#92400e'}}>{c?.canSend&&(!manualResults[p.id]||manualRetryable[p.id])?'● Pode enviar — '+(c.channel==='email'?'E-mail':'WhatsApp'):'● Não pode enviar — '+(manualResults[p.id]?'Confira o resultado da tentativa abaixo.':(c?.reason||'Verifique o e-mail / WhatsApp primeiro.'))}</p>{c?.recipient&&<p>{c.recipient}</p>}
+   {c?.emailVerificationStatus!=='deliverable'&&!manualResults[p.id]&&<div style={{margin:'12px 0',padding:'12px',border:'1px solid #dce2d9',borderRadius:8,background:'#f9fbf7'}}>
+     <strong style={{display:'block',fontSize:13,marginBottom:6}}>Encontrou o e-mail oficial desta unidade?</strong>
+     <p style={{fontSize:12,margin:'0 0 10px'}}>Informe o endereço e o link da página oficial que o publica. A verificação é gratuita; não cria contato e não envia mensagem.</p>
+     <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+      <label style={{flex:'1 1 210px',fontSize:12}}>E-mail da unidade
+       <input type="email" aria-label={'E-mail oficial de '+p.name} autoComplete="off" placeholder="unidade@empresa.com.br" value={manualEmails[p.id]?.email||''}
+        onChange={e=>setManualEmails(v=>({...v,[p.id]:{email:e.target.value,sourceUrl:v[p.id]?.sourceUrl||''}}))}
+        style={{display:'block',padding:9,width:'100%',border:'1px solid #cdd7cc',borderRadius:6}}/>
+      </label>
+      <label style={{flex:'1 1 250px',fontSize:12}}>Link do site oficial que publica o e-mail
+       <input type="url" aria-label={'Fonte oficial do e-mail de '+p.name} autoComplete="off" placeholder="https://empresa.com.br/unidade/" value={manualEmails[p.id]?.sourceUrl||''}
+        onChange={e=>setManualEmails(v=>({...v,[p.id]:{email:v[p.id]?.email||'',sourceUrl:e.target.value}}))}
+        style={{display:'block',padding:9,width:'100%',border:'1px solid #cdd7cc',borderRadius:6}}/>
+      </label>
+     </div>
+     <button type="button" disabled={busy||!manualEmails[p.id]?.email?.trim()||!manualEmails[p.id]?.sourceUrl?.trim()} onClick={()=>checkOfficialEmail(p)} style={{marginTop:9}}>Conferir e-mail oficial (sem enviar)</button>
+   </div>}
+   {c?.emailVerifyToken&&<div style={{margin:'8px 0'}}><button type="button" disabled={busy||!!manualResults[p.id]} onClick={()=>verifyBusinessEmail(c)}>Validar caixa de e-mail no HighLevel (sem enviar)</button><small style={{display:'block',marginTop:4}}>Consulta sob sua confirmação; custo estimado de US$ 0,0025 por e-mail. A verificação não garante entrega.</small></div>}{c?.emailVerificationStatus==='deliverable'&&<p style={{color:'#166534',fontSize:13}}>Caixa postal considerada entregável pelo HighLevel. Envio sujeito à sua confirmação.</p>}{manualResults[p.id]&&<p role="status">{manualResults[p.id]}</p>}{!manualResults[p.id]?.includes('Aceito pelo HighLevel')&&<button type="button" disabled={busy} onClick={()=>inspectManualAttempt(p)}>Conferir tentativa (sem enviar)</button>}{manualAudit[p.id]&&<div role="status" style={{fontSize:13,padding:12,border:'1px solid #d9a441',background:'#fffaf0',borderRadius:7,margin:'8px 0'}}><strong>{manualAudit[p.id].sendEvidence}</strong><p>{manualAudit[p.id].message}</p><small>{manualAudit[p.id].provider}. Não realize um novo envio sem confirmar o destinatário correto.</small></div>}<button type="button" onClick={()=>navigator.clipboard.writeText(p.message)}>Copiar mensagem</button>{' '}<button type="button" disabled={busy||!c?.canSend||!!manualResults[p.id]&&!manualRetryable[p.id]} onClick={()=>sendManualProspect(p)}>Enviar {c?.channel==='whatsapp'?'WhatsApp':'e-mail'} pelo HighLevel</button></>})()}</article>)}</section>}<div className="prospectList">{rows.map((r,i)=><article key={r.id} className={selected.includes(r.id)?'selected':''} onClick={()=>toggle(r.id)}><div className="selectBox">{selected.includes(r.id)&&<Check/>}</div><div className="rank">#{i+1}</div><div className="prospectInfo"><strong>{r.name}</strong><span>{r.address}</span><small>{r.rating?'★ '+r.rating:'Sem nota'} · {r.reviews===null?'Quantidade de avaliações não informada':r.reviews+' avaliações'}</small></div><div className="scoreBox"><span>Score MeuLocal</span><strong>{r.reviews===null?'—':r.score}<small>{r.reviews===null?'':'/100'}</small></strong><em>{r.reviews===null?'dados insuficientes':r.priority.replaceAll('_',' ')}</em></div></article>)}</div></>}
      </>}
 
      {view==='leads'&&data&&<section className="adminPanel tablePanel"><div className="panelHead"><div><span>FUNIL COMERCIAL</span><h2>Leads</h2></div><b>{data.leads.length}</b></div><div className="adminTable"><div className="tableRow tableHead"><span>Empresa / contato</span><span>Etapa</span><span>Automação</span><span>Próxima ação</span></div>{data.leads.map((l:any)=><div className="tableRow" key={l.id}><span><strong>{l.business?.name||l.name||'Sem empresa'}</strong><small>{l.email||l.whatsapp||'Sem contato'}</small></span><span><Pill value={l.lifecycle_stage}/></span><span>{l.automation_track||'—'}</span><span>{fmtDate(l.next_action_at)}</span></div>)}</div>{!data.leads.length&&<p className="empty">Nenhum lead ainda.</p>}</section>}
