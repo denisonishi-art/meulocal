@@ -1,5 +1,6 @@
 import {decryptToken,refreshGoogleAccessToken} from './google-business-server';
 import {calculateReputationScore} from './reputation-score';
+import {storeGoogleReviews} from './google-review-store';
 
 type AdminClient=any;
 type Connection={user_id:string;business_id:string;google_account_id:string;google_location_id:string;refresh_token_ciphertext:string};
@@ -37,9 +38,12 @@ export async function syncGoogleReputation(admin:AdminClient,conn:Connection,sou
     const result=calculateReputationScore({reviewCount:fetched.totalReviewCount,competitorAvgReviews,rating:fetched.averageRating,responseRate,reviewsLast30d:recent,previousReviewCount:previous?.review_count??null});
     const snapshot={business_id:conn.business_id,score:result.score,band:result.band,review_count:fetched.totalReviewCount,google_rating:fetched.averageRating,response_rate:responseRate,reviews_last_30d:recent,competitor_avg_reviews:competitorAvgReviews,competitor_avg_score:null,score_version:result.version,score_factors:{...result.factors,reviews_truncated:fetched.truncated},snapshot_date:new Date().toISOString().slice(0,10)};
     const {error:snapshotError}=await admin.from('score_snapshots').upsert(snapshot,{onConflict:'business_id,snapshot_date'});if(snapshotError)throw snapshotError;
+    // Guardar o texto das avaliações não pode derrubar a sincronização do score.
+    let reviewsStore:{stored:number;removed:number}|{error:string};
+    try{reviewsStore=await storeGoogleReviews(admin,conn.business_id,fetched.reviews,{complete:!fetched.truncated})}catch{reviewsStore={error:'google_reviews_store_failed'}}
     await admin.from('google_business_connections').update({last_sync_at:new Date().toISOString(),last_sync_status:'success',last_sync_error:null,token_expires_at:new Date(Date.now()+refreshed.expires_in*1000).toISOString()}).eq('user_id',conn.user_id).eq('business_id',conn.business_id);
     await admin.from('google_sync_logs').insert({business_id:conn.business_id,user_id:conn.user_id,source,status:'success',review_count:fetched.totalReviewCount,pages_fetched:fetched.pages,score:result.score,score_version:result.version});
-    return {...snapshot,pagesFetched:fetched.pages,reviewsTruncated:fetched.truncated};
+    return {...snapshot,pagesFetched:fetched.pages,reviewsTruncated:fetched.truncated,reviewsStore};
   }catch(error:any){
     const message=error?.message||'SYNC_FAILED';
     await admin.from('google_business_connections').update({last_sync_status:'failed',last_sync_error:message.slice(0,500)}).eq('user_id',conn.user_id).eq('business_id',conn.business_id);
