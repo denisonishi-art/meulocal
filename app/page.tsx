@@ -38,7 +38,7 @@ const intelligenceFeatures = [
 ];
 
 const faqs = [
-  ['Qual é a diferença entre os planos?', 'O Essencial automatiza os pedidos de avaliação e o acompanhamento da reputação. O Inteligência acrescenta análise de temas, comparação entre períodos e um resumo semanal com até três ações prioritárias. Essa camada está em desenvolvimento; a contratação dos novos planos será liberada após validação.'],
+  ['Qual é a diferença entre os planos?', 'O Essencial automatiza os pedidos de avaliação e o acompanhamento da reputação. O Inteligência acrescenta análise de temas, comparação entre períodos e um resumo semanal com até três ações prioritárias. Essa camada ainda está em desenvolvimento. O Essencial já pode ser contratado.'],
   ['E se minha empresa tiver poucas avaliações?', 'O plano Inteligência deverá informar quando não houver dados suficientes para concluir uma tendência. As recomendações serão sustentadas pelas avaliações disponíveis, sem inventar padrões.'],
   ['O MeuLocal cria avaliações?', 'Não. O MeuLocal facilita o pedido de avaliações reais aos clientes da sua própria empresa.'],
   ['De onde vêm os clientes que recebem os pedidos?', 'Da sua empresa. Você disponibiliza sua própria base de clientes ou contatos elegíveis; o MeuLocal não busca consumidores fora da sua operação.'],
@@ -133,6 +133,9 @@ export default function Home() {
           <h2 id="plans-heading">Automatize sua rotina.<br/>Entenda onde melhorar.</h2>
           <p>Escolha entre acompanhar sua reputação e transformar as avaliações em prioridades para o seu negócio.</p>
         </div>
+        <div role="note" style={{margin:'0 auto 24px',maxWidth:760,padding:'16px 20px',border:'1px solid #cfe3cf',borderRadius:12,background:'#f4faf3',fontSize:15,lineHeight:1.5}}>
+          <strong>Condição de cliente fundador:</strong> para os primeiros clientes do MeuLocal, o preço fica travado por 12 meses e há garantia de 30 dias. Se, no primeiro mês com o MeuLocal ativo e a sua base de clientes cadastrada, o seu perfil não receber nenhuma nova avaliação no Google, devolvemos a mensalidade.
+        </div>
         <div className={plansStyles.grid}>
           <article className={plansStyles.card} aria-labelledby="essential-heading">
             <span className={plansStyles.kicker}>Automação da rotina</span>
@@ -161,7 +164,7 @@ export default function Home() {
         <div className={plansStyles.notes}>
           <p><strong>Nos dois planos:</strong> o MeuLocal monitora e avisa. Nenhuma resposta é escrita ou publicada no Google.</p>
           <p>* Monitoramento em validação: consulta horária planejada e meta de aviso em até 3 horas a partir da postagem da avaliação, com integração Google e canal de alerta ativos. O prazo ainda não foi comprovado em operação real.</p>
-          <p>Os novos planos estão em preparação. A contratação será liberada após validação das entregas e configuração do pagamento. O diagnóstico continua gratuito.</p>
+          <p>O Essencial já está disponível para contratação. O Inteligência será liberado após a validação das entregas. O diagnóstico continua gratuito.</p>
           <p>No Inteligência, dados insuficientes serão informados; o relatório não apresentará tendências sem evidência.</p>
         </div>
       </section>
