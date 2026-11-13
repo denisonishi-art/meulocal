@@ -17,7 +17,7 @@ export const agentPolicies = {
     radiusIsHeuristicNotRule: true,
     allowSerpCompetitorsOutsideRadius: true,
     preferSearchIntentCompetitorsForNonHyperlocalNiches: true,
-    minimumGoogleRating: 4.0,
+    minimumGoogleRating: 3.5,
     prioritizeScoreBelow: 55,
     channels: ['email', 'whatsapp'] as const,
     maxOutboundMessages: 3,
