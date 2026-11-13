@@ -22,7 +22,7 @@ export default function ContratarPage(){
 
   useEffect(()=>{
     const params=new URLSearchParams(window.location.search);setPaymentState(params.get('payment'));
-    const chosen=params.get('plan');if(chosen){const selected=getPaymentPlan(chosen);if(selected)setPlanId(selected.id);else setPlanValid(false)}
+    const chosen=params.get('plan');if(chosen){const selected=getPaymentPlan(chosen);if(selected&&selected.id!=='inteligencia')setPlanId(selected.id);else setPlanValid(false)}
     try{
       const raw=sessionStorage.getItem('meulocal_checkout_context');
       if(raw){const c=JSON.parse(raw) as CheckoutContext;setName(c.name||'');setEmail(c.email||'');setPhone(c.phone||'');setBusinessName(c.businessName||'');}
@@ -32,7 +32,7 @@ export default function ContratarPage(){
 
   async function startCheckout(e:FormEvent){
     e.preventDefault(); setError('');
-    if(!planValid){setError('Escolha um plano válido para continuar.');return}
+    if(!planValid||planId!=='essencial'){setError('Escolha um plano válido para continuar. O Inteligência estará disponível em breve.');return}
     setLoading(true);
     // Reuse the confirmed public payment page. Never put personal data in its URL.
     window.location.assign(`https://www.asaas.com/000/c/${plan.paymentLinkId}`);
@@ -61,7 +61,7 @@ export default function ContratarPage(){
 
         <form className="checkoutAction" onSubmit={startCheckout}>
           <div className={styles.field}><label htmlFor="checkout-plan">Plano</label><select id="checkout-plan" className={styles.control} value={planId} onChange={e=>{setPlanId(e.target.value as PaymentPlanId);setPlanValid(true);setError('')}} disabled={loading}>
-            <option value="essencial">Essencial</option><option value="inteligencia">Inteligência</option>
+            <option value="essencial">Essencial</option><option value="inteligencia" disabled>Inteligência (em breve)</option>
           </select></div>
           <span>MeuLocal {plan.name}</span>
           <h2>{(plan.amountCents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}/mês</h2>
