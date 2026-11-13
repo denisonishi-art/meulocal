@@ -3,6 +3,7 @@ import {createClient} from '@supabase/supabase-js';
 import {z} from 'zod';
 import {isAdminRequest} from '@/lib/admin-auth';
 import {deliverAcquisitionMessage} from '@/lib/acquisition/delivery';
+import {manualDailyCap} from '@/lib/acquisition/manual-cap';
 import {verifyRecipient,manualRecipientReadiness,findExactRecipient,MANUAL_LOCATION} from '@/lib/acquisition/manual-prospect';
 import {getLocationAccessToken,getOperationalContact} from '@/lib/highlevel-operational';
 import {syncOperationalOpportunity} from '@/lib/ghl-opportunity';
@@ -24,6 +25,10 @@ export async function POST(req:Request){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key)return json({error:'Operação indisponível.'},503);
  const db=createClient(url,key,{auth:{persistSession:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(6000)})}});
+ // Limite diário aplicado no servidor, antes de qualquer verificação ou envio.
+ const cap=manualDailyCap(),used=await db.rpc('manual_sends_today');
+ if(used.error||typeof used.data!=='number')return json({error:'Não foi possível conferir o limite diário. Nenhuma mensagem foi enviada.'},503);
+ if(used.data>=cap)return json({error:'Limite diário de '+cap+' envios manuais atingido. Retome amanhã.',status:'daily_cap_reached',dailyCap:cap},429);
  const ready=await manualRecipientReadiness(db,target);
  if(!ready.canSend)return json({error:ready.reason},409);
  let preparing=false;
