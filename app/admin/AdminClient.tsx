@@ -150,6 +150,59 @@ export default function AdminClient(){
   }
   setMsg('Lote concluído: '+sent+' mensagem(ns) aceita(s) pelo HighLevel. Nenhuma cadência automática ativada.');
  }
+ // Fila do dia: 10 empresas preparadas pela rotina diária (e-mail oficial validado e mensagem pronta),
+ // ordenadas pela prioridade da ferramenta (menor score = maior chance de fechamento).
+ async function loadDailyQueue(){
+  if(busy)return;
+  setBusy(true);setMsg('Carregando a fila do dia...');
+  try{
+   const res=await fetch('/api/agents/prospect/daily-queue');const j=await res.json();
+   if(!res.ok)throw Error(j.error||'Falha ao carregar a fila.');
+   const items:any[]=j.items||[];
+   if(!items.length){setMsg(!j.run||j.run.status==='processing'?'A fila de hoje ainda está sendo preparada. Tente novamente em alguns minutos.':j.run.status==='failed'?'A preparação da fila de hoje falhou ('+(j.run.last_error||'erro')+'). Use "Gerar fila agora".':'Fila de hoje vazia ou já contatada.');return}
+   setSelected(items.map(i=>i.place_id));setContactCheck([]);setManualResults({});setManualAudit({});setManualEmails({});setDispatchPreview([]);
+   setNiche(j.run?.niche||'');setRegion(j.run?.region||'');
+   setRows(items.map(i=>({id:i.place_id,name:i.name,address:i.address||'',rating:i.rating==null?null:Number(i.rating),reviews:i.reviews??null,website:i.website||null,phone:null,score:i.score??null,priority:i.priority})));
+   setPrepared(items.map(i=>({id:i.place_id,name:i.name,message:i.message})));
+   setMsg('Fila de hoje carregada: '+items.length+' empresa(s) de "'+(j.run?.niche||'')+'", da maior para a menor chance de fechamento. Revalide os e-mails e aprove o lote.');
+  }catch(e:any){setMsg(String(e.message||e))}finally{setBusy(false)}
+ }
+ async function generateDailyQueueNow(){
+  if(busy)return;
+  if(!window.confirm('Gerar a fila de hoje agora? A busca, a validação de e-mails (cobrança por consulta no HighLevel) e os rascunhos podem levar alguns minutos. Nada será enviado.'))return;
+  setBusy(true);setMsg('Preparando a fila do dia. Isso pode levar alguns minutos...');
+  try{const res=await fetch('/api/agents/prospect/daily-queue',{method:'POST'});const j=await res.json();
+   if(!res.ok)throw Error(j.status==='daily_queue_disabled'?'A fila diária está desativada (MEULOCAL_DAILY_QUEUE_ENABLED).':j.error||'Falha ao gerar a fila.');
+   setMsg('Fila: '+(j.status||'sem status')+(j.ready!=null?' · '+j.ready+' pronta(s)':'')+(j.error?' · '+j.error:'')+'. Use "Carregar fila do dia".');
+  }catch(e:any){setMsg(String(e.message||e))}finally{setBusy(false)}
+ }
+ async function validateDailyQueue(){
+  if(busy||!prepared.length)return;
+  const n=Math.min(prepared.length,10);
+  if(!window.confirm('Revalidar as caixas de e-mail de '+n+' empresa(s) no HighLevel? Custo estimado: US$ '+(n*0.0025).toFixed(3)+'. Nada será enviado. A validação vale por 15 minutos: aprove o lote logo depois.'))return;
+  const companies=prepared.slice(0,10).map(p=>({id:p.id,name:p.name}));
+  setBusy(true);setContactCheck([]);setMsg('Revalidando os e-mails da fila do dia, sem enviar mensagens...');
+  const results:any[]=[];
+  try{
+   for(let i=0;i<companies.length;i+=5){
+    const res=await fetch('/api/agents/prospect/contact-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companies:companies.slice(i,i+5)})});
+    const json=await res.json();if(!res.ok)throw Error(json.error||'Falha na consulta');
+    for(const r of json.results||[]){
+     let row=r;
+     if(r.emailVerifyToken){
+      try{
+       const v=await fetch('/api/agents/prospect/verify-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emailVerifyToken:r.emailVerifyToken,confirmed:true})});
+       const info=await v.json();const ok=Boolean(v.ok&&info.canSend&&info.sendToken);
+       row={...r,emailVerifyToken:null,emailVerificationStatus:info.status||'unverified',canSend:ok,contactAllowed:ok,sendToken:ok?info.sendToken:null,reason:info.reason||'Não foi possível confirmar o resultado do HighLevel.'};
+      }catch{row={...r,emailVerifyToken:null,emailVerificationStatus:'unknown',canSend:false,sendToken:null,reason:'Verificação inconclusiva. Pode ter ocorrido cobrança; não repita automaticamente.'}}
+     }
+     results.push(row);setContactCheck([...results]);
+    }
+   }
+   setMsg('Revalidação concluída: '+results.filter(x=>x.canSend).length+' de '+results.length+' apta(s). Clique em "Aprovar e enviar lote" em até 15 minutos. Nenhuma mensagem enviada.');
+  }catch(e:any){setMsg('Revalidação parcial de '+results.length+' empresa(s). '+String(e.message||e))}
+  finally{setBusy(false)}
+ }
  async function inspectManualAttempt(p:{id:string;name:string}){
   if(busy)return;
   setBusy(true);setMsg('Conferindo a tentativa de '+p.name+' em modo somente leitura, sem enviar...');
@@ -356,6 +409,7 @@ if(!selected.length)return;setBusy(true);setMsg('');try{
 
      {view==='prospecting'&&<>
        <form className="commandCard" onSubmit={search}><div className="commandIcon"><Bot/></div><div className="commandFields"><label>O que você quer prospectar?<input value={niche} onChange={e=>setNiche(e.target.value)} placeholder="Ex.: empresas que alugam geradores" required/></label><label>Onde?<input value={region} onChange={e=>setRegion(e.target.value)} placeholder="Ex.: Moema, São Paulo, SP" required/></label></div><button disabled={busy}>{busy?'Pesquisando...':'Buscar oportunidades'} <ArrowUpRight/></button></form>
+       <div style={{display:'flex',gap:12,flexWrap:'wrap',margin:'12px 0'}}><button className="approveBtn" type="button" onClick={loadDailyQueue} disabled={busy}>Carregar fila do dia</button><button className="textBtn" type="button" onClick={generateDailyQueueNow} disabled={busy}>Gerar fila agora</button>{prepared.length>0&&<button className="approveBtn" type="button" onClick={validateDailyQueue} disabled={busy}>Revalidar e-mails da fila ({Math.min(prepared.length,10)})</button>}</div>
        {msg&&<div className="adminMessage">{msg}</div>}
        <section className="adminPanel" style={{marginBottom:18,padding:20}}>
         <div className="panelHead"><div><span>HISTÓRICO DE PROSPECÇÃO</span><h2>Diagnósticos salvos e situação de contato</h2></div><b>{catalog.length}</b></div>
