@@ -158,7 +158,7 @@ export default function Home() {
               {intelligenceFeatures.map(feature=><li key={feature}><Check size={18} aria-hidden="true"/><span>{feature}</span></li>)}
             </ul>
             <p className={plansStyles.status}>Análise de temas e resumo semanal em desenvolvimento.</p>
-            <a className="primary" href="https://www.asaas.com/000/c/71k8chmbik8gy1ph">Contratar Inteligência <ArrowRight size={16} aria-hidden="true"/></a>
+            <span className="primary" aria-disabled="true" style={{opacity:.55,cursor:'not-allowed'}}>Em breve</span>
           </article>
         </div>
         <div className={plansStyles.notes}>
