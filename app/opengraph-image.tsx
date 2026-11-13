@@ -13,7 +13,7 @@ export default function Image(){
         MeuLocal
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:'18px',maxWidth:'980px'}}>
-        <div style={{fontSize:68,lineHeight:1.05,fontWeight:800}}>Mais avaliações no Google.<br/>Mais clientes locais.</div>
+        <div style={{display:'flex',flexDirection:'column',fontSize:68,lineHeight:1.05,fontWeight:800}}><div>Mais avaliações no Google.</div><div>Mais clientes locais.</div></div>
         <div style={{fontSize:30,color:'#4b5563'}}>Reputação local, diagnóstico e evolução em um só lugar.</div>
       </div>
       <div style={{fontSize:24,color:'#6b7280'}}>MeuLocal</div>
