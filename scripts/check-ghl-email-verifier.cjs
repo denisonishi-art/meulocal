@@ -75,6 +75,11 @@ test('HighLevel deliverable low risk and exact recipient are the only green outc
   {...valid,result:'do_not_send'}
  ])assert.equal(interpret(x,'school@example.org').deliverable,false,JSON.stringify(x));
 });
+test('a not-processed HighLevel response is never green and surfaces the provider message',()=>{
+ const r=interpretLCEmailVerification({verified:false,message:'Email verification is not enabled\nfor this location',address:'school@example.org'},'school@example.org');
+ assert.equal(r.deliverable,false);assert.equal(r.status,'not_processed');assert.match(r.reason,/not enabled for this location/);assert.equal(r.reason.includes('\n'),false);
+ assert.equal(interpretLCEmailVerification({verified:false,address:'school@example.org'},'school@example.org').deliverable,false);
+});
 test('only explicit admin confirmation invokes paid LC Email validation',async()=>{
  const f=setup(),denied=await setup({authorized:false}).post(true);
  assert.equal(denied.status,401);

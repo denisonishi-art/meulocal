@@ -6,6 +6,12 @@ export function interpretLCEmailVerification(response:unknown,expectedEmail:stri
  const risk=typeof r?.risk==='string'?r.risk:'unknown';
  const address=typeof r?.address==='string'?r.address.trim().toLowerCase():'';
  const isValid=(r?.leadConnectorRecommendation as Record<string,unknown>|null)?.isEmailValid;
+ // Resposta "não processada" do HighLevel (EmailNotVerifiedResponseDto): {verified:false,message,address}.
+ // Normalmente indica configuração (LC Email / verificação desativada), não um problema da caixa.
+ if(r&&r.verified===false&&typeof r.result!=='string'){
+  const detail=typeof r.message==='string'?r.message.replace(/[\r\n]+/g,' ').slice(0,160):'sem detalhe';
+  return {status:'not_processed',reason:'O HighLevel não processou a verificação ('+detail+'). Confira se a verificação de e-mail do LC Email está ativada na conta. Nenhum envio autorizado.',deliverable:false};
+ }
  if(!allowedResults.has(result)||address!==expectedEmail.toLowerCase())return {
   status:'unverified',reason:'Resultado inconclusivo do verificador. Nenhum envio autorizado.',deliverable:false
  };
